@@ -1,0 +1,9 @@
+
+# folders
+.vscode/
+node_modules/
+
+# not-wanted files
+.env
+.DS_Store
+package_lock.json
