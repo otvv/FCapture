@@ -8,16 +8,6 @@ FCapture Preview
 */
 
 import { app, BrowserWindow, Menu, dialog } from "electron";
-import tanjun from "tanjun-log";
-
-// tanjun-log cheatsheet
-//
-// tanjun.print('test message', '+')
-// tanjun.print('test message', '+', 'success');
-// tanjun.print('test message', '+', 'fatal');
-// tanjun.print('test message', '+', 'error');
-// tanjun.print('test message', '+', 'warning');
-// tanjun.print('test message', '+', 'info');
 
 // disable hardware acceleration (can cause issues on some systems)
 app.disableHardwareAcceleration();
@@ -43,15 +33,10 @@ const generateParentWindow = () => {
   // if parent (main) window fails to be initialized somehow
   // quit app and throw
   if (parent === null) {
-    // set it to fake throw since we're going to quit the app anyways
-    tanjun.crash(
-      "parent window creation failed.",
-      "fcapture-preview",
-      "error",
-      true,
-      "!!!"
-    );
-    app.quit();
+    console.error("[fcapture-preview] - electron@generateParentWindow: failed to generate window.");
+    return; // for some reason the app triggers the next instruction 
+            // even when calling the quit function so for now the app will just halt
+            // in case something goes wrong
   }
 
   // load parent window HTML structure
@@ -63,7 +48,5 @@ const generateParentWindow = () => {
   }
 };
 
-//
 // app initializer
-//
 app.whenReady().then(generateParentWindow).then(null); // TODO: replace "null" with the menubar/dockmenu templates later for macOS

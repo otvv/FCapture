@@ -21,7 +21,7 @@
     }
   },
   "scripts": {
-    "start":	"npx electron .",
+    "start": "npx electron .",
     "test": "ELECTRON_ENV=development npx electron .",
     "build": "electron-builder && sudo sh build/ad-hoc-sign.sh"
   },
@@ -46,7 +46,6 @@
   "homepage": "https://github.com/otvv/fcapture-preview#readme",
   "devDependencies": {
     "electron": "^32.1.2",
-    "electron-builder": "^25.0.5",
-    "tanjun-log": "^0.0.8"
+    "electron-builder": "^25.0.5"
   }
 }
