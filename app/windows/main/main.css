@@ -1,0 +1,45 @@
+/*
+
+FCapture Preview
+
+- github@otvv
+- 09/25/2024
+
+*/
+
+* {
+  user-select: none;
+  overflow: hidden;
+
+  height: 100vh;
+  margin: 0px;
+
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  color: #dedede;
+
+  background-color: #282828;
+}
+
+video {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  background-color: transparent;
+}
+
+.video-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-container {
+  width: auto;
+  height: auto;
+  max-width: 100vw;
+  max-height: 100vh;
+}

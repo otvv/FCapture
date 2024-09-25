@@ -46,7 +46,7 @@ const generateParentWindow = () => {
     // set it to fake throw since we're going to quit the app anyways
     tanjun.crash(
       "parent window creation failed.",
-      "fcapture-view",
+      "fcapture-preview",
       "error",
       true,
       "!!!"
@@ -55,7 +55,7 @@ const generateParentWindow = () => {
   }
 
   // load parent window HTML structure
-  parent.loadFile("app/windows/Main/Main.html");
+  parent.loadFile("app/windows/main/main.html");
 
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
