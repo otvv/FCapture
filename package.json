@@ -2,9 +2,10 @@
   "name": "fcapture-preview",
   "version": "0.0.0",
   "description": "a previewer/recorder (eventually) for generic USB capture cards",
-  "main": "app/electron.js",
+  "main": "app/electron.mjs",
   "scripts": {
-    "test": "npx electron ."
+    "start":	"npx electron .",
+    "test": "ELECTRON_ENV=development npx electron ."
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,7 @@
     "software",
     "electron"
   ],
+  "type": "module",
   "author": "otvv",
   "license": "GPL-3.0-or-later",
   "bugs": {
