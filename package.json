@@ -1,11 +1,29 @@
 {
   "name": "fcapture-preview",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "a previewer/recorder (eventually) for generic USB capture cards",
   "main": "app/electron.mjs",
+  "build": {
+    "productName": "FCapture Preview",
+    "icon": "app/assets/icons/fcapture-icon",
+    "mac": {
+      "icon": "app/assets/icons/fcapture-icon.icns",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "icon": "app/assets/icons/fcapture-icon.ico"
+    },
+    "linux": {
+      "icon": "app/assets/icons/fcapture-icon.png"
+    }
+  },
   "scripts": {
     "start":	"npx electron .",
-    "test": "ELECTRON_ENV=development npx electron ."
+    "test": "ELECTRON_ENV=development npx electron .",
+    "build": "electron-builder && sudo sh build/ad-hoc-sign.sh"
   },
   "repository": {
     "type": "git",

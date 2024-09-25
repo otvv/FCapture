@@ -2,6 +2,7 @@
 # folders
 .vscode/
 node_modules/
+dist/
 
 # not-wanted files
 .env
