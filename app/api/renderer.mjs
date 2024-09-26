@@ -18,12 +18,19 @@ const getAvailableDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     // dummy
-    const devicesPayload = { video: {}, audio: {} };
+    const devicesPayload = { video: { id: '', name: '' }, audio: { id: '', name: ''} };
+
+    let usbVideoFound = false;
 
     devices.forEach((device) => {
       console.log(
         `[fcapture-preview] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`
       );
+
+      // ignore OBS related devices
+      if (device.label.includes("OBS Virtual Camera")) {
+        return;
+      }
 
       // filter each device for a specific type
       // TODO: improve this method later to handle more types of devices and other systems
@@ -31,6 +38,7 @@ const getAvailableDevices = async () => {
       if (device.kind === "videoinput" && device.label.includes("USB Video")) {
         devicesPayload.video.id = device.deviceId; // assign device id
         devicesPayload.video.name = device.label;
+        usbVideoFound = true;
       }
 
       if (
@@ -42,13 +50,14 @@ const getAvailableDevices = async () => {
       }
     });
 
+    if (!usbVideoFound) {
+      return null;
+    }
+
     // return payload
     return devicesPayload;
   } catch (err) {
-    console.error(
-      "[fcapture-preview] - renderer@getAvailableDevices:",
-      err
-    );
+    console.error("[fcapture-preview] - renderer@getAvailableDevices:", err);
   }
 };
 
@@ -56,6 +65,10 @@ export const setupStreamFromDevice = async () => {
   try {
     // get filtered device payload to pull video from
     const device = await getAvailableDevices();
+
+    if (device === null) {
+      return;
+    }
 
     // setup raw input video and audio properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
@@ -73,7 +86,7 @@ export const setupStreamFromDevice = async () => {
       },
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: { min: 48000, ideal: 48000, max: 192000 },
+        sampleRate: { min: 44100, ideal: 192000, max: 198000 },
         sampleSize: 24,
         channelCount: 2, // stereo = 2, mono = 1
       },
@@ -81,9 +94,6 @@ export const setupStreamFromDevice = async () => {
 
     return rawMedia;
   } catch (err) {
-    console.error(
-      "[fcapture-preview] - renderer@setupStreamFromDevice:",
-      err
-    );
+    console.error("[fcapture-preview] - renderer@setupStreamFromDevice:", err);
   }
 };
