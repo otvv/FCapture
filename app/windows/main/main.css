@@ -39,7 +39,7 @@ video player
   width: 100vw;
   height: 100vh;
 
-  object-fit: fill; /* TODO: different fitting modes */
+  object-fit: fill; /* TODO: create different fitting modes */
 }
 
 /*
@@ -65,7 +65,7 @@ no-signal screen
   border-radius: 50%;
   box-shadow: 0px 0px 1px 1px #28282845;
   background-color: #28282833;
-  outline: 1px solid #ff00004d;
+  outline: 1px solid #7575754d;
   animation: pulse 2s infinite;
   margin-top: 10px;
   margin-bottom: 10px;

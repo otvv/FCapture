@@ -8,9 +8,9 @@ FCapture Preview
 */
 
 const ASPECT_RATIO_TABLE = Object.freeze({
-  STANDARD: 4 / 3,
-  WIDESCREEN: 16 / 9,
-  ULTRAWIDE: 21 / 9,
+  STANDARD: (4 / 3),
+  WIDESCREEN: (16 / 9),
+  ULTRAWIDE: (21 / 9),
 });
 
 const getAvailableDevices = async () => {
@@ -18,16 +18,15 @@ const getAvailableDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     // dummy
-    const devicesPayload = { video: { id: '', name: '' }, audio: { id: '', name: ''} };
-
     let usbVideoFound = false;
 
-    devices.forEach((device) => {
-      console.log(
-        `[fcapture-preview] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`
-      );
+    // store device payload info
+    const deviceInfoPayload = { video: { id: '', label: '' }, audio: { id: '', label: ''} };
 
-      // ignore OBS related devices
+    devices.forEach((device) => {
+      // console.log(`[fcapture-preview] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
+
+      // ignore OBS related virtual devices
       if (device.label.includes("OBS Virtual Camera")) {
         return;
       }
@@ -36,8 +35,8 @@ const getAvailableDevices = async () => {
       // TODO: improve this method later to handle more types of devices and other systems
       // where this is handled differently (Windows)
       if (device.kind === "videoinput" && device.label.includes("USB Video")) {
-        devicesPayload.video.id = device.deviceId; // assign device id
-        devicesPayload.video.name = device.label;
+        deviceInfoPayload.video.id = device.deviceId;
+        deviceInfoPayload.video.label = device.label;
         usbVideoFound = true;
       }
 
@@ -45,17 +44,19 @@ const getAvailableDevices = async () => {
         device.kind === "audioinput" &&
         device.label.includes("USB Digital Audio")
       ) {
-        devicesPayload.audio.id = device.deviceId; // assign device id
-        devicesPayload.audio.name = device.label;
+        deviceInfoPayload.audio.id = device.deviceId;
+        deviceInfoPayload.audio.label = device.label;
       }
     });
 
+    // prevent the renderer from fallbacking to the default device
+    // in case the desired device has not been found/initialized yet
     if (!usbVideoFound) {
       return null;
     }
 
     // return payload
-    return devicesPayload;
+    return deviceInfoPayload;
   } catch (err) {
     console.error("[fcapture-preview] - renderer@getAvailableDevices:", err);
   }
@@ -72,25 +73,32 @@ export const setupStreamFromDevice = async () => {
 
     // setup raw input video and audio properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
+      // NOTE: if device doesnt have support for any of these settings
+      // it will use the respective setting internal default/ideal value
       video: {
-        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60 and so on)
+        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         deviceId: { exact: device.video.id },
-        width: { min: 1280, ideal: 2560, max: 3840 },
-        height: { min: 720, ideal: 1440, max: 2160 },
-        frameRate: { min: 30, ideal: 60, max: 120 },
-        aspectRatio: {
-          min: ASPECT_RATIO_TABLE.STANDARD,
-          ideal: ASPECT_RATIO_TABLE.WIDESCREEN,
-          max: ASPECT_RATIO_TABLE.ULTRAWIDE,
-        },
+        width: { exact: 1920 },
+        height: { exact: 1080 },
+        frameRate: { exact: 60 },
+        aspectRatio: { exact: ASPECT_RATIO_TABLE.WIDESCREEN },
       },
+      // TODO: add an option to only passthrough audio, to make it easier
+      // to integrate the capture device audio with an audio interface
+      // or if the user just want to play while listening to music on PC for example
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: { min: 44100, ideal: 192000, max: 198000 },
+        sampleRate: 192000,
         sampleSize: 24,
         channelCount: 2, // stereo = 2, mono = 1
       },
     });
+
+    // DEBUG PURPOSES ONLY
+    // console.log(
+    //   "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
+    //   rawMedia.getVideoTracks()[0].getCapabilities()
+    // );
 
     return rawMedia;
   } catch (err) {

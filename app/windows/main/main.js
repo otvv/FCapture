@@ -7,17 +7,21 @@ FCapture Preview
 
 */
 
-"use strict"
+"use strict";
 
 const initializeStream = async () => {
   try {
-    const renderer = (await import("../../api/renderer.mjs"));
+    const renderer = await import("../../api/renderer.mjs");
 
     const videoPlayerElement = document.querySelector("#video-player");
-    const noSignalContainerElement = document.querySelector("#no-signal-container");
+    const noSignalContainerElement = document.querySelector(
+      "#no-signal-container"
+    );
 
     if (videoPlayerElement === null) {
-      console.error("[fcapture-preview] - main@initializeStream: video player element not found.\n[fcapture-preview] - main@initializeStream: please restart the window.");
+      console.error(
+        "[fcapture-preview] - main@initializeStream: video player element not found.\n[fcapture-preview] - main@initializeStream: please restart the window."
+      );
       return;
     }
 
@@ -25,10 +29,12 @@ const initializeStream = async () => {
 
     if (!rawStream) {
       // hide video player and show no signal screen
-      noSignalContainerElement.style.display = "flex";
       videoPlayerElement.style.display = "none";
+      noSignalContainerElement.style.display = "flex";
 
-      console.warn("[fcapture-preview] - main@initializeStream: raw stream input not found, is your device initialized?");
+      console.warn(
+        "[fcapture-preview] - main@initializeStream: raw stream input not found, is your device initialized?"
+      );
       return;
     }
 
@@ -42,22 +48,50 @@ const initializeStream = async () => {
 
     // temporary stream configurations
     videoPlayerElement.volume = 1.0;
-    videoPlayerElement.style.filter = "brightness(0.9) contrast(0.9)  saturate(0.9)";
+    videoPlayerElement.style.filter =
+      "brightness(0.9) contrast(0.9)  saturate(0.9)";
   } catch (err) {
     console.error("[fcapture-preview] - main@initializeStream:", err);
   }
-}
-
-
-// FIXME: remove this function from here, once the app has a proper flow defined
-// I can handle the stream initialization someplace else.
-// unless the user defines to auto-start it using a config file 
-// (will be implemented once the settings screen is finished)
-// for now this will do since its just for quick testing.
-initializeStream();
-
-// temporary event handler
-navigator.mediaDevices.ondevicechange = async () => {
-  console.log("[fcapture-preview] - main@ondevicechange: device change detected, restarting stream..");
-  await initializeStream();
 };
+
+// NOTE: for now, all "windows" will have their own event handler initializer
+// the plan is to have a global event handler that can listen to events from all around the app
+// but since node.js is very picky with imports and JavaScript doesnt really support "pointers"
+// I cant really do it without using a global variable 
+// (which is kind of a bad practice and should be avoided at all costs!)
+const initializeMainEventHandler = async () => {
+  try {
+    const events = await import("../../api/eventHandler.mjs");
+
+    // initialize this event handler instance
+    const eventHandler = new events.fEventHandler();
+
+    if (eventHandler === null) {
+      console.warn(
+        "[fcapture-preview] - main@initializeMainEventHandler: eventHandler is null."
+      );
+
+      return;
+    }
+
+    // event listeners
+    // NOTE: these two listeneres will likely stay on this file/function
+    eventHandler.on("start-stream", async () => await initializeStream());
+    navigator.mediaDevices.ondevicechange = async () => await initializeStream();
+
+    // event emitters
+    // NOTE: this will likely be in other files as well, such as the settings menu
+    // or any other window that might need to trigger a start stream event
+    eventHandler.send("start-stream");
+  } catch (err) {
+    console.error("[fcapture-preview] - main@initializeMainEventHandler:", err);
+  }
+};
+
+// initialize event handler
+initializeMainEventHandler().then(() => {
+  console.log("[fcapture-preview] - main@initializeMainEventHandlerPromise: eventHandler is initialized successfully!");
+}).catch((err) => {
+  console.error("[fcapture-preview] - main@initializeMainEventHandlerPromise:", err);
+});
