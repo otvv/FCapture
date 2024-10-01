@@ -1,23 +1,26 @@
 {
   "name": "fcapture-preview",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "a previewer/recorder (eventually) for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {
     "productName": "FCapture Preview",
-    "icon": "app/assets/icons/fcapture-icon",
+    "icon": "app/assets/icons/fcapture-icon-fallback.png",
+    "extraResources": [
+      "app/preload.js"
+    ],
     "mac": {
-      "icon": "app/assets/icons/fcapture-icon.icns",
+      "icon": "app/assets/icons/fcapture-icon-mac.icns",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "hardenedRuntime": true,
       "gatekeeperAssess": false
     },
     "win": {
-      "icon": "app/assets/icons/fcapture-icon.ico"
+      "icon": "app/assets/icons/fcapture-icon-windows.ico"
     },
     "linux": {
-      "icon": "app/assets/icons/fcapture-icon.png"
+      "icon": "app/assets/icons/fcapture-icon-linux.png"
     }
   },
   "scripts": {

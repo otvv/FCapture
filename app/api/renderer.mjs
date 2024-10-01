@@ -80,7 +80,7 @@ export const setupStreamFromDevice = async () => {
         deviceId: { exact: device.video.id },
         width: { exact: 1920 },
         height: { exact: 1080 },
-        frameRate: { exact: 60 },
+        frameRate: { min: 30, ideal: 60, max: 60 },
         aspectRatio: { exact: ASPECT_RATIO_TABLE.WIDESCREEN },
       },
       // TODO: add an option to only passthrough audio, to make it easier
