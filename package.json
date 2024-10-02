@@ -6,9 +6,6 @@
   "build": {
     "productName": "FCapture Preview",
     "icon": "app/assets/icons/fcapture-icon-fallback.png",
-    "extraResources": [
-      "app/preload.js"
-    ],
     "mac": {
       "icon": "app/assets/icons/fcapture-icon-mac.icns",
       "entitlements": "build/entitlements.mac.plist",
@@ -26,7 +23,9 @@
   "scripts": {
     "start": "npx electron .",
     "test": "ELECTRON_ENV=development npx electron .",
-    "build": "electron-builder && sudo sh build/ad-hoc-sign.sh"
+    "build": "sudo sh build/build.sh",
+    "buildAlt": "electron-builder",
+    "signMac": "codesign --deep --force --sign - dist/mac/*.app"
   },
   "repository": {
     "type": "git",

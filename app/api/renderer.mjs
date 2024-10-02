@@ -16,6 +16,10 @@ const ASPECT_RATIO_TABLE = Object.freeze({
 const getAvailableDevices = async () => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
+    
+    if (!devices) {
+      return;
+    }
 
     // dummy
     let usbVideoFound = false;
