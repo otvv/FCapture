@@ -36,8 +36,8 @@ const getAvailableDevices = async () => {
       }
 
       // filter each device for a specific type
-      // TODO: improve this method later to handle more types of devices and other systems
-      // where this is handled differently (Windows)
+      // TODO: improve this method later to handle more types of devices and/in other systems
+      // where they might be handled differently (Windows)
       if (device.kind === "videoinput" && device.label.includes("USB Video")) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
@@ -59,7 +59,7 @@ const getAvailableDevices = async () => {
       return null;
     }
 
-    // return payload
+    // return valid payload
     return deviceInfoPayload;
   } catch (err) {
     console.error("[fcapture-preview] - renderer@getAvailableDevices:", err);
@@ -103,6 +103,15 @@ export const setupStreamFromDevice = async () => {
     //   "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
     //   rawMedia.getVideoTracks()[0].getCapabilities()
     // );
+    // console.log("[fcapture-preview] renderer@setupStreamFromDevice rawMedia:", rawMedia);
+
+    
+    if (!rawMedia) {
+      console.log(
+        "[fcapture-preview] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
+      );
+      return null;
+    }
 
     return rawMedia;
   } catch (err) {

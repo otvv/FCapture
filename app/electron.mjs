@@ -7,7 +7,7 @@ FCapture Preview
 
 */
 
-import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, dialog } from "electron";
 import path from "path";
 
 let parentWindow;
@@ -30,7 +30,7 @@ const generateParentWindow = () => {
     title: "FCapture Preview",
     darkTheme: true, // might break on some GTK3 themes if it doesnt have a proper dark variation
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
@@ -55,108 +55,114 @@ const generateParentWindow = () => {
 };
 
 const generateTemplateMenu = () => {
-    const dockMenuTemplate = Menu.buildFromTemplate([
-      {
-        label: "Refresh Stream",
-        click: () => parentWindow.webContents.send("restart-stream"),
-      },
-      {
-        label: "Close Stream",
-        click: () => parentWindow.webContents.send("stop-stream"),
-      },
-      { type: "separator" },
-      {
-        label: "Mute Audio",
-        click: () => parentWindow.webContents.send("mute-stream"),
-      },
-      {
-        label: "Unmute Audio",
-        click: () => parentWindow.webContents.send("unmute-stream"),
-      },
-      { type: "separator" },
-      {
-        label: "Settings",
-        click: () => null,
-      },
-    ]);
+  // dont do anything in case the user is not using macOS.
+  // TODO: investigate if some of these menus can work on Windows or Linux
+  if (process.platform !== "darwin") {
+    return;
+  }
 
-    const menuBarTemplate = Menu.buildFromTemplate([
-      {
-        label: "View",
-        submenu: [
-          {
-            label: "Refresh Stream",
-            click: () => parentWindow.webContents.send("restart-stream"),
-          },
-          {
-            label: "Close Stream",
-            click: () => parentWindow.webContents.send("stop-stream"),
-          },
-          { type: "separator" },
-          {
-            label: "Settings",
-            click: () => null,
-          },
-        ],
-      },
-      {
-        label: "Audio",
-        submenu: [
-          {
-            label: "Mute",
-            click: () => parentWindow.webContents.send("mute-stream"),
-          },
-          {
-            label: "Unmute",
-            click: () => parentWindow.webContents.send("unmute-stream"),
-          },
-        ],
-      },
-      {
-        label: "Window",
-        submenu: [
-          { role: "togglefullscreen" },
-          { type: "separator" },
-          { role: "minimize" },
-          { role: "zoom" },
-          { type: "separator" },
-          { label: "Quit FCaputure Preview", role: "quit" },
-        ],
-      },
-      {
-        label: "Help",
-        submenu: [
-          {
-            label: "Reload Window",
-            role: "reload",
-          },
-          {
-            label: "Enable DevTools",
-            role: "toggledevtools",
-          },
-          { type: "separator" },
-          {
-            label: "About",
-            click: () => {
-              dialog.showMessageBox({
-                title: `About FCapturePreview`,
-                type: "info",
-                message: `FCapturePreview
+  const dockMenuTemplate = Menu.buildFromTemplate([
+    {
+      label: "Refresh Stream",
+      click: () => parentWindow.webContents.send("restart-stream"),
+    },
+    {
+      label: "Close Stream",
+      click: () => parentWindow.webContents.send("stop-stream"),
+    },
+    { type: "separator" },
+    {
+      label: "Mute Audio",
+      click: () => parentWindow.webContents.send("mute-stream"),
+    },
+    {
+      label: "Unmute Audio",
+      click: () => parentWindow.webContents.send("unmute-stream"),
+    },
+    { type: "separator" },
+    {
+      label: "Settings",
+      click: () => null,
+    },
+  ]);
+
+  const menuBarTemplate = Menu.buildFromTemplate([
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Refresh Stream",
+          click: () => parentWindow.webContents.send("restart-stream"),
+        },
+        {
+          label: "Close Stream",
+          click: () => parentWindow.webContents.send("stop-stream"),
+        },
+        { type: "separator" },
+        {
+          label: "Settings",
+          click: () => null,
+        },
+      ],
+    },
+    {
+      label: "Audio",
+      submenu: [
+        {
+          label: "Mute",
+          click: () => parentWindow.webContents.send("mute-stream"),
+        },
+        {
+          label: "Unmute",
+          click: () => parentWindow.webContents.send("unmute-stream"),
+        },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [
+        { role: "togglefullscreen" },
+        { type: "separator" },
+        { role: "minimize" },
+        { role: "zoom" },
+        { type: "separator" },
+        { label: "Quit FCaputure Preview", role: "quit" },
+      ],
+    },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "Reload Window",
+          role: "reload",
+        },
+        {
+          label: "Enable DevTools",
+          role: "toggledevtools",
+        },
+        { type: "separator" },
+        {
+          label: "About",
+          click: () => {
+            dialog.showMessageBox({
+              title: `About FCapturePreview`,
+              type: "info",
+              message: `FCapturePreview
               
               A previewer/recorder (eventually) for generic USB capture cards`,
-                detail: `version: ${app.getVersion()}\n copyright © github.com/otvv`,
-              });
-            },
+              detail: `version: ${app.getVersion()}\n copyright © github.com/otvv`,
+            });
           },
-        ],
-      },
-    ]);
+        },
+      ],
+    },
+  ]);
 
-    // replace macOS's menu bar with our own
-    Menu.setApplicationMenu(menuBarTemplate);
+  // replace macOS's menu bar with our own
+  Menu.setApplicationMenu(menuBarTemplate);
 
-    // set dock menu (macOS only)
-    app.dock.setMenu(dockMenuTemplate);
+  // set dock menu (macOS only)
+  app.dock.setMenu(dockMenuTemplate);
 };
 
 // app initializer

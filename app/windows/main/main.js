@@ -34,10 +34,6 @@ const handleStreamAction = async (action = "start") => {
           // hide video player and show no signal screen
           videoPlayerElement.style.display = "none";
           noSignalContainerElement.style.display = "flex";
-
-          console.warn(
-            "[fcapture-preview] - main@handleStreamAction: raw stream input not found, is your device initialized?"
-          );
           return;
         }
 
@@ -56,10 +52,6 @@ const handleStreamAction = async (action = "start") => {
         break;
       case "stop":
         if (!rawStreamData) {
-          console.warn(
-            "[fcapture-preview] - main@handleStreamAction: raw stream input not found, is your device initialized?"
-          );
-
           return;
         }
         
