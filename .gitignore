@@ -8,3 +8,4 @@ dist/
 .env
 .DS_Store
 package-lock.json
+.last_build_version

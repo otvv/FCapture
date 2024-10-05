@@ -10,24 +10,17 @@ FCapture
 * {
   user-select: none;
   overflow: hidden;
+  -webkit-user-drag: none;
+  appearance: none;
 
-  font-family: system-ui, sans-serif;
+  font-family: system-ui, sans-serif; /* TODO: find a default font for the app */
   font-size: 13px;
+  margin: 0px;
 }
 
 html,
 body {
   height: 100vh;
-  margin: 0px;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  background-color: transparent;
 }
 
 /*
@@ -147,8 +140,10 @@ video player
   width: 100vw;
   height: 100vh;
 
-  object-fit: fill;
+  background-color: #000000; /* simulate the black bars effect on a ultrawide/widescreen panel */
+  
   /* TODO: create different fitting modes */
+  object-fit: contain;
 }
 
 /*
@@ -184,10 +179,11 @@ no-signal screen
 
 .no-device-text {
   background-color: transparent;
-  font-size: 13px;
-  text-shadow: 2px 2px 5px #282828;
   position: relative;
+  
   color: #727272;
+
+  text-shadow: 1px 1px 3px #282828;
   text-align: center;
 }
 
@@ -205,7 +201,7 @@ anims
 
   100% {
     box-shadow: 0px 0px 0px 35px #28282800;
-    outline: 1px solid #ff000000;
+    outline: 1px solid #28282800;
   }
 }
 
@@ -235,6 +231,6 @@ anims
   }
 
   100% {
-    transform: rotate(360deg);
+    transform: rotate(65deg);
   }
 }
