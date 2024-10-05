@@ -6,20 +6,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-
   <link rel="stylesheet" href="main.css">
   <script src="main.js" defer></script>
+
+  <!--font awesome icons-->
+  <script src="../../assets/fontawesome/fontawesome.js" defer></script>
+  <script src="../../assets/fontawesome/solid.js" defer></script>
 </head>
 
 <body>
+  <div class="navbar-container"">
+    <div class="tabs-container">
+      <button class="tab-button active" id="preview-tab">Preview</button>
+      <button class="tab-button disabled" id="recordings-tab">Recordings</button>
+    </div>
+    <div class="settings-button-wrapper" id="settings-button">
+      <i class="fa-solid fa-cog settings-icon"></i>
+    </div>
   </div>
-  <div class="video-container">
-    <video class="video-wrapper" id="video-player" playsinline autoplay></video>
-  </div>
-  <div id="no-signal-container" class="container">
-    <div class="circle"></div>
-    <h2 class="no-device-text">No device signal.</h2>
-  </div>
+
+  <div>
+    <div class="video-container">
+      <video class="video-wrapper" id="video-player" playsinline autoplay></video>
+    </div>
+    <div id="no-signal-container" class="container">
+      <div class="circle"></div>
+      <h2 class="no-device-text">no device signal</h2>
+    </div>
 </body>
 
 </html>

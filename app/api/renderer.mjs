@@ -82,8 +82,8 @@ export const setupStreamFromDevice = async () => {
       video: {
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         deviceId: { exact: device.video.id },
-        width: { exact: 1920 },
-        height: { exact: 1080 },
+        width: { exact: 1280 },
+        height: { exact: 720 },
         frameRate: { min: 30, ideal: 60, max: 60 },
         aspectRatio: { exact: ASPECT_RATIO_TABLE.WIDESCREEN },
       },
@@ -92,18 +92,19 @@ export const setupStreamFromDevice = async () => {
       // or if the user just want to play while listening to music on PC for example
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: 192000,
-        sampleSize: 24,
-        channelCount: 2, // stereo = 2, mono = 1
+        sampleRate: 96000,
+        sampleSize: 16,
+        channelCount: 1,
       },
     });
 
     // DEBUG PURPOSES ONLY
-    // console.log(
-    //   "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
-    //   rawMedia.getVideoTracks()[0].getCapabilities()
-    // );
-    // console.log("[fcapture-preview] renderer@setupStreamFromDevice rawMedia:", rawMedia);
+    console.log(
+      "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
+      rawMedia.getVideoTracks()[0].getCapabilities(),
+      rawMedia.getAudioTracks()[0].getCapabilities()
+    );
+    // console.log("[fcapture-preview] renderer@setupStreamFromDevice raw:", rawMedia);
 
     
     if (!rawMedia) {

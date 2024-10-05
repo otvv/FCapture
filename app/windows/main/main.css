@@ -11,17 +11,124 @@ FCapture Preview
   user-select: none;
   overflow: hidden;
 
-
   font-family: system-ui, sans-serif;
   font-size: 13px;
-  color: #dedede;
+}
 
+html,
+body {
+  height: 100vh;
+  margin: 0px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  background-color: transparent;
+}
+
+/*
+
+navbar
+
+*/
+.navbar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #525252b6;
+  padding: 10px;
+  height: 40px;
+  color: white;
+  z-index: 1000;
+
+  backdrop-filter: blur(10px);
+  
+  opacity: 0%;
+  box-shadow: 0px 1px 10px #28282800;
+  animation: fadeOut 0.5s ease-out;
+}
+
+.navbar-container:hover {
+  opacity: 100%;
+  box-shadow: 0px 1px 10px #282828;
+  animation: fadeIn 0.5s ease-in;
+}
+
+/*
+*/
+
+.tabs-container {
+  display: flex;
+  gap: 10px;
+  margin-left: 10px;
+  background-color: transparent;
+}
+
+.tab-button {
+  background-color: #282828;
+  color: #dedede;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.tab-button:hover {
+  color: #ffffff;
+  background-color: #3d3d3d;
+}
+
+.tab-button.active {
+  color: #ff5f57;
+  transition: color 0.2s ease;
+}
+
+.tab-button.active:active {
+  color: #b42e27 !important;
+}
+
+.tab-button.disabled {
+  color: #666666;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tab-button.disabled:hover {
+  cursor: not-allowed !important;
+}
+
+/*
+*/
+
+.settings-button-wrapper {
+  margin-right: 25px;
+  padding: 5px;
+  border-radius: 5px;
   background-color: #282828;
 }
 
-html, body {
-  height: 100vh;
-  margin: 0px;
+.settings-icon {
+  font-size: 18px;
+  color: #dedede;
+  text-shadow: 2px 2px 5px #282828;
+  transition: color 0.2s ease;
+}
+
+.settings-icon:hover {
+  color: #ffffff;
+}
+
+.settings-icon:active {
+  color: #ff5f57 !important;
+  animation: spin 0.2s ease-in-out  ;
 }
 
 /*
@@ -33,13 +140,15 @@ video player
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: #282828;
 }
 
 .video-wrapper {
   width: 100vw;
   height: 100vh;
 
-  object-fit: fill; /* TODO: create different fitting modes */
+  object-fit: fill;
+  /* TODO: create different fitting modes */
 }
 
 /*
@@ -57,6 +166,8 @@ no-signal screen
   left: 0;
   width: 100vw;
   height: 100vh;
+
+  background-color: #282828;
 }
 
 .circle {
@@ -66,7 +177,7 @@ no-signal screen
   box-shadow: 0px 0px 1px 1px #28282845;
   background-color: #28282833;
   outline: 1px solid #7575754d;
-  animation: pulse 2s infinite;
+  animation: pulse 2s ease-in-out infinite;
   margin-top: 10px;
   margin-bottom: 10px;
 }
@@ -88,12 +199,41 @@ anims
 */
 @keyframes pulse {
   0% {
-    box-shadow: 0px 0px 0px 0px #ff00004d;
-    outline: 1px solid #ff00004d;
+    box-shadow: 0px 0px 0px 0px #ff5f57;
+    outline: 1px solid #ff5f57;
   }
 
   100% {
-    box-shadow: 0px 0px 0px 45px #28282800;
+    box-shadow: 0px 0px 0px 35px #28282800;
     outline: 1px solid #ff000000;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0%;
+  }
+
+  100% {
+    opacity: 100%;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 100%;
+  }
+
+  100% {
+    opacity: 0%;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
