@@ -2,7 +2,7 @@
 
 DIST_PATH="./dist"
 PACKAGE_JSON="./package.json"
-APP_PATH="./dist/mac/FCapture Preview.app" # adjust path if needed
+APP_PATH="./dist/mac/FCapture.app" # adjust path if needed
 VERSION_FILE=".last_build_version"
 OS=$(uname) # OS platform/name
 

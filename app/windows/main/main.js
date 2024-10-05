@@ -18,8 +18,8 @@ const handleStreamAction = async (action = "start") => {
 
     if (videoPlayerElement === null) {
       console.error(
-        `[fcapture-preview] - main@handleStreamAction: video player element not found.
-         [fcapture-preview] - main@handleStreamAction: please restart the window.`
+        `[fcapture] - main@handleStreamAction: video player element not found.
+         [fcapture] - main@handleStreamAction: please restart the window.`
       );
       return;
     }
@@ -54,7 +54,7 @@ const handleStreamAction = async (action = "start") => {
         if (!rawStreamData) {
           return;
         }
-        
+
         // get all available stream video/audio tracks
         const streamTracks = rawStreamData.getTracks();
 
@@ -78,12 +78,12 @@ const handleStreamAction = async (action = "start") => {
         videoPlayerElement.volume = 1.0; // TODO: use the previous volume before muting
         break;
       default:
-        await handleStreamAction("start"); // when no argument is passed the action 
-                                           // will always be to start the stream
+        await handleStreamAction("start"); // when no argument is passed the action
+        // will always be to start the stream
         break;
     }
   } catch (err) {
-    console.error("[fcapture-preview] - main@handleStreamAction:", err);
+    console.error("[fcapture] - main@handleStreamAction:", err);
   }
 };
 
@@ -91,7 +91,7 @@ const handleStreamAction = async (action = "start") => {
 const initializeEventHandler = async () => {
   try {
     // DEBUG PURPOSES ONLY
-    // console.log("[fcapture-preview] - main@initializeEventHandler:", window.ipcRenderer.isLoaded());
+    // console.log("[fcapture] - main@initializeEventHandler:", window.ipcRenderer.isLoaded());
 
     // event listeners
     // NOTE: these listeneres will likely stay on this file/function
@@ -118,13 +118,12 @@ const initializeEventHandler = async () => {
     // DOM native event listener
     navigator.mediaDevices.ondevicechange = async () => {
       await handleStreamAction("restart");
-    }
-    
+    };
+
     // start stream
     await handleStreamAction();
-
   } catch (err) {
-    console.error("[fcapture-preview] - main@initializeEventHandler:", err);
+    console.error("[fcapture] - main@initializeEventHandler:", err);
   }
 };
 
@@ -132,9 +131,12 @@ const initializeEventHandler = async () => {
 initializeEventHandler()
   .then(() => {
     console.log(
-      "[fcapture-preview] - main@initializeEventHandlerPromise: event handler initialized."
+      "[fcapture] - main@initializeEventHandlerPromise: event handler initialized."
     );
   })
   .catch((err) => {
-    console.error("[fcapture-preview] - main@initializeEventHandlerPromise:", err);
+    console.error(
+      "[fcapture] - main@initializeEventHandlerPromise:",
+      err
+    );
   });

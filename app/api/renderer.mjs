@@ -8,15 +8,15 @@ FCapture Preview
 */
 
 const ASPECT_RATIO_TABLE = Object.freeze({
-  STANDARD: (4 / 3),
-  WIDESCREEN: (16 / 9),
-  ULTRAWIDE: (21 / 9),
+  STANDARD: 4 / 3,
+  WIDESCREEN: 16 / 9,
+  ULTRAWIDE: 21 / 9,
 });
 
 const getAvailableDevices = async () => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    
+
     if (!devices) {
       return;
     }
@@ -25,7 +25,10 @@ const getAvailableDevices = async () => {
     let usbVideoFound = false;
 
     // store device payload info
-    const deviceInfoPayload = { video: { id: '', label: '' }, audio: { id: '', label: ''} };
+    const deviceInfoPayload = {
+      video: { id: "", label: "" },
+      audio: { id: "", label: "" },
+    };
 
     devices.forEach((device) => {
       // console.log(`[fcapture-preview] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
@@ -99,14 +102,13 @@ export const setupStreamFromDevice = async () => {
     });
 
     // DEBUG PURPOSES ONLY
-    console.log(
-      "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
-      rawMedia.getVideoTracks()[0].getCapabilities(),
-      rawMedia.getAudioTracks()[0].getCapabilities()
-    );
+    // console.log(
+    //   "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
+    //   rawMedia.getVideoTracks()[0].getCapabilities(),
+    //   rawMedia.getAudioTracks()[0].getCapabilities()
+    // );
     // console.log("[fcapture-preview] renderer@setupStreamFromDevice raw:", rawMedia);
 
-    
     if (!rawMedia) {
       console.log(
         "[fcapture-preview] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
