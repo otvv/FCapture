@@ -1,6 +1,6 @@
 /*
 
-FCapture Preview
+FCapture
 
 - github@otvv
 - 09/25/2024
@@ -27,7 +27,7 @@ const generateParentWindow = () => {
     minWidth: 640,
     minHeight: 480,
     icon: "./assets/icons/fcapture-icon-fallback.png",
-    title: "FCapture Preview",
+    title: "FCapture",
     darkTheme: true, // might break on some GTK3 themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -38,7 +38,7 @@ const generateParentWindow = () => {
   // quit app and throw
   if (parentWindow === null) {
     console.error(
-      "[fcapture-preview] - electron@generateParentWindow: failed to generate window."
+      "[fcapture] - electron@generateParentWindow: failed to generate window."
     );
     return; // for some reason the app triggers the next instruction
     // even when calling the quit function so for now the app will just halt
@@ -126,7 +126,7 @@ const generateTemplateMenu = () => {
         { role: "minimize" },
         { role: "zoom" },
         { type: "separator" },
-        { label: "Quit FCaputure Preview", role: "quit" },
+        { label: "Quit FCaputure", role: "quit" },
       ],
     },
     {
@@ -145,11 +145,11 @@ const generateTemplateMenu = () => {
           label: "About",
           click: () => {
             dialog.showMessageBox({
-              title: `About FCapturePreview`,
+              title: `About FCapture`,
               type: "info",
-              message: `FCapturePreview
+              message: `FCapture
               
-              A previewer/recorder (eventually) for generic USB capture cards`,
+              A previewer/recorder (eventually) software for generic USB capture cards`,
               detail: `version: ${app.getVersion()}\n copyright © github.com/otvv`,
             });
           },

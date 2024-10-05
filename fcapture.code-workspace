@@ -8,7 +8,6 @@
 		"hide-files.files": [
 			"package-lock.json",
 			"dist/builder-debug.yml",
-			"dist/FCapture-*.dmg",
 			"dist/FCapture-*.dmg.blockmap",
 			"dist/FCapture-*-mac.zip",
 			"dist/FCapture-*-mac.zip.blockmap",

@@ -1,6 +1,6 @@
 /*
 
-FCapture Preview
+FCapture
 
 - github@otvv
 - 09/25/2024
@@ -31,7 +31,7 @@ const getAvailableDevices = async () => {
     };
 
     devices.forEach((device) => {
-      // console.log(`[fcapture-preview] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
+      // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // ignore OBS related virtual devices
       if (device.label.includes("OBS Virtual Camera")) {
@@ -65,7 +65,7 @@ const getAvailableDevices = async () => {
     // return valid payload
     return deviceInfoPayload;
   } catch (err) {
-    console.error("[fcapture-preview] - renderer@getAvailableDevices:", err);
+    console.error("[fcapture] - renderer@getAvailableDevices:", err);
   }
 };
 
@@ -103,21 +103,21 @@ export const setupStreamFromDevice = async () => {
 
     // DEBUG PURPOSES ONLY
     // console.log(
-    //   "[fcapture-preview] - renderer@setupStreamFromDevice capabilities:",
+    //   "[fcapture] - renderer@setupStreamFromDevice capabilities:",
     //   rawMedia.getVideoTracks()[0].getCapabilities(),
     //   rawMedia.getAudioTracks()[0].getCapabilities()
     // );
-    // console.log("[fcapture-preview] renderer@setupStreamFromDevice raw:", rawMedia);
+    // console.log("[fcapture] renderer@setupStreamFromDevice raw:", rawMedia);
 
     if (!rawMedia) {
       console.log(
-        "[fcapture-preview] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
+        "[fcapture] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
       );
       return null;
     }
 
     return rawMedia;
   } catch (err) {
-    console.error("[fcapture-preview] - renderer@setupStreamFromDevice:", err);
+    console.error("[fcapture] - renderer@setupStreamFromDevice:", err);
   }
 };
