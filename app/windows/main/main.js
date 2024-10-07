@@ -11,6 +11,8 @@ FCapture
 
 // FIXME: get rid of these 
 let audioController;
+let currentVolume;
+let previousVolume;
 let streamData;
 
 const handleStreamAction = async (action = "start") => {
@@ -21,6 +23,7 @@ const handleStreamAction = async (action = "start") => {
     const noSignalContainerElement = document.querySelector(
       "#no-signal-container"
     );
+    const muteIconElement = document.querySelector("#mute-icon");
 
     if (canvasElement === null) {
       console.error(
@@ -66,9 +69,9 @@ const handleStreamAction = async (action = "start") => {
         noSignalContainerElement.style.display = "none";
         canvasElement.style.display = "block";
 
-        // store gain node for mute/unmute control
-        // later on
+        // store gain node for volume control
         audioController = streamData.gainNode;
+        currentVolume = audioController.gain.value;
         break;
       case "stop":
         if (!streamData) {
@@ -92,6 +95,7 @@ const handleStreamAction = async (action = "start") => {
         streamData = null;
 
         // display the "no signal" screen
+        muteIconElement.style.display = "none";
         canvasElement.style.display = "none";
         noSignalContainerElement.style.display = "flex";
         break;
@@ -104,21 +108,31 @@ const handleStreamAction = async (action = "start") => {
           return;
         }
 
+        // save current volume before muting
+        previousVolume = audioController.gain.value;
+
         // set volume to 0
-        if (audioController) {
+        if (audioController && currentVolume > 0.0) {
           audioController.gain.value = 0.0;
+          currentVolume = audioController.gain.value; // update volume data
         }
-        // TODO: visual indicator on screen
+        
+        // show icon indicator on screen
+        muteIconElement.style.display = "block";
         break;
       case "unmute":
         if (!streamData) {
           return;
         }
         
-        // set volume to 1
-        if (audioController) {
-          audioController.gain.value = 1.0;
+        // set volume back to what it was before muting
+        if (audioController)  {
+          audioController.gain.value = previousVolume;
+          currentVolume = audioController.gain.value; // update volume data
         }
+
+        // hide icon indicator on screen
+        muteIconElement.style.display = "none";
         break;
       default:
         await handleStreamAction("start");
@@ -163,6 +177,7 @@ const initializeEventHandler = async () => {
     const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
     const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
     const settingsButtonElement = document.querySelector("#settings-button");
+    const muteIconElement = document.querySelector("#mute-icon");
 
     // event listeners
     // NOTE: these listeneres will likely stay on this file/function
@@ -205,6 +220,10 @@ const initializeEventHandler = async () => {
         await handleWindowAction("settings");
       });
     }
+
+    muteIconElement.addEventListener("click", async () => {
+      await handleStreamAction("unmute");
+    });
 
     // start stream
     await handleStreamAction();

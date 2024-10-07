@@ -125,6 +125,36 @@ navbar
 }
 
 /*
+*/
+
+.muted-button-wrapper {
+  display: none;
+  position: absolute;
+  bottom: 0; /* Position it at the bottom */
+  right: 0; /* Position it at the right */
+  margin-right: 25px; /* Keeps your right margin */
+  margin-bottom: 10px; /* Add margin at the bottom if needed */
+  padding: 5px;
+  background-color: transparent;
+}
+
+.mute-icon {
+  font-size: 18px;
+  color: #ff5f57;
+  text-shadow: 2px 2px 5px #282828;
+  transition: color 0.2s ease;
+}
+
+.mute-icon:hover {
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.mute-icon:active {
+  color: #dedede !important;
+}
+
+/*
 
 stream player/canvas
 
