@@ -35,6 +35,12 @@ const handleStreamAction = async (action = "start") => {
 
     switch (action) {
       case "start":
+        // dont do anything if the stream data is already pulled
+        // in other words (if the stream is already running)
+        if (streamData) {
+          return;
+        }
+
         // render frames of the raw stream from the canvas
         // onto the video player element
         streamData = await renderer.renderRawFrameOnCanvas(canvasElement, canvasContext);
@@ -65,7 +71,7 @@ const handleStreamAction = async (action = "start") => {
         audioController = streamData.gainNode;
         break;
       case "stop":
-        if (!streamData.rawStreamData) {
+        if (!streamData) {
           return;
         }
 
@@ -81,8 +87,9 @@ const handleStreamAction = async (action = "start") => {
         );
 
         // stop all tracks from playing
-        // audio and video
+        // and clear stream data
         streamTracks.forEach((track) => track.stop());
+        streamData = null;
 
         // display the "no signal" screen
         canvasElement.style.display = "none";
@@ -93,7 +100,7 @@ const handleStreamAction = async (action = "start") => {
         await handleStreamAction("start");
         break;
       case "mute":
-        if (!streamData.rawStreamData) {
+        if (!streamData) {
           return;
         }
 
@@ -104,7 +111,7 @@ const handleStreamAction = async (action = "start") => {
         // TODO: visual indicator on screen
         break;
       case "unmute":
-        if (!streamData.rawStreamData) {
+        if (!streamData) {
           return;
         }
         
@@ -124,11 +131,38 @@ const handleStreamAction = async (action = "start") => {
   }
 };
 
+const handleWindowAction = async (action = "preview") => {
+  try {
+    switch (action) {
+      case "preview":
+        await handleStreamAction("start");
+        break;
+      case "recordings":
+        // TODO: handle tab switch logic here
+        console.warn("[fcapture] - main@handleWindowAction: not implemented!");
+        break;
+      case "settings":
+        // TODO: handle settings window logic here
+        console.warn("[fcapture] - main@handleWindowAction: not implemented!");
+        break;
+    }
+  } catch (err) {
+    console.error("[fcapture] - main@handleWindowAction:", err);
+  }
+};
+
 // NOTE: for now, all "windows" will have their own event handler initializer
 const initializeEventHandler = async () => {
   try {
     // DEBUG PURPOSES ONLY
     // console.log("[fcapture] - main@initializeEventHandler:", window.ipcRenderer.isLoaded());
+
+    // controllers
+    const navbarContainerElement = document.querySelector("#navbar-container");
+    const tabsContainerElement = document.querySelector("#tabs-container");
+    const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
+    const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
+    const settingsButtonElement = document.querySelector("#settings-button");
 
     // event listeners
     // NOTE: these listeneres will likely stay on this file/function
@@ -152,10 +186,25 @@ const initializeEventHandler = async () => {
       await handleStreamAction("unmute");
     });
 
-    // DOM native event listeners
+    // native DOM event listeners
     navigator.mediaDevices.ondevicechange = async () => {
       await handleStreamAction("restart");
     };
+
+    if (navbarContainerElement) {
+
+      previewTabElement.addEventListener("click", async () => {
+        await handleWindowAction("preview");
+      });
+      
+      recordingsTabElement.addEventListener("click", async () => {
+        await handleWindowAction("recordings");
+      });
+      
+      settingsButtonElement.addEventListener("click", async () => {
+        await handleWindowAction("settings");
+      });
+    }
 
     // start stream
     await handleStreamAction();
