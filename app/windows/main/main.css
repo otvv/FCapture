@@ -126,21 +126,25 @@ navbar
 
 /*
 
-video player
+stream player/canvas
 
 */
-.video-container {
+.stream-container {
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #282828;
 }
 
-.video-wrapper {
+.canvas-wrapper {
   width: 100vw;
   height: 100vh;
 
-  background-color: #000000; /* simulate the black bars effect on a ultrawide/widescreen panel */
+  background-color: #000000; /* simulate the "black bar" effect on a ultrawide/widescreen panel */
+  
+  /* TODO: create different priorities options
+   when it comes to image quality when resizing */
+  image-rendering: optimizeQuality;
   
   /* TODO: create different fitting modes */
   object-fit: contain;
@@ -151,7 +155,7 @@ video player
 no-signal screen
 
 */
-.container {
+.no-signal-container {
   display: none;
   flex-direction: column;
   align-items: center;

@@ -8,17 +8,17 @@ FCapture
 */
 
 import { app, BrowserWindow, Menu, dialog } from "electron";
+import process from "process";
 import path from "path";
-
-let parentWindow;
 
 // dirname
 const __dirname = import.meta.dirname;
 
-// disable hardware acceleration (can cause issues on some systems)
-app.disableHardwareAcceleration();
+// setup gpu/hardware acceleration
+app.commandLine.appendSwitch('enable-gpu-rasterization');
 
 // generators
+let parentWindow;
 const generateParentWindow = () => {
   // setup properties
   parentWindow = new BrowserWindow({

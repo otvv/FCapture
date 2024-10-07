@@ -15,8 +15,8 @@
 </head>
 
 <body>
-  <div class="navbar-container"">
-    <div class=" tabs-container">
+  <div class="navbar-container" id="navbar">
+    <div class=" tabs-container" id="tabs">
     <button class="tab-button active" id="preview-tab">Preview</button>
     <button class="tab-button disabled" id="recordings-tab">Recordings</button>
   </div>
@@ -26,10 +26,10 @@
   </div>
 
   <div>
-    <div class="video-container">
-      <video class="video-wrapper" id="video-player" playsinline autoplay></video>
+    <div class="stream-container">
+      <canvas class="canvas-wrapper" id="canvas-element"></canvas>
     </div>
-    <div id="no-signal-container" class="container">
+    <div class="no-signal-container" id="no-signal-container">
       <div class="circle"></div>
       <h2 class="no-device-text">no device signal</h2>
     </div>

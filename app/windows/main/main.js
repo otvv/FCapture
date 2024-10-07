@@ -9,62 +9,83 @@ FCapture
 
 "use strict";
 
+// FIXME: get rid of these 
+let audioController;
+let streamData;
+
 const handleStreamAction = async (action = "start") => {
   try {
-    const videoPlayerElement = document.querySelector("#video-player");
+    const renderer = await import("../../api/renderer.mjs");
+
+    const canvasElement = document.querySelector("#canvas-element");
     const noSignalContainerElement = document.querySelector(
       "#no-signal-container"
     );
 
-    if (videoPlayerElement === null) {
+    if (canvasElement === null) {
       console.error(
-        `[fcapture] - main@handleStreamAction: video player element not found.
+        `[fcapture] - main@handleStreamAction: canvas element not found.
          [fcapture] - main@handleStreamAction: please restart the window.`
       );
       return;
     }
 
-    const renderer = await import("../../api/renderer.mjs");
-    const rawStreamData = await renderer.setupStreamFromDevice();
+    // context for drawing on the canvas
+    const canvasContext = canvasElement.getContext("2d");
 
     switch (action) {
       case "start":
+        // render frames of the raw stream from the canvas
+        // onto the video player element
+        streamData = await renderer.renderRawFrameOnCanvas(canvasElement, canvasContext);
+
         // in case the user starts the app without any device connected
-        if (!rawStreamData) {
-          // hide video player and show no signal screen
-          videoPlayerElement.style.display = "none";
+        if (!streamData.rawStreamData) {
+          // clear context from residual frames
+          canvasContext.clearRect(
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height
+          );
+
+          // hide canvas and show no signal screen
+          canvasElement.style.display = "none";
           noSignalContainerElement.style.display = "flex";
           return;
         }
 
-        // display video player and hide no signal screen
+        // display canvas and hide no signal screen
         // if device is and stream is working
         noSignalContainerElement.style.display = "none";
-        videoPlayerElement.style.display = "block";
+        canvasElement.style.display = "block";
 
-        // assign raw stream to the video player
-        videoPlayerElement.srcObject = rawStreamData;
-
-        // temporary stream configurations
-        videoPlayerElement.volume = 1.0;
-        videoPlayerElement.style.filter =
-          "brightness(1.0) contrast(0.8) saturate(1.0)";
+        // store gain node for mute/unmute control
+        // later on
+        audioController = streamData.gainNode;
         break;
       case "stop":
-        if (!rawStreamData) {
+        if (!streamData.rawStreamData) {
           return;
         }
 
         // get all available stream video/audio tracks
-        const streamTracks = rawStreamData.getTracks();
+        const streamTracks = streamData.rawStreamData.getTracks();
+
+        // clear canvas
+        canvasContext.clearRect(
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height
+        );
 
         // stop all tracks from playing
+        // audio and video
         streamTracks.forEach((track) => track.stop());
 
-        // reset video player element and
         // display the "no signal" screen
-        videoPlayerElement.srcObject = null;
-        videoPlayerElement.style.display = "none";
+        canvasElement.style.display = "none";
         noSignalContainerElement.style.display = "flex";
         break;
       case "restart":
@@ -72,13 +93,29 @@ const handleStreamAction = async (action = "start") => {
         await handleStreamAction("start");
         break;
       case "mute":
-        videoPlayerElement.volume = 0.0;
+        if (!streamData.rawStreamData) {
+          return;
+        }
+
+        // set volume to 0
+        if (audioController) {
+          audioController.gain.value = 0.0;
+        }
+        // TODO: visual indicator on screen
         break;
       case "unmute":
-        videoPlayerElement.volume = 1.0; // TODO: use the previous volume before muting
+        if (!streamData.rawStreamData) {
+          return;
+        }
+        
+        // set volume to 1
+        if (audioController) {
+          audioController.gain.value = 1.0;
+        }
         break;
       default:
-        await handleStreamAction("start"); // when no argument is passed the action
+        await handleStreamAction("start");
+        // when no argument is passed the default action
         // will always be to start the stream
         break;
     }
@@ -115,7 +152,7 @@ const initializeEventHandler = async () => {
       await handleStreamAction("unmute");
     });
 
-    // DOM native event listener
+    // DOM native event listeners
     navigator.mediaDevices.ondevicechange = async () => {
       await handleStreamAction("restart");
     };
