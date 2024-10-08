@@ -110,21 +110,26 @@ html, body {
   transition: color 0.2s ease;
 }
 
-.mute-icon:hover, .settings-icon:hover, .refresh-icon:hover {
+.mute-icon:hover {
   color: #fff;
   cursor: pointer;
+  animation: swing 0.5s ease-in-out;
+}
+
+.settings-icon:hover {
+  color: #fff;
+  cursor: pointer;
+  animation: spin-half 0.5s ease-in-out;
+}
+
+.refresh-icon:hover {
+  color: #fff;
+  cursor: pointer;
+  animation: spin 0.4s ease-in-out;
 }
 
 .mute-icon:active, .settings-icon:active, .refresh-icon:active {
   color: #ff5f57 !important;
-}
-
-.settings-icon:active {
-  animation: spin-half 0.2s ease-in-out;
-}
-
-.refresh-icon:active {
-  animation: spin 0.2s ease-in-out;
 }
 
 /* stream player/canvas */
@@ -248,5 +253,53 @@ html, body {
   }
   100% {
     transform: rotate(65deg);
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-8px);
+  }
+  30% {
+    transform: translateX(8px);
+  }
+  45% {
+    transform: translateX(-6px);
+  }
+  60% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  90% {
+    transform: translateX(4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes swing {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(15deg);
+  }
+  40% {
+    transform: rotate(-10deg);
+  }
+  60% {
+    transform: rotate(5deg);
+  }
+  80% {
+    transform: rotate(-3deg);
+  }
+  100% {
+    transform: rotate(0deg);
   }
 }
