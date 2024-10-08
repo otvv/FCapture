@@ -12,22 +12,16 @@ FCapture
   overflow: hidden;
   -webkit-user-drag: none;
   appearance: none;
-
   font-family: system-ui, sans-serif; /* TODO: find a default font for the app */
   font-size: 13px;
-  margin: 0px;
+  margin: 0;
 }
 
-html,
-body {
+html, body {
   height: 100vh;
 }
 
-/*
-
-navbar
-
-*/
+/* navbar */
 .navbar-container {
   position: fixed;
   top: 0;
@@ -41,23 +35,24 @@ navbar
   height: 40px;
   color: white;
   z-index: 1000;
-
   backdrop-filter: blur(10px);
-
-  opacity: 0%;
-  box-shadow: 0px 1px 10px #28282800;
+  opacity: 0;
+  box-shadow: 0px 1px 10px transparent;
   animation: fadeOut 0.5s ease-out;
 }
 
 .navbar-container:hover {
-  opacity: 100%;
+  opacity: 1;
   box-shadow: 0px 1px 10px #282828;
   animation: fadeIn 0.5s ease-in;
 }
 
-/*
-*/
+.navbar-buttons-container {
+  margin-right: 20px;
+  padding: 5px;
+}
 
+/* tab panel */
 .tabs-container {
   display: flex;
   gap: 10px;
@@ -72,93 +67,67 @@ navbar
   padding: 5px 15px;
   border-radius: 5px;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .tab-button:hover {
-  color: #ffffff;
+  color: #fff;
   background-color: #3d3d3d;
 }
 
 .tab-button.active {
   color: #ff5f57;
-  transition: color 0.2s ease;
 }
 
-.tab-button.active:active {
-  color: #b42e27 !important;
+.tab-button.active:active,
+.tab-button:active {
+  color: #b42e27;
 }
 
 .tab-button.disabled {
-  color: #666666;
+  color: #666;
   opacity: 0.5;
   pointer-events: none;
 }
 
-.tab-button.disabled:hover {
-  cursor: not-allowed !important;
-}
-
-/*
-*/
-
-.settings-button-wrapper {
-  margin-right: 25px;
+/* button wrapper */
+.button-wrapper {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 5px;
   padding: 5px;
   border-radius: 5px;
   background-color: #282828;
+  text-align: center;
 }
 
-.settings-icon {
-  font-size: 18px;
+/* icons */
+.mute-icon, .settings-icon, .refresh-icon {
   color: #dedede;
+  font-size: 15px;
   text-shadow: 2px 2px 5px #282828;
   transition: color 0.2s ease;
 }
 
-.settings-icon:hover {
-  color: #ffffff;
-}
-
-.settings-icon:active {
-  color: #ff5f57 !important;
-  animation: spin 0.2s ease-in-out;
-}
-
-/*
-*/
-
-.muted-button-wrapper {
-  display: none;
-  position: absolute;
-  bottom: 0; /* Position it at the bottom */
-  right: 0; /* Position it at the right */
-  margin-right: 25px; /* Keeps your right margin */
-  margin-bottom: 10px; /* Add margin at the bottom if needed */
-  padding: 5px;
-  background-color: transparent;
-}
-
-.mute-icon {
-  font-size: 18px;
-  color: #ff5f57;
-  text-shadow: 2px 2px 5px #282828;
-  transition: color 0.2s ease;
-}
-
-.mute-icon:hover {
-  color: #ffffff;
+.mute-icon:hover, .settings-icon:hover, .refresh-icon:hover {
+  color: #fff;
   cursor: pointer;
 }
 
-.mute-icon:active {
-  color: #dedede !important;
+.mute-icon:active, .settings-icon:active, .refresh-icon:active {
+  color: #ff5f57 !important;
 }
 
-/*
+.settings-icon:active {
+  animation: spin-half 0.2s ease-in-out;
+}
 
-stream player/canvas
+.refresh-icon:active {
+  animation: spin 0.2s ease-in-out;
+}
 
-*/
+/* stream player/canvas */
 .stream-container {
   display: flex;
   justify-content: center;
@@ -169,22 +138,41 @@ stream player/canvas
 .canvas-wrapper {
   width: 100vw;
   height: 100vh;
-
-  background-color: #000000; /* simulate the "black bar" effect on a ultrawide/widescreen panel */
-  
+  background-color: #000;
   /* TODO: create different priorities options
    when it comes to image quality when resizing */
   image-rendering: optimizeQuality;
-  
   /* TODO: create different fitting modes */
   object-fit: contain;
 }
 
-/*
+/* mute icon on canvas */
+.muted-icon-wrapper {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 0 25px 10px;
+  padding: 5px;
+  background-color: transparent;
+}
 
-no-signal screen
+.muted-icon {
+  font-size: 18px;
+  color: #ff5f57;
+  text-shadow: 2px 2px 5px #282828;
+  transition: color 0.2s ease;
+}
 
-*/
+.muted-icon:hover {
+  color: #fff;
+}
+
+.muted-icon:active {
+  color: #dedede !important;
+}
+
+/* no-signal screen */
 .no-signal-container {
   display: none;
   flex-direction: column;
@@ -195,7 +183,6 @@ no-signal screen
   left: 0;
   width: 100vw;
   height: 100vh;
-
   background-color: #282828;
 }
 
@@ -207,55 +194,42 @@ no-signal screen
   background-color: #28282833;
   outline: 1px solid #7575754d;
   animation: pulse 2s ease-in-out infinite;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin: 10px 0;
 }
 
 .no-device-text {
-  background-color: transparent;
-  position: relative;
-  
   color: #727272;
-
   text-shadow: 1px 1px 3px #282828;
   text-align: center;
 }
 
-
-/*
-
-anims
-
-*/
+/* animations */
 @keyframes pulse {
   0% {
     box-shadow: 0px 0px 0px 0px #ff5f57;
     outline: 1px solid #ff5f57;
   }
-
   100% {
-    box-shadow: 0px 0px 0px 35px #28282800;
-    outline: 1px solid #28282800;
+    box-shadow: 0px 0px 0px 35px transparent;
+    outline: 1px solid transparent;
   }
 }
 
 @keyframes fadeIn {
   0% {
-    opacity: 0%;
+    opacity: 0;
   }
-
   100% {
-    opacity: 100%;
+    opacity: 1;
   }
 }
 
 @keyframes fadeOut {
   0% {
-    opacity: 100%;
+    opacity: 1;
   }
-
   100% {
-    opacity: 0%;
+    opacity: 0;
   }
 }
 
@@ -263,7 +237,15 @@ anims
   0% {
     transform: rotate(0deg);
   }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
+@keyframes spin-half {
+  0% {
+    transform: rotate(0deg);
+  }
   100% {
     transform: rotate(65deg);
   }

@@ -23,7 +23,7 @@ const handleStreamAction = async (action = "start") => {
     const noSignalContainerElement = document.querySelector(
       "#no-signal-container"
     );
-    const muteIconElement = document.querySelector("#mute-icon");
+    const mutedIconElement = document.querySelector("#muted-icon");
 
     if (canvasElement === null) {
       console.error(
@@ -95,7 +95,7 @@ const handleStreamAction = async (action = "start") => {
         streamData = null;
 
         // display the "no signal" screen
-        muteIconElement.style.display = "none";
+        mutedIconElement.style.display = "none";
         canvasElement.style.display = "none";
         noSignalContainerElement.style.display = "flex";
         break;
@@ -118,7 +118,7 @@ const handleStreamAction = async (action = "start") => {
         }
         
         // show icon indicator on screen
-        muteIconElement.style.display = "block";
+        mutedIconElement.style.display = "block";
         break;
       case "unmute":
         if (!streamData) {
@@ -132,7 +132,7 @@ const handleStreamAction = async (action = "start") => {
         }
 
         // hide icon indicator on screen
-        muteIconElement.style.display = "none";
+        mutedIconElement.style.display = "none";
         break;
       default:
         await handleStreamAction("start");
@@ -177,7 +177,9 @@ const initializeEventHandler = async () => {
     const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
     const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
     const settingsButtonElement = document.querySelector("#settings-button");
-    const muteIconElement = document.querySelector("#mute-icon");
+    const muteButtonElement = document.querySelector("#mute-button");
+    const refreshButtonElement = document.querySelector("#refresh-button");
+    const mutedIconElement = document.querySelector("#muted-icon");
 
     // event listeners
     // NOTE: these listeneres will likely stay on this file/function
@@ -205,9 +207,12 @@ const initializeEventHandler = async () => {
     navigator.mediaDevices.ondevicechange = async () => {
       await handleStreamAction("restart");
     };
+    
+    mutedIconElement.addEventListener("click", async () => {
+      await handleStreamAction("unmute");
+    });
 
     if (navbarContainerElement) {
-
       previewTabElement.addEventListener("click", async () => {
         await handleWindowAction("preview");
       });
@@ -215,15 +220,19 @@ const initializeEventHandler = async () => {
       recordingsTabElement.addEventListener("click", async () => {
         await handleWindowAction("recordings");
       });
+
+      muteButtonElement.addEventListener("click", async () => {
+        await handleStreamAction("mute"); // TODO: turn this into a switch to mute and unmute the audio
+      });
+
+      refreshButtonElement.addEventListener("click", async () => {
+        await handleStreamAction("restart");
+      });
       
       settingsButtonElement.addEventListener("click", async () => {
         await handleWindowAction("settings");
       });
     }
-
-    muteIconElement.addEventListener("click", async () => {
-      await handleStreamAction("unmute");
-    });
 
     // start stream
     await handleStreamAction();
