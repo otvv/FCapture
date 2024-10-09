@@ -106,7 +106,7 @@ html, body {
 .mute-icon, .settings-icon, .refresh-icon {
   color: #dedede;
   font-size: 15px;
-  text-shadow: 2px 2px 5px #282828;
+  filter: drop-shadow(1px 1px 3px #282828);
   transition: color 0.2s ease;
 }
 
@@ -165,8 +165,8 @@ html, body {
 .muted-icon {
   font-size: 18px;
   color: #ff5f57;
-  text-shadow: 2px 2px 5px #282828;
   transition: color 0.2s ease;
+  filter: drop-shadow(1px 1px 3px #282828);
 }
 
 .muted-icon:hover {
