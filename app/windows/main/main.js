@@ -222,7 +222,9 @@ const initializeEventHandler = async () => {
       });
 
       muteButtonElement.addEventListener("click", async () => {
-        await handleStreamAction("mute"); // TODO: turn this into a switch to mute and unmute the audio
+        await handleStreamAction("mute");
+        // TODO: turn this into a switch to mute and unmute the audio
+        // and change the icon based on stream status
       });
 
       refreshButtonElement.addEventListener("click", async () => {
