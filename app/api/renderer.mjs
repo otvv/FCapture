@@ -13,6 +13,19 @@ const ASPECT_RATIO_TABLE = Object.freeze({
   ULTRAWIDE: 21 / 9,
 });
 
+// this will be filled with more devices in the future
+const AVAILABLE_DEVICE_LABELS = Object.freeze({
+  // generic
+  USB_VIDEO: "USB Video",
+  USB_AUDIO: "USB Digital Audio",
+  // semi-generic
+
+  // branded
+
+  // these here will be ignored
+  OBS_VIRTUAL: "OBS Virtual Camera",
+});
+
 const getAvailableDevices = async () => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -34,14 +47,17 @@ const getAvailableDevices = async () => {
       // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // ignore OBS related virtual devices
-      if (device.label.includes("OBS Virtual Camera")) {
+      if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL)) {
         return;
       }
 
       // filter each device for a specific type
       // TODO: improve this method later to handle more types of devices and/in other systems
       // where they might be handled differently (Windows)
-      if (device.kind === "videoinput" && device.label.includes("USB Video")) {
+      if (
+        device.kind === "videoinput" &&
+        device.label.includes(AVAILABLE_DEVICE_LABELS.USB_VIDEO)
+      ) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
         usbVideoFound = true;
@@ -49,7 +65,7 @@ const getAvailableDevices = async () => {
 
       if (
         device.kind === "audioinput" &&
-        device.label.includes("USB Digital Audio")
+        device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO)
       ) {
         deviceInfoPayload.audio.id = device.deviceId;
         deviceInfoPayload.audio.label = device.label;
@@ -69,6 +85,50 @@ const getAvailableDevices = async () => {
   }
 };
 
+const setupOverlay = (debugMode) => {
+  if (!debugMode) {
+    return () => {};
+  }
+
+  let lastFrameTime = performance.now();
+  let frameCount = 0;
+  let canvasFps = 0;
+  let internalFps = 0;
+  let refreshRate = 0;
+  let refreshRateStartTime = performance.now();
+
+  return (canvasContext, rawStreamData) => {
+    const currentTime = performance.now();
+    frameCount++;
+
+    // update fps and refresh rate every second
+    if (currentTime - lastFrameTime >= 1000) {
+      canvasFps = frameCount || "NaN";
+      internalFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "NaN";
+
+      const elapsedTime = currentTime - refreshRateStartTime;
+      refreshRate = (frameCount / (elapsedTime / 1000)).toFixed(2) || "NaN"
+
+      frameCount = 0;
+      lastFrameTime = currentTime;
+      refreshRateStartTime = currentTime;
+    }
+
+    const rectangleWidth = 255;
+    const rectangleHeight = 100;
+    
+    // draw overlay
+    canvasContext.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    canvasContext.fillRect(0, 0, rectangleWidth, rectangleHeight);
+    canvasContext.fillStyle = 'rgba(0, 0, 0, 1.0)';
+    canvasContext.font = '20px Arial';
+    canvasContext.fillText(`CANVAS FPS: ${canvasFps}`, 10, 30);
+    canvasContext.fillText(`RAW FPS: ${internalFps}`, 10, 60);
+    canvasContext.fillText(`REFRESH RATE: ${refreshRate}Hz`, 10, 90);
+
+  };
+};
+
 const setupStreamFromDevice = async () => {
   try {
     // get filtered device payload to pull video from
@@ -85,10 +145,10 @@ const setupStreamFromDevice = async () => {
       video: {
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         deviceId: { exact: device.video.id },
-        width: { exact: 1280 },
-        height: { exact: 720 },
-        frameRate: { min: 30, ideal: 60, max: 60 },
-        aspectRatio: { exact: ASPECT_RATIO_TABLE.WIDESCREEN },
+        width: 1280,
+        height: 720,
+        frameRate: 60,
+        aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
       // TODO: add an option to only passthrough audio, to make it easier
       // to integrate the capture device audio with an audio interface
@@ -124,6 +184,7 @@ const setupStreamFromDevice = async () => {
 
 export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
   const temporaryVideoElement = document.createElement("video");
+  const rawStreamData = await setupStreamFromDevice();
 
   if (temporaryVideoElement === null) {
     console.error(
@@ -132,20 +193,24 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
     return { undefined, undefined };
   }
 
+  // setup overlay
+  const drawOverlay = setupOverlay(false);
+
   // assign raw stream data to this temporary player
-  const rawStreamData = await setupStreamFromDevice();
   temporaryVideoElement.srcObject = rawStreamData;
 
   // start video playback muted
   // (to avoid duplicated sound)
-  await temporaryVideoElement.play().then((temporaryVideoElement.muted = true));
+  await temporaryVideoElement
+    .play()
+    .then(() => (temporaryVideoElement.muted = true));
 
   // TODO: add an option to only passthrough audio, to make it easier
   // to integrate the capture device audio with an audio interface
   // or if the user just want to play while listening to music on PC for example
   // make sure to clear rawStreamData.video too if the option is enabled
 
-  const drawFrameOnScreen = () => {
+  const drawFrameOnScreen = async () => {
     if (
       temporaryVideoElement.readyState ===
       temporaryVideoElement.HAVE_ENOUGH_DATA
@@ -155,25 +220,42 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       canvasElement.width = temporaryVideoElement.videoWidth;
       canvasElement.height = temporaryVideoElement.videoHeight;
 
+      if (canvasContext.isContextLost() || !canvasContext) {
+        return;
+      }
+
       // clean old frames
       canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
+      // image smoothing when resizing
+      canvasContext.imageSmoothingEnabled = true;
+      canvasContext.imageSmoothingQuality = "high";
+
       // apply temporary image filters
-      canvasContext.filter = "brightness(0.95) contrast(0.8) saturate(1.0)";
+      canvasContext.filter = "brightness(1.0) contrast(0.8) saturate(1.0)";
+
+      // generate a bitmap from the current video frame
+      const bitmap = await createImageBitmap(temporaryVideoElement);
 
       // draw new frame
       canvasContext.drawImage(
-        temporaryVideoElement,
+        bitmap,
         0,
         0,
         canvasElement.width,
         canvasElement.height
       );
+
+      // draw overlay
+      drawOverlay(canvasContext, rawStreamData);
     }
 
-    // continue rendering frames recursively
+    // render frames recursively
     requestAnimationFrame(drawFrameOnScreen);
-  }; drawFrameOnScreen();
+  };
+
+  // continue rendering frames
+  requestAnimationFrame(drawFrameOnScreen);
 
   // handle window audio context and gaing node
   const audioContext = new window.AudioContext();
