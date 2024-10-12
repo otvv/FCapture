@@ -19,8 +19,8 @@ const ASPECT_RATIO_TABLE = Object.freeze({
 const AVAILABLE_DEVICE_LABELS = Object.freeze({
   // generic
   USB_VIDEO: "USB Video",
-  USB_AUDIO: "USB Digital Audio",
-  USB_AUDIO_TEMP: "USB Video Estéreo analógico",
+  USB_AUDIO: "USB Digital Audio", // macOS
+  USB_AUDIO_ALT: "USB Video", // Linux
   // semi-generic
 
   // branded
@@ -48,7 +48,7 @@ const getAvailableDevices = async () => {
 
     devices.forEach((device) => {
       // DEBUG PURPOSES ONLY
-      console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
+      // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // ignore OBS related virtual devices
       if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL)) {
@@ -68,7 +68,9 @@ const getAvailableDevices = async () => {
       }
 
       if (
-        device.kind === "audioinput" && (device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO) || device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO_TEMP))
+        device.kind === "audioinput" &&
+        (device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO) ||
+          device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO_ALT))
       ) {
         deviceInfoPayload.audio.id = device.deviceId;
         deviceInfoPayload.audio.label = device.label;
@@ -114,13 +116,10 @@ const setupStreamFromDevice = async () => {
       // or if the user just want to play while listening to music on PC for example
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: {min: 44100, ideal: 48000, max: 96000 },
+        sampleRate: { min: 44100, ideal: 48000, max: 96000 },
         sampleSize: { min: 16, ideal: 24, max: 24 },
         channelCount: { min: 1, ideal: 2, max: 2 },
-        voiceIsolation: false,
         echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
       },
     });
 
@@ -159,15 +158,15 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
   // assign raw stream data to this temporary player
   temporaryVideoElement.srcObject = rawStreamData;
 
-  // setup overlay (will only display if you are in debug mode)
-  // or if you manually enable it (passing true as an argument)
-  const drawOverlay = setupOverlay();
-
   // start video playback muted
   // (to avoid duplicated sound)
   await temporaryVideoElement
     .play()
     .then(() => (temporaryVideoElement.muted = true));
+
+  // setup overlay (will only display if you are in debug mode)
+  // or if you manually enable it (passing true as an argument)
+  const drawOverlay = setupOverlay();
 
   // TODO: add an option to only passthrough audio, to make it easier
   // to integrate the capture device audio with an audio interface
@@ -196,7 +195,8 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       canvasContext.imageSmoothingQuality = "high";
 
       // apply temporary image filters
-      canvasElement.style.filter = "brightness(1.0) contrast(0.95) saturate(1.0)";
+      canvasElement.style.filter =
+        "brightness(1.0) contrast(0.95) saturate(1.0)";
 
       // generate a bitmap from the current video frame
       const bitmap = await createImageBitmap(temporaryVideoElement);
@@ -210,12 +210,11 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
         canvasElement.height
       );
 
-      // draw overlay
+      // DEBUG PURPOSES ONLY
       if (drawOverlay) {
         drawOverlay(canvasContext, temporaryVideoElement, rawStreamData);
       }
     }
-
 
     // render frames recursively
     requestAnimationFrame(drawFrameOnScreen);

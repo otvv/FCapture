@@ -9,7 +9,6 @@ FCapture
 
 const UPDATE_INTERVAL = 1000; // one second in ms
 
-
 // overlay constraints
 const overlaySettings = Object.freeze({
   width: 280,
@@ -21,7 +20,8 @@ const overlaySettings = Object.freeze({
 
 // enable the overlay only when in debug mode
 export const setupOverlay = () => {
-  console.log("[fcapture] - overlay@setupOverlay: DEBUG MODE", window.ipcRenderer.isInDebugMode());
+  // DEBUR PURPOSES ONLY
+  // console.log("[fcapture] - overlay@setupOverlay: DEBUG MODE", window.ipcRenderer.isInDebugMode());
   if (!window.ipcRenderer.isInDebugMode()) {
     return false;
   }

@@ -47,13 +47,15 @@ const generateParentWindow = () => {
 
   // load parent window HTML structure
   parentWindow.loadFile("app/windows/main/main.html");
-  parentWindow.setMenuBarVisibility(false);
-
+  
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
     parentWindow.openDevTools();
     parentWindow.setMenuBarVisibility(true);
   }
+
+  // disable menu-bar
+  parentWindow.setMenuBarVisibility(false);
 };
 
 const generateTemplateMenu = () => {

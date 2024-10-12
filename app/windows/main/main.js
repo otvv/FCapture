@@ -126,10 +126,9 @@ const handleStreamAction = async (action = "start") => {
           currentVolume = audioController.gain.value; // update volume data
         }
 
-        // show icon indicator on screen
-        mutedIconElement.style.display = "block";
-
+        // show mute icon indicator on screen
         isAudioTrackMuted = true;
+        mutedIconElement.style.display = "block";
         break;
       case "unmute":
         if (!streamData || !audioController || isAudioTrackMuted === false) {
@@ -140,10 +139,9 @@ const handleStreamAction = async (action = "start") => {
         audioController.gain.value = previousVolume;
         currentVolume = audioController.gain.value; // update volume data
 
-        // hide icon indicator on screen
-        mutedIconElement.style.display = "none";
-
+        // hide mute icon indicator
         isAudioTrackMuted = false;
+        mutedIconElement.style.display = "none";
       default:
         // when no argument is passed the default action
         // will always be to start the stream
@@ -189,23 +187,17 @@ const initializeEventHandler = async () => {
     // NOTE: these listeneres will likely stay on this file/function
     window.ipcRenderer.on("start-stream", () => handleStreamAction("start"));
     window.ipcRenderer.on("stop-stream", () => handleStreamAction("stop"));
-    window.ipcRenderer.on("restart-stream", () =>
-      handleStreamAction("restart")
-    );
+    window.ipcRenderer.on("restart-stream", () => handleStreamAction("restart"));
     window.ipcRenderer.on("mute-stream", () => handleStreamAction("mute"));
     window.ipcRenderer.on("unmute-stream", () => handleStreamAction("unmute"));
 
     // native DOM event listeners
     navigator.mediaDevices.ondevicechange = () => handleStreamAction("restart");
-    mutedIconElement.addEventListener("click", () =>
-      handleStreamAction("unmute")
-    );
+    mutedIconElement.addEventListener("click", () => handleStreamAction("unmute"));
 
     if (navbarContainerElement) {
-      const previewTabElement =
-        tabsContainerElement.querySelector("#preview-tab");
-      const recordingsTabElement =
-        tabsContainerElement.querySelector("#recordings-tab");
+      const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
+      const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
       const settingsButtonElement = document.querySelector("#settings-button");
       const muteButtonElement = document.querySelector("#mute-button");
       const refreshButtonElement = document.querySelector("#refresh-button");
