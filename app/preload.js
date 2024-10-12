@@ -16,4 +16,5 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     callback(..._args);
   }),
   send: (channel, data) => ipcRenderer.send(channel, data),
+  isInDebugMode: () => process.env.ELECTRON_ENV === "development"
 });

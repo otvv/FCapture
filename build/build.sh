@@ -23,6 +23,14 @@ spinner() {
     printf "\r[fbuild] - app built successfully\n"
 }
 
+# check if electron builder is installed
+if ! command -v electron-builder &>/dev/null; then
+    echo "[fbuild] - electron-builder could not be found."
+    echo "[fbuild] - please run 'npm install -g electron-builder' to proceed."
+    exit 1
+fi
+
+
 # check if jq is installed
 if ! command -v jq &>/dev/null; then
     echo "[fbuild] - jq command could not be found. please install jq to proceed."

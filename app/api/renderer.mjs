@@ -7,6 +7,8 @@ FCapture
 
 */
 
+import { setupOverlay } from "./overlay.mjs";
+
 const ASPECT_RATIO_TABLE = Object.freeze({
   STANDARD: 4 / 3,
   WIDESCREEN: 16 / 9,
@@ -18,6 +20,7 @@ const AVAILABLE_DEVICE_LABELS = Object.freeze({
   // generic
   USB_VIDEO: "USB Video",
   USB_AUDIO: "USB Digital Audio",
+  USB_AUDIO_TEMP: "USB Video Estéreo analógico",
   // semi-generic
 
   // branded
@@ -44,7 +47,8 @@ const getAvailableDevices = async () => {
     };
 
     devices.forEach((device) => {
-      // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
+      // DEBUG PURPOSES ONLY
+      console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // ignore OBS related virtual devices
       if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL)) {
@@ -64,8 +68,7 @@ const getAvailableDevices = async () => {
       }
 
       if (
-        device.kind === "audioinput" &&
-        device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO)
+        device.kind === "audioinput" && (device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO) || device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO_TEMP))
       ) {
         deviceInfoPayload.audio.id = device.deviceId;
         deviceInfoPayload.audio.label = device.label;
@@ -85,50 +88,6 @@ const getAvailableDevices = async () => {
   }
 };
 
-const setupOverlay = (debugMode) => {
-  if (!debugMode) {
-    return () => {};
-  }
-
-  let lastFrameTime = performance.now();
-  let frameCount = 0;
-  let canvasFps = 0;
-  let internalFps = 0;
-  let refreshRate = 0;
-  let refreshRateStartTime = performance.now();
-
-  return (canvasContext, rawStreamData) => {
-    const currentTime = performance.now();
-    frameCount++;
-
-    // update fps and refresh rate every second
-    if (currentTime - lastFrameTime >= 1000) {
-      canvasFps = frameCount || "NaN";
-      internalFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "NaN";
-
-      const elapsedTime = currentTime - refreshRateStartTime;
-      refreshRate = (frameCount / (elapsedTime / 1000)).toFixed(2) || "NaN"
-
-      frameCount = 0;
-      lastFrameTime = currentTime;
-      refreshRateStartTime = currentTime;
-    }
-
-    const rectangleWidth = 255;
-    const rectangleHeight = 100;
-    
-    // draw overlay
-    canvasContext.fillStyle = 'rgba(255, 255, 255, 0.7)';
-    canvasContext.fillRect(0, 0, rectangleWidth, rectangleHeight);
-    canvasContext.fillStyle = 'rgba(0, 0, 0, 1.0)';
-    canvasContext.font = '20px Arial';
-    canvasContext.fillText(`CANVAS FPS: ${canvasFps}`, 10, 30);
-    canvasContext.fillText(`RAW FPS: ${internalFps}`, 10, 60);
-    canvasContext.fillText(`REFRESH RATE: ${refreshRate}Hz`, 10, 90);
-
-  };
-};
-
 const setupStreamFromDevice = async () => {
   try {
     // get filtered device payload to pull video from
@@ -145,9 +104,9 @@ const setupStreamFromDevice = async () => {
       video: {
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         deviceId: { exact: device.video.id },
-        width: 1280,
-        height: 720,
-        frameRate: 60,
+        width: { min: 1280, ideal: 1280, max: 2560 },
+        height: { min: 720, ideal: 720, max: 1440 },
+        frameRate: { min: 30, ideal: 60, max: 60 },
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
       // TODO: add an option to only passthrough audio, to make it easier
@@ -155,9 +114,13 @@ const setupStreamFromDevice = async () => {
       // or if the user just want to play while listening to music on PC for example
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: 96000,
-        sampleSize: 16,
-        channelCount: 1,
+        sampleRate: {min: 44100, ideal: 48000, max: 96000 },
+        sampleSize: { min: 16, ideal: 24, max: 24 },
+        channelCount: { min: 1, ideal: 2, max: 2 },
+        voiceIsolation: false,
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
       },
     });
 
@@ -193,11 +156,12 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
     return { undefined, undefined };
   }
 
-  // setup overlay
-  const drawOverlay = setupOverlay(false);
-
   // assign raw stream data to this temporary player
   temporaryVideoElement.srcObject = rawStreamData;
+
+  // setup overlay (will only display if you are in debug mode)
+  // or if you manually enable it (passing true as an argument)
+  const drawOverlay = setupOverlay();
 
   // start video playback muted
   // (to avoid duplicated sound)
@@ -232,7 +196,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       canvasContext.imageSmoothingQuality = "high";
 
       // apply temporary image filters
-      canvasContext.filter = "brightness(1.0) contrast(0.8) saturate(1.0)";
+      canvasElement.style.filter = "brightness(1.0) contrast(0.95) saturate(1.0)";
 
       // generate a bitmap from the current video frame
       const bitmap = await createImageBitmap(temporaryVideoElement);
@@ -247,8 +211,11 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       );
 
       // draw overlay
-      drawOverlay(canvasContext, rawStreamData);
+      if (drawOverlay) {
+        drawOverlay(canvasContext, temporaryVideoElement, rawStreamData);
+      }
     }
+
 
     // render frames recursively
     requestAnimationFrame(drawFrameOnScreen);

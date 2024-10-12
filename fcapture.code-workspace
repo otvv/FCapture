@@ -11,7 +11,12 @@
 			"dist/FCapture-*.dmg.blockmap",
 			"dist/FCapture-*-mac.zip",
 			"dist/FCapture-*-mac.zip.blockmap",
-			"dist/FCapture-*-mac.zip"
+			"dist/FCapture-*-mac.zip",
+			"dist/fcapture_*_amd64.snap",
+			"dist/linux-unpacked",
+			"dist/latest-linux.yml",
+			"dist/__snap-amd64",
+			"dist/__appImage-x64"
 		]
 	}
 }

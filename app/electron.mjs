@@ -26,7 +26,7 @@ const generateParentWindow = () => {
     height: 720,
     minWidth: 640,
     minHeight: 480,
-    icon: "./assets/icons/fcapture-icon-fallback.png",
+    icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
     title: "FCapture",
     darkTheme: true, // might break on some GTK3 themes if it doesnt have a proper dark variation
     webPreferences: {
@@ -47,10 +47,12 @@ const generateParentWindow = () => {
 
   // load parent window HTML structure
   parentWindow.loadFile("app/windows/main/main.html");
+  parentWindow.setMenuBarVisibility(false);
 
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
     parentWindow.openDevTools();
+    parentWindow.setMenuBarVisibility(true);
   }
 };
 

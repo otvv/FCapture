@@ -17,6 +17,10 @@ FCapture
   margin: 0;
 }
 
+*:focus {
+  outline: none;
+}
+
 html, body {
   height: 100vh;
 }
