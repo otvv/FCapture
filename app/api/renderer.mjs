@@ -112,6 +112,7 @@ const setupStreamFromDevice = async () => {
         width: { ideal: 99999999 }, 
         height: { ideal: 99999999 },
         frameRate: { ideal: 99999999 },
+        bitrate: { ideal: 99999999 },
         //
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
@@ -168,16 +169,14 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
   // (to avoid duplicated sound)
   await temporaryVideoElement
     .play()
-    .then(() => (temporaryVideoElement.muted = true));
+    .then(() => {
+      temporaryVideoElement.muted = true;
+      temporaryVideoElement.disablePictureInPicture = true;
+    });
 
   // setup overlay (will only display if you are in debug mode)
   // or if you manually enable it (passing true as an argument)
   const drawOverlay = setupOverlay();
-
-  // TODO: add an option to only passthrough audio, to make it easier
-  // to integrate the capture device audio with an audio interface
-  // or if the user just want to play while listening to music on PC for example
-  // make sure to clear rawStreamData.video too if the option is enabled
 
   const drawFrameOnScreen = async () => {
     if (
@@ -204,12 +203,9 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       canvasElement.style.filter =
         "brightness(1.0) contrast(0.95) saturate(1.0)";
 
-      // generate a bitmap from the current video frame
-      const bitmap = await createImageBitmap(temporaryVideoElement);
-
       // draw new frame
       canvasContext.drawImage(
-        bitmap,
+        temporaryVideoElement,
         0,
         0,
         canvasElement.width,

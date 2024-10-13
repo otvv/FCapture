@@ -7,7 +7,7 @@ FCapture
 
 */
 
-const UPDATE_INTERVAL = 1000; // one second in ms
+const UPDATE_INTERVAL = 1000; // in ms
 
 // overlay constraints
 const overlaySettings = Object.freeze({
@@ -16,7 +16,8 @@ const overlaySettings = Object.freeze({
   font: "bold 20px Arial",
   textColor: "rgb(0, 0, 0)",
   valueColor: "rgb(255, 0, 0)",
-  backgroundColor: "rgba(235, 235, 235, 0.5)",
+  outlineColor: "rgba(0, 0, 0, 0.9)",
+  backgroundColor: "rgba(235, 235, 235, 0.5)"
 });
 
 // enable the overlay only when in debug mode
@@ -30,23 +31,26 @@ export const setupOverlay = () => {
   // state variables
   let lastFrameTime = performance.now();
   let frameCount = 0;
-  let canvasFps = 0;
-  let internalFps = 0;
+  let outputFps = 0;
   let refreshRate = 0;
   let refreshRateStartTime = performance.now();
 
   // static overlay geometry 
   const drawStaticOverlay = (canvasContext, constraints) => {
     canvasContext.fillStyle = constraints.backgroundColor;
-    canvasContext.fillRect(0, 0, constraints.overlayWidth, constraints.overlayHeight);
+    canvasContext.fillRect(2, 2, constraints.overlayWidth, constraints.overlayHeight);
+    //
+    canvasContext.strokeStyle = constraints.outlineColor;
+    canvasContext.lineWidth = 1;
+    canvasContext.strokeRect(2, 2, constraints.overlayWidth, constraints.overlayHeight);
     //
     canvasContext.font = constraints.font;
     canvasContext.fillStyle = constraints.textColor;
-    canvasContext.fillText("OUTPUT FPS:", 10, 30);
-    canvasContext.fillText("INPUT FPS:", 10, 60);
-    canvasContext.fillText("REFRESH RATE:", 10, 90);
-    canvasContext.fillText("OUTPUT RES:", 10, 120);
-    canvasContext.fillText("INPUT RES:", 10, 150);
+    canvasContext.fillText("OUTPUT FPS:", 15, 30);
+    canvasContext.fillText("TARGET FPS:", 15, 60);
+    canvasContext.fillText("OUTPUT RES:", 15, 90);
+    canvasContext.fillText("DEVICE RES:", 15, 120);
+    canvasContext.fillText("REFRESH RATE:", 15, 150);
   };
 
   // dynamic overlay geometry
@@ -54,58 +58,57 @@ export const setupOverlay = () => {
     canvasContext,
     constraints,
     {
-      canvasFps,
-      internalFps,
+      outputFps,
+      targetFps,
       refreshRate,
-      videoElementWidth,
-      videoElementHeight,
-      internalWidth,
-      internalHeight,
+      outputWidth,
+      outputHeight,
+      targetWidth,
+      targetHeight,
     }
   ) => {
     canvasContext.fillStyle = constraints.valueColor;
-    canvasContext.fillText(`${canvasFps}`, 145, 30);
-    canvasContext.fillText(`${internalFps}`, 125, 60);
-    canvasContext.fillText(`${refreshRate}hz`, 175, 90);
-    canvasContext.fillText(`${videoElementWidth}x${videoElementHeight}`, 125, 150);
-    canvasContext.fillText(`${internalWidth}x${internalHeight}`, 155, 120);
+    canvasContext.fillText(`${outputFps}`, 155, 30);
+    canvasContext.fillText(`${targetFps}`, 155, 60);
+    canvasContext.fillText(`${outputWidth}x${outputHeight}`, 160, 90);
+    canvasContext.fillText(`${targetWidth}x${targetHeight}`, 155, 120);
+    canvasContext.fillText(`${refreshRate}hz`, 185, 150);
   };
 
-  return (canvasContext, videoPlayerElement, rawStreamData) => {
+  return (canvasContext, streamPlayerElement, rawStreamData) => {
     const currentTime = performance.now();
     frameCount++;
 
-    // update FPS and refresh rate at the defined interval (each second)
+    // update output (canvas) FPS and refresh rate at the defined interval (per second)
     if (currentTime - lastFrameTime >= UPDATE_INTERVAL) {
-      canvasFps = frameCount;
-      internalFps =
-        rawStreamData.getVideoTracks()[0].getSettings().frameRate || "NaN";
+      outputFps = frameCount;
 
       const elapsedTime = currentTime - refreshRateStartTime;
-      refreshRate = (frameCount / (elapsedTime / UPDATE_INTERVAL)).toFixed(2);
+      refreshRate = (frameCount / (elapsedTime / UPDATE_INTERVAL)).toFixed(1);
 
-      // update fps values alongside the refresh rate
+      // update fps alongside the refresh rate
       frameCount = 0;
       lastFrameTime = currentTime;
       refreshRateStartTime = currentTime;
     }
 
     // get some more additional info
-    const videoElementWidth = videoPlayerElement.videoWidth || "0x0";
-    const videoElementHeight = videoPlayerElement.videoHeight || "0x0";
-    const internalWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "NaN";
-    const internalHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "NaN";
+    const outputWidth = streamPlayerElement.videoWidth || "0x0";
+    const outputHeight = streamPlayerElement.videoHeight || "0x0";
+    const targetWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "NaN";
+    const targetHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "NaN";
+    const targetFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "NaN";
 
     // draw overlay
     drawStaticOverlay(canvasContext, overlaySettings);
     drawDynamicOverlay(canvasContext, overlaySettings, {
-      canvasFps,
-      internalFps,
+      outputFps,
+      targetFps,
       refreshRate,
-      videoElementWidth,
-      videoElementHeight,
-      internalWidth,
-      internalHeight,
+      outputWidth,
+      outputHeight,
+      targetWidth,
+      targetHeight,
     });
   };
 };
