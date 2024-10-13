@@ -104,21 +104,27 @@ const setupStreamFromDevice = async () => {
       // NOTE: if device doesnt have support for any of these settings
       // it will use the respective setting internal default/ideal value
       video: {
-        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         deviceId: { exact: device.video.id },
-        width: { min: 1280, ideal: 1280, max: 2560 },
-        height: { min: 720, ideal: 720, max: 1440 },
-        frameRate: { min: 30, ideal: 60, max: 60 },
+        
+        // wacky way to get the highest possible 
+        // image quality from the device
+        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
+        width: { ideal: 99999999 }, 
+        height: { ideal: 99999999 },
+        frameRate: { ideal: 99999999 },
+        //
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
-      // TODO: add an option to only passthrough audio, to make it easier
-      // to integrate the capture device audio with an audio interface
-      // or if the user just want to play while listening to music on PC for example
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: { min: 44100, ideal: 48000, max: 96000 },
-        sampleSize: { min: 16, ideal: 24, max: 24 },
-        channelCount: { min: 1, ideal: 2, max: 2 },
+        
+        // wacky way to get the highest possible 
+        // audio quality from the device
+        // TODO: add an option to only passthrough audio
+        sampleRate: { ideal: 99999999 },
+        sampleSize: { ideal: 99999999 },
+        channelCount: { ideal: 99999999 },
+        //
         echoCancellation: false,
       },
     });

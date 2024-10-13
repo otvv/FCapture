@@ -1,6 +1,6 @@
 {
   "name": "fcapture",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "a previewer/recorder eventually) software for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {

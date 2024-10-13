@@ -11,11 +11,12 @@ const UPDATE_INTERVAL = 1000; // one second in ms
 
 // overlay constraints
 const overlaySettings = Object.freeze({
-  width: 280,
-  height: 170,
+  overlayWidth: 280,
+  overlayHeight: 170,
   font: "bold 20px Arial",
   textColor: "rgb(0, 0, 0)",
-  backgroundColor: "rgb(235, 235, 235)",
+  valueColor: "rgb(255, 0, 0)",
+  backgroundColor: "rgba(235, 235, 235, 0.5)",
 });
 
 // enable the overlay only when in debug mode
@@ -37,39 +38,37 @@ export const setupOverlay = () => {
   // static overlay geometry 
   const drawStaticOverlay = (canvasContext, constraints) => {
     canvasContext.fillStyle = constraints.backgroundColor;
-    canvasContext.fillRect(0, 0, constraints.width, constraints.height);
+    canvasContext.fillRect(0, 0, constraints.overlayWidth, constraints.overlayHeight);
     //
     canvasContext.font = constraints.font;
     canvasContext.fillStyle = constraints.textColor;
-    canvasContext.fillText("CANVAS FPS:", 10, 30);
-    canvasContext.fillText("INTERNAL FPS:", 10, 60);
+    canvasContext.fillText("OUTPUT FPS:", 10, 30);
+    canvasContext.fillText("INPUT FPS:", 10, 60);
     canvasContext.fillText("REFRESH RATE:", 10, 90);
-    canvasContext.fillText("INTERNAL RES:", 10, 120);
-    canvasContext.fillText("CANVAS RES:", 10, 150);
+    canvasContext.fillText("OUTPUT RES:", 10, 120);
+    canvasContext.fillText("INPUT RES:", 10, 150);
   };
 
   // dynamic overlay geometry
   const drawDynamicOverlay = (
     canvasContext,
+    constraints,
     {
       canvasFps,
       internalFps,
       refreshRate,
-      internalWidth,
-      internalHeight,
       videoElementWidth,
       videoElementHeight,
+      internalWidth,
+      internalHeight,
     }
   ) => {
-    canvasContext.fillText(`${canvasFps}`, 150, 30);
-    canvasContext.fillText(`${internalFps}`, 180, 60);
-    canvasContext.fillText(`${refreshRate}Hz`, 180, 90);
-    canvasContext.fillText(`${internalWidth}x${internalHeight}`, 170, 120);
-    canvasContext.fillText(
-      `${videoElementWidth}x${videoElementHeight}`,
-      150,
-      150
-    );
+    canvasContext.fillStyle = constraints.valueColor;
+    canvasContext.fillText(`${canvasFps}`, 145, 30);
+    canvasContext.fillText(`${internalFps}`, 125, 60);
+    canvasContext.fillText(`${refreshRate}hz`, 175, 90);
+    canvasContext.fillText(`${videoElementWidth}x${videoElementHeight}`, 125, 150);
+    canvasContext.fillText(`${internalWidth}x${internalHeight}`, 155, 120);
   };
 
   return (canvasContext, videoPlayerElement, rawStreamData) => {
@@ -92,23 +91,21 @@ export const setupOverlay = () => {
     }
 
     // get some more additional info
-    const internalWidth =
-      rawStreamData.getVideoTracks()[0].getSettings().width || "NaN";
-    const internalHeight =
-      rawStreamData.getVideoTracks()[0].getSettings().height || "NaN";
     const videoElementWidth = videoPlayerElement.videoWidth || "0x0";
     const videoElementHeight = videoPlayerElement.videoHeight || "0x0";
+    const internalWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "NaN";
+    const internalHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "NaN";
 
     // draw overlay
     drawStaticOverlay(canvasContext, overlaySettings);
-    drawDynamicOverlay(canvasContext, {
+    drawDynamicOverlay(canvasContext, overlaySettings, {
       canvasFps,
       internalFps,
       refreshRate,
-      internalWidth,
-      internalHeight,
       videoElementWidth,
       videoElementHeight,
+      internalWidth,
+      internalHeight,
     });
   };
 };
