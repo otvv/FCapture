@@ -20,20 +20,18 @@ const overlaySettings = Object.freeze({
   backgroundColor: "rgba(235, 235, 235, 0.5)"
 });
 
-// enable the overlay only when in debug mode
 export const setupOverlay = () => {
-  // DEBUR PURPOSES ONLY
-  // console.log("[fcapture] - overlay@setupOverlay: DEBUG MODE", window.ipcRenderer.isInDebugMode());
+  // enable the overlay only when in debug mode
   if (!window.ipcRenderer.isInDebugMode()) {
     return false;
   }
 
   // state variables
   let lastFrameTime = performance.now();
+  let refreshRateStartTime = performance.now();
   let frameCount = 0;
   let outputFps = 0;
   let refreshRate = 0;
-  let refreshRateStartTime = performance.now();
 
   // static overlay geometry 
   const drawStaticOverlay = (canvasContext, constraints) => {
@@ -93,11 +91,11 @@ export const setupOverlay = () => {
     }
 
     // get some more additional info
-    const outputWidth = streamPlayerElement.videoWidth || "0x0";
-    const outputHeight = streamPlayerElement.videoHeight || "0x0";
-    const targetWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "NaN";
-    const targetHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "NaN";
-    const targetFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "NaN";
+    const outputWidth = streamPlayerElement.videoWidth || "0";
+    const outputHeight = streamPlayerElement.videoHeight || "0";
+    const targetWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "0";
+    const targetHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "0";
+    const targetFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "0";
 
     // draw overlay
     drawStaticOverlay(canvasContext, overlaySettings);

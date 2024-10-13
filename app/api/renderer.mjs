@@ -18,14 +18,15 @@ const ASPECT_RATIO_TABLE = Object.freeze({
 // this will be filled with more devices in the future
 const AVAILABLE_DEVICE_LABELS = Object.freeze({
   // generic
-  USB_VIDEO: "USB Video",
+  USB_VIDEO: "USB Video", // macOS and Linux
   USB_AUDIO: "USB Digital Audio", // macOS
   USB_AUDIO_ALT: "USB Video", // Linux
   // semi-generic
 
   // branded
 
-  // these here will be ignored
+  // software based 
+  // (most likely to be ignored)
   OBS_VIRTUAL: "OBS Virtual Camera",
 });
 
@@ -38,7 +39,7 @@ const getAvailableDevices = async () => {
     }
 
     // dummy
-    let usbVideoFound = false;
+    let usbDeviceFound = false;
 
     // store device payload info
     const deviceInfoPayload = {
@@ -64,7 +65,7 @@ const getAvailableDevices = async () => {
       ) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
-        usbVideoFound = true;
+        usbDeviceFound = true;
       }
 
       if (
@@ -78,12 +79,11 @@ const getAvailableDevices = async () => {
     });
 
     // prevent the renderer from fallbacking to the default device
-    // in case the desired device has not been found/initialized yet
-    if (!usbVideoFound) {
+    // in case the desired device has not been found or initialized yet
+    if (!usbDeviceFound) {
       return null;
     }
 
-    // return valid payload
     return deviceInfoPayload;
   } catch (err) {
     console.error("[fcapture] - renderer@getAvailableDevices:", err);
@@ -108,12 +108,11 @@ const setupStreamFromDevice = async () => {
         
         // wacky way to get the highest possible 
         // image quality from the device
-        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         width: { ideal: 99999999 }, 
         height: { ideal: 99999999 },
         frameRate: { ideal: 99999999 },
         bitrate: { ideal: 99999999 },
-        //
+        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
       audio: {
@@ -121,18 +120,17 @@ const setupStreamFromDevice = async () => {
         
         // wacky way to get the highest possible 
         // audio quality from the device
-        // TODO: add an option to only passthrough audio
         sampleRate: { ideal: 99999999 },
         sampleSize: { ideal: 99999999 },
         channelCount: { ideal: 99999999 },
-        //
+        // TODO: add an option to only passthrough audio
         echoCancellation: false,
       },
     });
 
     // DEBUG PURPOSES ONLY
     // console.log(
-    //   "[fcapture] - renderer@setupStreamFromDevice capabilities:",
+    //   "[fcapture] - renderer@setupStreamFromDevice:",
     //   rawMedia.getVideoTracks()[0].getCapabilities(),
     //   rawMedia.getAudioTracks()[0].getCapabilities()
     // );
@@ -152,8 +150,15 @@ const setupStreamFromDevice = async () => {
 };
 
 export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
-  const temporaryVideoElement = document.createElement("video");
   const rawStreamData = await setupStreamFromDevice();
+
+  // kinda useless check 
+  // but better be safe than sorry lol
+  if (!rawStreamData) {
+    return;
+  }
+  
+  const temporaryVideoElement = document.createElement("video");
 
   if (temporaryVideoElement === null) {
     console.error(
@@ -172,6 +177,9 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
     .then(() => {
       temporaryVideoElement.muted = true;
       temporaryVideoElement.disablePictureInPicture = true;
+      console.log("[fcapture] - renderer@temporaryVideoElementPromise: finished setting up video player element.");
+    }).catch((err) => {
+      console.error("[fcapture] - renderer@temporaryVideoElementPromise:", err);
     });
 
   // setup overlay (will only display if you are in debug mode)
@@ -200,8 +208,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       canvasContext.imageSmoothingQuality = "high";
 
       // apply temporary image filters
-      canvasElement.style.filter =
-        "brightness(1.0) contrast(0.95) saturate(1.0)";
+      canvasElement.style.filter = "brightness(1.05) contrast(0.95) saturate(0.95)";
 
       // draw new frame
       canvasContext.drawImage(
