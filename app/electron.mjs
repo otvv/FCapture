@@ -7,64 +7,88 @@ FCapture
 
 */
 
-import { app, BrowserWindow, Menu, dialog } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import process from "process";
 import path from "path";
 
 // dirname
 const __dirname = import.meta.dirname;
 
-// setup gpu/hardware acceleration
-app.commandLine.appendSwitch('enable-gpu-rasterization');
-
-// generators
+// globals
 let parentWindow;
+let childWindow;
+
+// setup gpu/hardware acceleration
+app.commandLine.appendSwitch("enable-gpu-rasterization");
 const generateParentWindow = () => {
   // setup properties
   parentWindow = new BrowserWindow({
+    title: "FCapture",
     width: 1280,
     height: 720,
     minWidth: 640,
     minHeight: 480,
+    autoHideMenuBar: true,
     icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
-    title: "FCapture",
     darkTheme: true, // might break on some GTK3 themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
   });
 
-  // if parent (main) window fails to be initialized somehow
-  // quit app and throw
   if (parentWindow === null) {
-    console.error(
+    throw new Error(
       "[fcapture] - electron@generateParentWindow: failed to generate window."
     );
-    return; // for some reason the app triggers the next instruction
-    // even when calling the quit function so for now the app will just halt
-    // in case something goes wrong
   }
 
   // load parent window HTML structure
   parentWindow.loadFile("app/windows/main/main.html");
-  
+
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
     parentWindow.openDevTools();
     parentWindow.setMenuBarVisibility(true);
   }
+};
 
-  // disable menu-bar
-  parentWindow.setMenuBarVisibility(false);
+const generateChildWindow = () => {
+  // setup properties
+  childWindow = new BrowserWindow({
+    title: "Settings",
+    parent: parentWindow,
+    modal: true,
+    show: true,
+    width: 640,
+    height: 480,
+    darkTheme: true,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+    },
+  });
+
+  if (childWindow === null) {
+    throw new Error(
+      "[fcapture] - electron@generateChildWindow: failed to generate child window."
+    );
+  }
+
+  // load child window HTML structure
+  childWindow.loadFile("app/windows/settings/settings.html");
+  childWindow.setMenuBarVisibility(false);
+
+  // DEBUG PURPOSES ONLY
+  if (process.env.ELECTRON_ENV === "development") {
+    childWindow.webContents.openDevTools();
+  }
 };
 
 const generateTemplateMenu = () => {
-  // dont do anything in case the user is not using macOS.
-  // TODO: investigate if some of these menus can work on Windows or Linux
-  if (process.platform !== "darwin") {
-    return;
-  }
-
   const dockMenuTemplate = Menu.buildFromTemplate([
     {
       label: "Refresh Stream",
@@ -86,7 +110,7 @@ const generateTemplateMenu = () => {
     { type: "separator" },
     {
       label: "Settings",
-      click: () => null,
+      click: () => generateChildWindow(),
     },
   ]);
 
@@ -105,7 +129,7 @@ const generateTemplateMenu = () => {
         { type: "separator" },
         {
           label: "Settings",
-          click: () => null,
+          click: () => generateChildWindow(),
         },
       ],
     },
@@ -166,8 +190,20 @@ const generateTemplateMenu = () => {
   Menu.setApplicationMenu(menuBarTemplate);
 
   // set dock menu (macOS only)
-  app.dock.setMenu(dockMenuTemplate);
+  if (process.platform === "darwin") {
+    app.dock.setMenu(dockMenuTemplate);
+  }
 };
 
-// app initializer
-app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
+const initializeEventHandler = async () => {
+  try {
+    // event listeners
+    ipcMain.on("open-settings", () => generateChildWindow());
+  } catch (err) {
+    console.error("[fcapture] - electron@initializeEventHandler:", err);
+  }
+};
+
+app.whenReady().then(generateParentWindow)
+.then(generateTemplateMenu)
+.then(initializeEventHandler);

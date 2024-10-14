@@ -164,8 +164,7 @@ const handleWindowAction = async (action = "preview") => {
         console.warn("[fcapture] - main@handleWindowAction: not implemented!");
         break;
       case "settings":
-        // TODO: handle settings window logic here
-        console.warn("[fcapture] - main@handleWindowAction: not implemented!");
+        window.ipcRenderer.send("open-settings");
         break;
     }
   } catch (err) {
