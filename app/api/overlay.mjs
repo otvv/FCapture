@@ -73,7 +73,11 @@ export const setupOverlay = () => {
     canvasContext.fillText(`${refreshRate}hz`, 185, 150);
   };
 
-  return (canvasContext, streamPlayerElement, rawStreamData) => {
+  return (canvasContext, canvasElement, rawStreamData) => {
+    if (!canvasContext || !canvasElement || !rawStreamData) {
+      return;
+    }
+
     const currentTime = performance.now();
     frameCount++;
 
@@ -91,8 +95,8 @@ export const setupOverlay = () => {
     }
 
     // get some more additional info
-    const outputWidth = streamPlayerElement.videoWidth || "0";
-    const outputHeight = streamPlayerElement.videoHeight || "0";
+    const outputWidth = canvasElement.width || "0";
+    const outputHeight = canvasElement.height || "0";
     const targetWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "0";
     const targetHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "0";
     const targetFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "0";

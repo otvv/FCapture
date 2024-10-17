@@ -6,3 +6,51 @@ FCapture
 - 09/25/2024
 
 */
+
+* {
+  user-select: none;
+  overflow: hidden;
+  -webkit-user-drag: none;
+  appearance: none;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  margin: 0;
+
+  color: #dedede;
+  background-color: #282828;
+}
+
+*:focus {
+  outline: none;
+}
+
+html, body {
+  height: 100vh;
+}
+
+hr, fieldset {
+  border-color: #dedede2f;
+}
+
+fieldset {
+  outline: none;
+  color: #dedede;
+  border-radius: 5px;
+  border-width: 0.5px;
+}
+
+/* title and description */
+.title-container {
+  display: block;
+  margin: 10px;
+  font-weight: bold;
+}
+
+.description-container {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  margin-left: 25px;
+  margin-right: 25px;
+  margin-bottom: 10px;
+}

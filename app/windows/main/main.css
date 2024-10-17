@@ -12,7 +12,7 @@ FCapture
   overflow: hidden;
   -webkit-user-drag: none;
   appearance: none;
-  font-family: system-ui, sans-serif; /* TODO: find a default font for the app */
+  font-family: system-ui, sans-serif;
   font-size: 13px;
   margin: 0;
 }

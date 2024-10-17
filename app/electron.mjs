@@ -15,11 +15,13 @@ import path from "path";
 const __dirname = import.meta.dirname;
 
 // globals
-let parentWindow;
-let childWindow;
+let parentWindow = null;
+let childWindow = null;
+let canvasData = {};
 
 // setup gpu/hardware acceleration
 app.commandLine.appendSwitch("enable-gpu-rasterization");
+
 const generateParentWindow = () => {
   // setup properties
   parentWindow = new BrowserWindow({
@@ -53,6 +55,11 @@ const generateParentWindow = () => {
 };
 
 const generateChildWindow = () => {
+  if (childWindow && !childWindow.isDestroyed()) {
+    childWindow.focus();
+    return childWindow;
+  }
+
   // setup properties
   childWindow = new BrowserWindow({
     title: "Settings",
@@ -66,6 +73,7 @@ const generateChildWindow = () => {
     maximizable: false,
     minimizable: false,
     fullscreenable: false,
+    autoHideMenuBar: true,
     icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -78,41 +86,21 @@ const generateChildWindow = () => {
     );
   }
 
+  childWindow.on("closed", () => {
+    childWindow = null;  // reset ref
+  });
+
   // load child window HTML structure
   childWindow.loadFile("app/windows/settings/settings.html");
-  childWindow.setMenuBarVisibility(false);
-
+  
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
     childWindow.webContents.openDevTools();
+    childWindow.setMenuBarVisibility(true);
   }
 };
 
 const generateTemplateMenu = () => {
-  const dockMenuTemplate = Menu.buildFromTemplate([
-    {
-      label: "Refresh Stream",
-      click: () => parentWindow.webContents.send("restart-stream"),
-    },
-    {
-      label: "Close Stream",
-      click: () => parentWindow.webContents.send("stop-stream"),
-    },
-    { type: "separator" },
-    {
-      label: "Mute Audio",
-      click: () => parentWindow.webContents.send("mute-stream"),
-    },
-    {
-      label: "Unmute Audio",
-      click: () => parentWindow.webContents.send("unmute-stream"),
-    },
-    { type: "separator" },
-    {
-      label: "Settings",
-      click: () => generateChildWindow(),
-    },
-  ]);
 
   const menuBarTemplate = Menu.buildFromTemplate([
     {
@@ -129,7 +117,9 @@ const generateTemplateMenu = () => {
         { type: "separator" },
         {
           label: "Settings",
-          click: () => generateChildWindow(),
+          click: () => {
+            ipcMain.emit("open-settings", canvasData);
+          },
         },
       ],
     },
@@ -186,24 +176,79 @@ const generateTemplateMenu = () => {
     },
   ]);
 
-  // replace macOS's menu bar with our own
+  // replace app menu bar with our own
   Menu.setApplicationMenu(menuBarTemplate);
 
   // set dock menu (macOS only)
   if (process.platform === "darwin") {
+    const dockMenuTemplate = Menu.buildFromTemplate([
+      {
+        label: "Refresh Stream",
+        click: () => parentWindow.webContents.send("restart-stream"),
+      },
+      {
+        label: "Close Stream",
+        click: () => parentWindow.webContents.send("stop-stream"),
+      },
+      { type: "separator" },
+      {
+        label: "Mute Audio",
+        click: () => parentWindow.webContents.send("mute-stream"),
+      },
+      {
+        label: "Unmute Audio",
+        click: () => parentWindow.webContents.send("unmute-stream"),
+      },
+      { type: "separator" },
+      {
+        label: "Settings",
+        click: () => {
+          ipcMain.emit("open-settings", canvasData);
+        },
+      },
+    ]);
+
     app.dock.setMenu(dockMenuTemplate);
   }
 };
 
 const initializeEventHandler = async () => {
   try {
+    // initialize app
+    app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
+
     // event listeners
-    ipcMain.on("open-settings", () => generateChildWindow());
+    ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
+      if (canvasInfo) {
+        canvasData = canvasInfo;
+      }
+    });
+
+    ipcMain.on("open-settings", (_event) => {
+      generateChildWindow();
+
+      if (childWindow) {
+        if (childWindow.webContents.isLoading()) {
+          childWindow.webContents.once("did-finish-load", () => {
+            // send canvas info payload back to the settings window
+            childWindow.webContents.send("send-canvas-info", canvasData);
+          });
+        }
+      }
+    });
+
   } catch (err) {
     console.error("[fcapture] - electron@initializeEventHandler:", err);
   }
 };
 
-app.whenReady().then(generateParentWindow)
-.then(generateTemplateMenu)
-.then(initializeEventHandler);
+// initialize event handler
+initializeEventHandler()
+  .then(() => {
+    console.log(
+      "[fcapture] - electron@initializeEventHandlerPromise: event handler initialized."
+    );
+  })
+  .catch((err) => {
+    console.error("[fcapture] - electron@initializeEventHandlerPromise:", err);
+  });

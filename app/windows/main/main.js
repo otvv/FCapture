@@ -70,6 +70,15 @@ const handleStreamAction = async (action = "start") => {
           return;
         }
 
+        // generate simple object with the necessary canvas
+        // info to populate the settings window description
+        // when needed
+        const canvasInfo = {
+          width: streamData.temporaryVideoElement.videoWidth,
+          height: streamData.temporaryVideoElement.videoHeight,
+        };
+        window.ipcRenderer.send("receive-canvas-info", canvasInfo);
+
         // display canvas and hide no signal screen
         // if device is and stream is working
         noSignalContainerElement.style.display = "none";
@@ -81,7 +90,11 @@ const handleStreamAction = async (action = "start") => {
         isAudioTrackMuted = false;
         break;
       case "stop":
-        if (!streamData) {
+        if (
+          !streamData ||
+          !streamData.rawStreamData ||
+          !streamData.temporaryVideoElement
+        ) {
           return;
         }
 
@@ -93,15 +106,25 @@ const handleStreamAction = async (action = "start") => {
           canvasElement.height
         );
 
-        // get all available stream video/audio tracks
+        // get allcanvasElement available stream video/audio tracks
         const streamTracks = await streamData.rawStreamData.getTracks();
+
+        if (!streamTracks) {
+          return;
+        }
+
+        // clear stream related data
+        {
+          streamData.temporaryVideoElement.srcObject = null;
+          streamData.temporaryVideoElement = null;
+          streamData.rawStreamData = null;
+          streamData.gainNode = null;
+          streamData = null;
+        }
 
         // stop all tracks from playing
         await streamTracks.forEach((track) => track.stop());
         isAudioTrackMuted = false;
-
-        // clear stream data
-        streamData = null;
 
         // display the "no signal" screen
         mutedIconElement.style.display = "none";
@@ -155,6 +178,12 @@ const handleStreamAction = async (action = "start") => {
 
 const handleWindowAction = async (action = "preview") => {
   try {
+    const canvasElement = document.querySelector("#canvas-element");
+
+    if (!canvasElement) {
+      return;
+    }
+
     switch (action) {
       case "preview":
         await handleStreamAction("start");
@@ -207,9 +236,9 @@ const initializeEventHandler = async () => {
       recordingsTabElement.addEventListener("click", () =>
         handleWindowAction("recordings")
       );
-      // TODO: turn this into a switch to mute and unmute the audio
-      // and change the icon based on stream status
       muteButtonElement.addEventListener("click", () =>
+        // TODO: turn this into a switch to mute and unmute the audio
+        // and change the icon based on stream status
         handleStreamAction("mute")
       );
       refreshButtonElement.addEventListener("click", () =>
@@ -227,7 +256,7 @@ const initializeEventHandler = async () => {
   }
 };
 
-// initialize stream
+// initialize event handler
 initializeEventHandler()
   .then(() => {
     console.log(
