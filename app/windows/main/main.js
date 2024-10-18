@@ -10,8 +10,10 @@ FCapture
 "use strict";
 
 // FIXME: get rid of these
-let streamData;
-let audioController;
+let streamData = null;
+let canvasContext = null;
+let audioContext = null;
+let audioController = null;
 let currentVolume = 0;
 let previousVolume = 0;
 let isAudioTrackMuted = false;
@@ -34,11 +36,6 @@ const handleStreamAction = async (action = "start") => {
       return;
     }
 
-    // context for drawing on the canvas
-    const canvasContext = canvasElement.getContext("2d", {
-      willReadFrequently: true,
-    });
-
     switch (action) {
       case "start":
         // dont do anything if the stream data is already pulled
@@ -46,12 +43,19 @@ const handleStreamAction = async (action = "start") => {
         if (streamData) {
           return;
         }
+                
+        // initialize canvas and audio context
+        canvasContext = canvasElement.getContext("2d", {
+          willReadFrequently: true,
+        });
+        audioContext = new window.AudioContext();
 
         // render frames of the raw stream from the canvas
         // onto the video player element
         streamData = await renderer.renderRawFrameOnCanvas(
           canvasElement,
-          canvasContext
+          canvasContext,
+          audioContext
         );
 
         // in case the user starts the app without any device connected
@@ -113,18 +117,18 @@ const handleStreamAction = async (action = "start") => {
           return;
         }
 
-        // clear stream related data
-        {
-          streamData.temporaryVideoElement.srcObject = null;
-          streamData.temporaryVideoElement = null;
-          streamData.rawStreamData = null;
-          streamData.gainNode = null;
-          streamData = null;
-        }
-
         // stop all tracks from playing
         await streamTracks.forEach((track) => track.stop());
         isAudioTrackMuted = false;
+
+        // clear stream data
+        {
+          streamData.temporaryVideoElement.srcObject = null;
+          streamData = { temporaryVideoElement: null, gainNode: null, rawStreamData: null };
+          streamData = null;
+          canvasContext = null;
+          audioContext = null;
+        }
 
         // display the "no signal" screen
         mutedIconElement.style.display = "none";

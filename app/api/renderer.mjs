@@ -22,7 +22,7 @@ const createVideoElement = (srcObject) => {
   return videoElement;
 }
 
-export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
+export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audioContext) => {
   try {
     const rawStreamData = await setupStreamFromDevice();
 
@@ -39,16 +39,21 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
       return {};
     }
 
+    if (canvasContext.isContextLost() || !canvasContext) {
+      temporaryVideoElement.srcObject = null;
+      temporaryVideoElement = null;
+      return;
+    }
+
     // start video playback muted
-    // (to avoid duplicated sound)
-    await temporaryVideoElement
-      .play()
-      .catch((err) => {
-        console.error(
-          "[fcapture] - renderer@temporaryVideoElementPromise:",
-          err
-        );
-      });
+    // (to avoid duplicated audio tracks)
+    await temporaryVideoElement.play().catch((err) => {
+      console.error("[fcapture] - renderer@temporaryVideoElementPromise:", err);
+    });
+
+    // apply temporary image filters
+    canvasElement.style.filter =
+      "brightness(1.00) contrast(0.80) saturate(0.90)";
 
     // setup overlay (will only display if you are in debug mode)
     // or if you manually enable it (passing true as an argument)
@@ -59,16 +64,6 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
         temporaryVideoElement.readyState ===
         temporaryVideoElement.HAVE_ENOUGH_DATA
       ) {
-        // setup canvas element using the data pulled
-        // from the rawStream object (the user will have the option to change this later)
-        canvasElement.width = temporaryVideoElement.videoWidth;
-        canvasElement.height = temporaryVideoElement.videoHeight;
-
-        if (canvasContext.isContextLost() || !canvasContext) {
-          temporaryVideoElement = null;
-          return;
-        }
-
         // clean old frames
         canvasContext.clearRect(
           0,
@@ -76,14 +71,6 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
           canvasElement.width,
           canvasElement.height
         );
-
-        // image smoothing when resizing
-        canvasContext.imageSmoothingEnabled = true;
-        canvasContext.imageSmoothingQuality = "high";
-
-        // apply temporary image filters
-        canvasElement.style.filter =
-          "brightness(1.05) contrast(0.95) saturate(0.95)";
 
         // draw new frame
         canvasContext.drawImage(
@@ -98,25 +85,59 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext) => {
         if (drawOverlay) {
           drawOverlay(canvasContext, canvasElement, rawStreamData);
         }
+
+        // enable image smoothing for resized frames
+        canvasContext.imageSmoothingEnabled = true;
+        canvasContext.imageSmoothingQuality = "high";
       }
 
       // render frames recursively
       requestAnimationFrame(drawFrameOnScreen);
     };
 
+    // setup canvas element using the data pulled
+    // from the rawStream object (the user will have the option to change this later)
+    canvasElement.width = temporaryVideoElement.videoWidth;
+    canvasElement.height = temporaryVideoElement.videoHeight;
+
     // continue rendering frames
     requestAnimationFrame(drawFrameOnScreen);
 
-    // handle window audio context and gaing node
-    const audioContext = new window.AudioContext();
+    // get audio source from raw stream
     const audioSource = audioContext.createMediaStreamSource(rawStreamData);
 
     // gain node to control volume (mute/unmute)
     const gainNode = audioContext.createGain();
 
-    // connect audio source to gain node to audio output
+    // bass boost node
+    const bassBoostNode = audioContext.createBiquadFilter();
+
+    // panner and delay nodes for surround sound
+    const pannerNode = audioContext.createPanner();
+    const delayNode = audioContext.createDelay();
+
+    // set up bass boost
+    bassBoostNode.type = "lowshelf";
+    bassBoostNode.frequency.setValueAtTime(150, audioContext.currentTime); // frequency ceiling (will target frequencies bellow 150hz)
+    bassBoostNode.gain.setValueAtTime(14, audioContext.currentTime); // boost level
+
+    // set up surround
+    pannerNode.panningModel = "HRTF"; // Head-Related Transfer Function for realistic 3D sound
+    pannerNode.distanceModel = "linear"; // how volume will decrease over distance/switching sides
+    //
+    pannerNode.positionX.setValueAtTime(0, audioContext.currentTime); // X (left-right)
+    pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up-down)
+    pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front-back)
+    //
+    delayNode.delayTime.value = 0.05;
+
+    // connect audio source to nodes and nodes 
+    // to the audio destination (device)
     audioSource.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(bassBoostNode);
+    bassBoostNode.connect(pannerNode);
+    pannerNode.connect(delayNode);
+    delayNode.connect(audioContext.destination);
 
     return { rawStreamData, gainNode, temporaryVideoElement };
   } catch (err) {
