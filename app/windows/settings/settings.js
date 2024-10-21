@@ -9,7 +9,6 @@ FCapture
 
 "use strict";
 
-// temporary
 const populateStreamOverview = async (canvasData) => {
   try {
     if (!canvasData) {
@@ -26,9 +25,9 @@ const populateStreamOverview = async (canvasData) => {
       );
     }
 
-    // unecessary call
-    // FIXME: pass the rvalue of this function through an event listener,
-    // since this is already being pulled somewhere else
+    // unnecessary call
+    // FIXME: pass the rvalue of this function through an event listener
+    // since this is already being retrieved in another place
     const rawStreamData = await devices.setupStreamFromDevice();
 
     if (!rawStreamData) {
@@ -74,7 +73,7 @@ const initializeEventHandler = async () => {
   try {
     // event listeners
     window.ipcRenderer.on("send-canvas-info", (canvasInfo) => {
-      // populate settings menu
+      // populate settings menu description
       if (canvasInfo) {
         populateStreamOverview(canvasInfo);
       }

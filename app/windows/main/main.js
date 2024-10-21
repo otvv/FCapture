@@ -9,14 +9,15 @@ FCapture
 
 "use strict";
 
-// FIXME: get rid of these
-let streamData = null;
-let canvasContext = null;
-let audioContext = null;
-let audioController = null;
-let currentVolume = 0;
-let previousVolume = 0;
-let isAudioTrackMuted = false;
+const streamState = {
+  canvas: null,
+  canvasContext: null,
+  audioContext: null,
+  audioController: null,
+  currentVolume: 0,
+  previousVolume: 0,
+  isAudioTrackMuted: false,
+};
 
 const handleStreamAction = async (action = "start") => {
   try {
@@ -40,28 +41,28 @@ const handleStreamAction = async (action = "start") => {
       case "start":
         // dont do anything if the stream data is already pulled
         // in other words (if the stream is already running)
-        if (streamData) {
+        if (streamState.canvas) {
           return;
         }
                 
         // initialize canvas and audio context
-        canvasContext = canvasElement.getContext("2d", {
+        streamState.canvasContext = canvasElement.getContext("2d", {
           willReadFrequently: true,
         });
-        audioContext = new window.AudioContext();
+        streamState.audioContext = new window.AudioContext();
 
         // render frames of the raw stream from the canvas
         // onto the video player element
-        streamData = await renderer.renderRawFrameOnCanvas(
+        streamState.canvas = await renderer.renderRawFrameOnCanvas(
           canvasElement,
-          canvasContext,
-          audioContext
+          streamState.canvasContext,
+          streamState.audioContext
         );
 
         // in case the user starts the app without any device connected
-        if (!streamData.rawStreamData) {
+        if (!streamState.canvas) {
           // clear context from residual frames
-          canvasContext.clearRect(
+          streamState.canvasContext.clearRect(
             0,
             0,
             canvasElement.width,
@@ -78,8 +79,8 @@ const handleStreamAction = async (action = "start") => {
         // info to populate the settings window description
         // when needed
         const canvasInfo = {
-          width: streamData.temporaryVideoElement.videoWidth,
-          height: streamData.temporaryVideoElement.videoHeight,
+          width: streamState.canvas.temporaryVideoElement.videoWidth,
+          height: streamState.canvas.temporaryVideoElement.videoHeight,
         };
         window.ipcRenderer.send("receive-canvas-info", canvasInfo);
 
@@ -89,21 +90,21 @@ const handleStreamAction = async (action = "start") => {
         canvasElement.style.display = "block";
 
         // store gain node for volume control
-        audioController = streamData.gainNode;
-        currentVolume = audioController.gain.value; // update volume data
-        isAudioTrackMuted = false;
+        streamState.audioController = streamState.canvas.gainNode;
+        streamState.currentVolume = streamState.audioController.gain.value; // update volume data
+        streamState.isAudioTrackMuted = false;
         break;
       case "stop":
         if (
-          !streamData ||
-          !streamData.rawStreamData ||
-          !streamData.temporaryVideoElement
+          !streamState.canvas ||
+          !streamState.canvas.rawStreamData ||
+          !streamState.canvas.temporaryVideoElement
         ) {
           return;
         }
 
         // clear canvas
-        canvasContext.clearRect(
+        streamState.canvasContext.clearRect(
           0,
           0,
           canvasElement.width,
@@ -111,7 +112,7 @@ const handleStreamAction = async (action = "start") => {
         );
 
         // get allcanvasElement available stream video/audio tracks
-        const streamTracks = await streamData.rawStreamData.getTracks();
+        const streamTracks = await streamState.canvas.rawStreamData.getTracks();
 
         if (!streamTracks) {
           return;
@@ -119,15 +120,15 @@ const handleStreamAction = async (action = "start") => {
 
         // stop all tracks from playing
         await streamTracks.forEach((track) => track.stop());
-        isAudioTrackMuted = false;
+        streamState.isAudioTrackMuted = false;
 
         // clear stream data
         {
-          streamData.temporaryVideoElement.srcObject = null;
-          streamData = { temporaryVideoElement: null, gainNode: null, rawStreamData: null };
-          streamData = null;
-          canvasContext = null;
-          audioContext = null;
+          streamState.canvas.temporaryVideoElement.srcObject = null;
+          streamState.canvas = { temporaryVideoElement: null, gainNode: null, rawStreamData: null };
+          streamState.canvas = null;
+          streamState.canvasContext = null;
+          streamState.audioContext = null;
         }
 
         // display the "no signal" screen
@@ -140,34 +141,34 @@ const handleStreamAction = async (action = "start") => {
         await handleStreamAction("start");
         break;
       case "mute":
-        if (!streamData || !audioController || isAudioTrackMuted === true) {
+        if (!streamState.canvas || !streamState.audioController || streamState.isAudioTrackMuted === true) {
           return;
         }
 
         // save current volume before muting
-        previousVolume = audioController.gain.value;
+        streamState.previousVolume = streamState.audioController.gain.value;
 
-        if (currentVolume > 0.0) {
+        if (streamState.currentVolume > 0.0) {
           // set volume to 0
-          audioController.gain.value = 0.0;
-          currentVolume = audioController.gain.value; // update volume data
+          streamState.audioController.gain.value = 0.0;
+          streamState.currentVolume = streamState.audioController.gain.value; // update volume data
         }
 
         // show mute icon indicator on screen
-        isAudioTrackMuted = true;
+        streamState.isAudioTrackMuted = true;
         mutedIconElement.style.display = "block";
         break;
       case "unmute":
-        if (!streamData || !audioController || isAudioTrackMuted === false) {
+        if (!streamState.canvas || !streamState.audioController || streamState.isAudioTrackMuted === false) {
           return;
         }
 
         // set volume back to what it was before the stream was muted
-        audioController.gain.value = previousVolume;
-        currentVolume = audioController.gain.value; // update volume data
+        streamState.audioController.gain.value = streamState.previousVolume;
+        streamState.currentVolume = streamState.audioController.gain.value; // update volume data
 
         // hide mute icon indicator
-        isAudioTrackMuted = false;
+        streamState.isAudioTrackMuted = false;
         mutedIconElement.style.display = "none";
       default:
         // when no argument is passed the default action

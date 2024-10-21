@@ -27,7 +27,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     const rawStreamData = await setupStreamFromDevice();
 
     if (!rawStreamData) {
-      return;
+      return {};
     }
 
     const temporaryVideoElement = createVideoElement(rawStreamData);
@@ -42,7 +42,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     if (canvasContext.isContextLost() || !canvasContext) {
       temporaryVideoElement.srcObject = null;
       temporaryVideoElement = null;
-      return;
+      return {};
     }
 
     // start video playback muted
@@ -119,7 +119,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     // set up bass boost
     bassBoostNode.type = "lowshelf";
     bassBoostNode.frequency.setValueAtTime(150, audioContext.currentTime); // frequency ceiling (will target frequencies bellow 150hz)
-    bassBoostNode.gain.setValueAtTime(14, audioContext.currentTime); // boost level
+    bassBoostNode.gain.setValueAtTime(10, audioContext.currentTime); // boost level
 
     // set up surround
     pannerNode.panningModel = "HRTF"; // Head-Related Transfer Function for realistic 3D sound

@@ -14,17 +14,18 @@ import path from "path";
 // dirname
 const __dirname = import.meta.dirname;
 
-// globals
-let parentWindow = null;
-let childWindow = null;
-let canvasData = {};
+const appState = {
+  parentWindow: null,
+  childWindow: null,
+  canvasData: {}
+};
 
 // setup gpu/hardware acceleration
 app.commandLine.appendSwitch("enable-gpu-rasterization");
 
 const generateParentWindow = () => {
   // setup properties
-  parentWindow = new BrowserWindow({
+  appState.parentWindow = new BrowserWindow({
     title: "FCapture",
     width: 1280,
     height: 720,
@@ -38,32 +39,32 @@ const generateParentWindow = () => {
     },
   });
 
-  if (parentWindow === null) {
+  if (appState.parentWindow === null) {
     throw new Error(
       "[fcapture] - electron@generateParentWindow: failed to generate window."
     );
   }
 
   // load parent window HTML structure
-  parentWindow.loadFile("app/windows/main/main.html");
+  appState.parentWindow.loadFile("app/windows/main/main.html");
 
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
-    parentWindow.openDevTools();
-    parentWindow.setMenuBarVisibility(true);
+    appState.parentWindow.openDevTools();
+    appState.parentWindow.setMenuBarVisibility(true);
   }
 };
 
 const generateChildWindow = () => {
-  if (childWindow && !childWindow.isDestroyed()) {
-    childWindow.focus();
-    return childWindow;
+  if (appState.childWindow && !appState.childWindow.isDestroyed()) {
+    appState.childWindow.focus();
+    return appState.childWindow;
   }
 
   // setup properties
-  childWindow = new BrowserWindow({
+  appState.childWindow = new BrowserWindow({
     title: "Settings",
-    parent: parentWindow,
+    parent: appState.parentWindow,
     modal: true,
     show: true,
     width: 640,
@@ -80,23 +81,23 @@ const generateChildWindow = () => {
     },
   });
 
-  if (childWindow === null) {
+  if (appState.childWindow === null) {
     throw new Error(
       "[fcapture] - electron@generateChildWindow: failed to generate child window."
     );
   }
 
-  childWindow.on("closed", () => {
-    childWindow = null;  // reset ref
+  appState.childWindow.on("closed", () => {
+    appState.childWindow = null;  // reset ref
   });
 
   // load child window HTML structure
-  childWindow.loadFile("app/windows/settings/settings.html");
+  appState.childWindow.loadFile("app/windows/settings/settings.html");
   
   // DEBUG PURPOSES ONLY
   if (process.env.ELECTRON_ENV === "development") {
-    childWindow.webContents.openDevTools();
-    childWindow.setMenuBarVisibility(true);
+    appState.childWindow.webContents.openDevTools();
+    appState.childWindow.setMenuBarVisibility(true);
   }
 };
 
@@ -108,17 +109,17 @@ const generateTemplateMenu = () => {
       submenu: [
         {
           label: "Refresh Stream",
-          click: () => parentWindow.webContents.send("restart-stream"),
+          click: () => appState.parentWindow.webContents.send("restart-stream"),
         },
         {
           label: "Close Stream",
-          click: () => parentWindow.webContents.send("stop-stream"),
+          click: () => appState.parentWindow.webContents.send("stop-stream"),
         },
         { type: "separator" },
         {
           label: "Settings",
           click: () => {
-            ipcMain.emit("open-settings", canvasData);
+            ipcMain.emit("open-settings", appState.canvasData);
           },
         },
       ],
@@ -128,11 +129,11 @@ const generateTemplateMenu = () => {
       submenu: [
         {
           label: "Mute",
-          click: () => parentWindow.webContents.send("mute-stream"),
+          click: () => appState.parentWindow.webContents.send("mute-stream"),
         },
         {
           label: "Unmute",
-          click: () => parentWindow.webContents.send("unmute-stream"),
+          click: () => appState.parentWindow.webContents.send("unmute-stream"),
         },
       ],
     },
@@ -184,26 +185,26 @@ const generateTemplateMenu = () => {
     const dockMenuTemplate = Menu.buildFromTemplate([
       {
         label: "Refresh Stream",
-        click: () => parentWindow.webContents.send("restart-stream"),
+        click: () => appState.parentWindow.webContents.send("restart-stream"),
       },
       {
         label: "Close Stream",
-        click: () => parentWindow.webContents.send("stop-stream"),
+        click: () => appState.parentWindow.webContents.send("stop-stream"),
       },
       { type: "separator" },
       {
         label: "Mute Audio",
-        click: () => parentWindow.webContents.send("mute-stream"),
+        click: () => appState.parentWindow.webContents.send("mute-stream"),
       },
       {
         label: "Unmute Audio",
-        click: () => parentWindow.webContents.send("unmute-stream"),
+        click: () => appState.parentWindow.webContents.send("unmute-stream"),
       },
       { type: "separator" },
       {
         label: "Settings",
         click: () => {
-          ipcMain.emit("open-settings", canvasData);
+          ipcMain.emit("open-settings", appState.canvasData);
         },
       },
     ]);
@@ -220,18 +221,18 @@ const initializeEventHandler = async () => {
     // event listeners
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
-        canvasData = canvasInfo;
+        appState.canvasData = canvasInfo;
       }
     });
 
     ipcMain.on("open-settings", (_event) => {
       generateChildWindow();
 
-      if (childWindow) {
-        if (childWindow.webContents.isLoading()) {
-          childWindow.webContents.once("did-finish-load", () => {
+      if (appState.childWindow) {
+        if (appState.childWindow.webContents.isLoading()) {
+          appState.childWindow.webContents.once("did-finish-load", () => {
             // send canvas info payload back to the settings window
-            childWindow.webContents.send("send-canvas-info", canvasData);
+            appState.childWindow.webContents.send("send-canvas-info", appState.canvasData);
           });
         }
       }
