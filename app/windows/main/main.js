@@ -72,17 +72,21 @@ const handleStreamAction = async (action = "start") => {
           // hide canvas and show no signal screen
           canvasElement.style.display = "none";
           noSignalContainerElement.style.display = "flex";
+
           return;
         }
 
-        // generate simple object with the necessary canvas
+        // generate a simple object with the necessary canvas
         // info to populate the settings window description
         // when needed
-        const canvasInfo = {
-          width: streamState.canvas.temporaryVideoElement.videoWidth,
-          height: streamState.canvas.temporaryVideoElement.videoHeight,
-        };
-        window.ipcRenderer.send("receive-canvas-info", canvasInfo);
+        if (streamState.canvas.temporaryVideoElement) {
+          const canvasInfo = {
+            width: streamState.canvas.temporaryVideoElement.videoWidth,
+            height: streamState.canvas.temporaryVideoElement.videoHeight,
+          };
+
+          window.ipcRenderer.send("receive-canvas-info", canvasInfo);
+        }
 
         // display canvas and hide no signal screen
         // if device is and stream is working
@@ -91,8 +95,11 @@ const handleStreamAction = async (action = "start") => {
 
         // store gain node for volume control
         streamState.audioController = streamState.canvas.gainNode;
-        streamState.currentVolume = streamState.audioController.gain.value; // update volume data
-        streamState.isAudioTrackMuted = false;
+
+        if (streamState.audioController) {
+          streamState.currentVolume = streamState.audioController.gain.value; // update volume data
+          streamState.isAudioTrackMuted = false;
+        } 
         break;
       case "stop":
         if (
@@ -141,7 +148,9 @@ const handleStreamAction = async (action = "start") => {
         await handleStreamAction("start");
         break;
       case "mute":
-        if (!streamState.canvas || !streamState.audioController || streamState.isAudioTrackMuted === true) {
+        if (!streamState.canvas || 
+          !streamState.audioController || 
+          streamState.isAudioTrackMuted === true) {
           return;
         }
 
@@ -159,7 +168,9 @@ const handleStreamAction = async (action = "start") => {
         mutedIconElement.style.display = "block";
         break;
       case "unmute":
-        if (!streamState.canvas || !streamState.audioController || streamState.isAudioTrackMuted === false) {
+        if (!streamState.canvas || 
+          !streamState.audioController || 
+          streamState.isAudioTrackMuted === false) {
           return;
         }
 
@@ -208,16 +219,12 @@ const handleWindowAction = async (action = "preview") => {
 
 const initializeEventHandler = async () => {
   try {
-    // DEBUG PURPOSES ONLY
-    // console.log("[fcapture] - main@initializeEventHandler:", window.ipcRenderer.isLoaded());
-
     // controllers
     const navbarContainerElement = document.querySelector("#navbar-container");
     const mutedIconElement = document.querySelector("#muted-icon");
     const tabsContainerElement = document.querySelector("#tabs-container");
 
     // event listeners
-    // NOTE: these listeneres will likely stay on this file/function
     window.ipcRenderer.on("start-stream", () => handleStreamAction("start"));
     window.ipcRenderer.on("stop-stream", () => handleStreamAction("stop"));
     window.ipcRenderer.on("restart-stream", () => handleStreamAction("restart"));
@@ -225,7 +232,7 @@ const initializeEventHandler = async () => {
     window.ipcRenderer.on("unmute-stream", () => handleStreamAction("unmute"));
 
     // native DOM event listeners
-    navigator.mediaDevices.ondevicechange = () => handleStreamAction("restart");
+    navigator.mediaDevices.ondevicechange = (_event) => handleStreamAction("restart");
     mutedIconElement.addEventListener("click", () => handleStreamAction("unmute"));
 
     if (navbarContainerElement) {
@@ -241,11 +248,13 @@ const initializeEventHandler = async () => {
       recordingsTabElement.addEventListener("click", () =>
         handleWindowAction("recordings")
       );
-      muteButtonElement.addEventListener("click", () =>
-        // TODO: turn this into a switch to mute and unmute the audio
-        // and change the icon based on stream status
-        handleStreamAction("mute")
-      );
+      muteButtonElement.addEventListener("click", () => {
+        if (streamState.isAudioTrackMuted) {
+          handleStreamAction("unmute")
+        } else {
+          handleStreamAction("mute")
+        }
+      });
       refreshButtonElement.addEventListener("click", () =>
         handleStreamAction("restart")
       );
