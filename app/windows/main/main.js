@@ -219,6 +219,9 @@ const handleWindowAction = async (action = "preview") => {
 
 const initializeEventHandler = async () => {
   try {
+    // start stream
+    await handleStreamAction();
+
     // controllers
     const navbarContainerElement = document.querySelector("#navbar-container");
     const mutedIconElement = document.querySelector("#muted-icon");
@@ -262,9 +265,6 @@ const initializeEventHandler = async () => {
         handleWindowAction("settings")
       );
     }
-
-    // start stream
-    await handleStreamAction();
   } catch (err) {
     console.error("[fcapture] - main@initializeEventHandler:", err);
   }

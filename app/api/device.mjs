@@ -79,7 +79,7 @@ const getAvailableDevices = async () => {
     // prevent the renderer from fallbacking to the default device
     // in case the desired device has not been found or initialized yet
     if (!usbDeviceFound) {
-      return null;
+      return;
     }
 
     return deviceInfoPayload;
@@ -93,7 +93,7 @@ export const setupStreamFromDevice = async () => {
     // get filtered device payload to pull video from
     const device = await getAvailableDevices();
 
-    if (device === null) {
+    if (!device) {
       return;
     }
 
@@ -138,7 +138,6 @@ export const setupStreamFromDevice = async () => {
       console.log(
         "[fcapture] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
       );
-      return null;
     }
 
     return rawMedia;

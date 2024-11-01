@@ -27,7 +27,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     const rawStreamData = await setupStreamFromDevice();
 
     if (!rawStreamData) {
-      return {};
+      return;
     }
 
     const temporaryVideoElement = createVideoElement(rawStreamData);
@@ -36,13 +36,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       console.error(
         "[fcapture] - renderer@renderRawFrameOnCanvas: failed to create temporary video element."
       );
-      return {};
-    }
-
-    if (canvasContext.isContextLost() || !canvasContext) {
-      temporaryVideoElement.srcObject = null;
-      temporaryVideoElement = null;
-      return {};
+      return;
     }
 
     // start video playback muted
@@ -129,7 +123,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up-down)
     pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front-back)
     //
-    delayNode.delayTime.value = 0.05;
+    delayNode.delayTime.value = 0.05; // surround effect "transition smoothness"
 
     // connect audio source to nodes and nodes 
     // to the audio destination (device)

@@ -69,14 +69,54 @@ const populateStreamOverview = async (canvasData) => {
   }
 };
 
+const requestConfigData = () => {
+  // request the current config when the settings window loads
+  window.ipcRenderer.send("request-config-info");
+}
+
 const initializeEventHandler = async () => {
   try {
+    const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
+    const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
+    const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
+
+    // request window state from config file 
+    // when the settings window is ready
+    window.addEventListener('DOMContentLoaded', () => {
+      requestConfigData();
+    });
+
     // event listeners
     window.ipcRenderer.on("send-canvas-info", (canvasInfo) => {
       // populate settings menu description
       if (canvasInfo) {
         populateStreamOverview(canvasInfo);
       }
+    });
+
+    window.ipcRenderer.on("config-loaded", (configPayload) => {
+      console.log("[fcapture] - settings@initializeEventHandler: config payload received.", configPayload);
+
+      // update control elements using the data pulled from the config file
+      if (configPayload) {
+        debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
+        bassBoostCheckboxElement.checked = configPayload.bassBoost;
+        surroundAudioCheckboxElement.checked = configPayload.surroundAudio;
+      }
+    });
+    
+    // update config file according with the settings window
+    // control element state
+    debugOverlayCheckboxElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { debugOverlay: event.target.checked } );
+    });
+    
+    surroundAudioCheckboxElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { surroundAudio: event.target.checked } );
+    });
+
+    bassBoostCheckboxElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { bassBoost: event.target.checked } );
     });
   } catch (err) {
     console.error("[fcapture] - settings@initializeEventHandler:", err);

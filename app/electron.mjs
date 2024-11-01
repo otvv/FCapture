@@ -8,20 +8,25 @@ FCapture
 */
 
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
+import { loadConfigState, saveConfigState, configObjectTemplate } from "./api/config.mjs";
 import process from "process";
 import path from "path";
 
 // dirname
 const __dirname = import.meta.dirname;
 
+// hardware acceleration flags
+app.commandLine.appendSwitch('ignore-gpu-blacklist')
+app.commandLine.appendSwitch('enable-gpu-rasterization')
+app.commandLine.appendSwitch('enable-accelerated-video')
+app.commandLine.appendSwitch('enable-accelerated-video-decode')
+app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder')
+
 const appState = {
   parentWindow: null,
   childWindow: null,
   canvasData: {}
 };
-
-// setup gpu/hardware acceleration
-app.commandLine.appendSwitch("enable-gpu-rasterization");
 
 const generateParentWindow = () => {
   // setup properties
@@ -33,7 +38,7 @@ const generateParentWindow = () => {
     minHeight: 480,
     autoHideMenuBar: true,
     icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
-    darkTheme: true, // might break on some GTK3 themes if it doesnt have a proper dark variation
+    darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -218,6 +223,9 @@ const initializeEventHandler = async () => {
     // initialize app
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
 
+    // load config internally after app starts
+    loadConfigState();
+
     // event listeners
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
@@ -232,12 +240,31 @@ const initializeEventHandler = async () => {
         if (appState.childWindow.webContents.isLoading()) {
           appState.childWindow.webContents.once("did-finish-load", () => {
             // send canvas info payload back to the settings window
-            appState.childWindow.webContents.send("send-canvas-info", appState.canvasData);
+            appState.childWindow.webContents.send(
+              "send-canvas-info",
+              appState.canvasData
+            );
           });
         }
       }
     });
 
+    ipcMain.on("update-config-info", (event, newConfigPayload) => { // save
+      Object.assign(configObjectTemplate, newConfigPayload);
+      
+      // save updated config payload state
+      saveConfigState();
+
+      event.reply("config-saved", configObjectTemplate);
+      console.log("[fcapture] - electron@initializeEventHandler: config saved.");
+    });
+
+    ipcMain.on("request-config-info", (event) => { // load
+
+      console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
+
+      event.reply("config-loaded", configObjectTemplate);
+    });
   } catch (err) {
     console.error("[fcapture] - electron@initializeEventHandler:", err);
   }
