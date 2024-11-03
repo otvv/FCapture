@@ -9,6 +9,31 @@ FCapture
 
 import { setupOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
+import { configObjectTemplate } from "../configTemplate.js";
+
+const requestConfigData = () => {
+  // request the current config when the settings window loads
+  window.ipcRenderer.send("request-config-info");
+}
+
+const updateWindowState = () => {
+  window.ipcRenderer.on("config-loaded", (configPayload) => {
+    console.log(
+      "[fcapture] - renderer@renderRawFrameOnCanvas: config payload received.",
+      configPayload
+    );
+
+    // update original config object template
+    // using the data pulled from the config file
+    if (configPayload) {
+      for (const key in configPayload) {
+        if (configObjectTemplate[key] !== configPayload[key]) {
+          configObjectTemplate[key] = configPayload[key];
+        }
+      }
+    }
+  });
+}
 
 const createVideoElement = (srcObject) => {
   const videoElement = document.createElement("video");
@@ -30,6 +55,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       return;
     }
 
+    // create video element and perform initial configurations
     const temporaryVideoElement = createVideoElement(rawStreamData);
 
     if (temporaryVideoElement === null) {
@@ -39,8 +65,12 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       return;
     }
 
-    // start video playback muted
-    // (to avoid duplicated audio tracks)
+    // request data from config file
+    // and update window state 
+    requestConfigData();
+    updateWindowState();
+
+    // start video playback
     await temporaryVideoElement.play().catch((err) => {
       console.error("[fcapture] - renderer@temporaryVideoElementPromise:", err);
     });
@@ -75,13 +105,13 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
           canvasElement.height
         );
 
-        // DEBUG PURPOSES ONLY
-        if (drawOverlay) {
+        // enable debug overlay
+        if (drawOverlay && configObjectTemplate.debugOverlay) {
           drawOverlay(canvasContext, canvasElement, rawStreamData);
         }
 
         // enable image smoothing for resized frames
-        canvasContext.imageSmoothingEnabled = true;
+        canvasContext.imageSmoothingEnabled = configObjectTemplate.imageSmoothing;
         canvasContext.imageSmoothingQuality = "high";
       }
 
@@ -113,7 +143,12 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     // set up bass boost
     bassBoostNode.type = "lowshelf";
     bassBoostNode.frequency.setValueAtTime(150, audioContext.currentTime); // frequency ceiling (will target frequencies bellow 150hz)
-    bassBoostNode.gain.setValueAtTime(10, audioContext.currentTime); // boost level
+
+    if (configObjectTemplate.bassBoost) {
+      bassBoostNode.gain.setValueAtTime(12, audioContext.currentTime);
+    } else {
+      bassBoostNode.gain.setValueAtTime(0, audioContext.currentTime);
+    }
 
     // set up surround
     pannerNode.panningModel = "HRTF"; // Head-Related Transfer Function for realistic 3D sound
@@ -123,7 +158,12 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up-down)
     pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front-back)
     //
-    delayNode.delayTime.value = 0.05; // surround effect "transition smoothness"
+    
+    if (configObjectTemplate.surroundAudio) {
+      delayNode.delayTime.value = 0.05;
+    } else {
+      delayNode.delayTime.value = 0.0;
+    }
 
     // connect audio source to nodes and nodes 
     // to the audio destination (device)

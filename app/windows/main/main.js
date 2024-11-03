@@ -9,6 +9,20 @@ FCapture
 
 "use strict";
 
+// element querying
+const canvasElement = document.querySelector("#canvas-element");
+const noSignalContainerElement = document.querySelector(
+  "#no-signal-container"
+);
+const mutedIconElement = document.querySelector("#muted-icon");
+const navbarContainerElement = document.querySelector("#navbar-container");
+const tabsContainerElement = document.querySelector("#tabs-container");
+const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
+const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
+const settingsButtonElement = document.querySelector("#settings-button");
+const muteButtonElement = document.querySelector("#mute-button");
+const refreshButtonElement = document.querySelector("#refresh-button");
+
 const streamState = {
   canvas: null,
   canvasContext: null,
@@ -19,15 +33,28 @@ const streamState = {
   isAudioTrackMuted: false,
 };
 
+const toggleStreamMute = (state) => {
+  if (!streamState.audioController) {
+    return;
+  } 
+
+  if (state && !streamState.isAudioTrackMuted) {
+    // save current volume and set gain to 0 for muting
+    streamState.previousVolume = streamState.audioController.gain.value;
+    streamState.audioController.gain.value = 0.0;
+    streamState.isAudioTrackMuted = true;
+    mutedIconElement.style.display = "block";
+  } else {
+    // restore previous volume after unmuting
+    streamState.audioController.gain.value = streamState.previousVolume;
+    streamState.isAudioTrackMuted = false;
+    mutedIconElement.style.display = "none";
+  }
+};
+
 const handleStreamAction = async (action = "start") => {
   try {
     const renderer = await import("../../api/renderer.mjs");
-
-    const canvasElement = document.querySelector("#canvas-element");
-    const noSignalContainerElement = document.querySelector(
-      "#no-signal-container"
-    );
-    const mutedIconElement = document.querySelector("#muted-icon");
 
     if (canvasElement === null) {
       console.error(
@@ -125,9 +152,23 @@ const handleStreamAction = async (action = "start") => {
           return;
         }
 
-        // stop all tracks from playing
+        // stop all tracks from playing (audio and video)
         await streamTracks.forEach((track) => track.stop());
         streamState.isAudioTrackMuted = false;
+
+        // close audio controller
+        if (streamState.audioController) {
+          streamState.audioController.disconnect();
+        }
+
+        if (streamState.audioContext) {
+          streamState.audioContext.close();
+        }
+
+        // display the "no signal" screen
+        mutedIconElement.style.display = "none";
+        canvasElement.style.display = "none";
+        noSignalContainerElement.style.display = "flex";
 
         // clear stream data
         {
@@ -137,50 +178,16 @@ const handleStreamAction = async (action = "start") => {
           streamState.canvasContext = null;
           streamState.audioContext = null;
         }
-
-        // display the "no signal" screen
-        mutedIconElement.style.display = "none";
-        canvasElement.style.display = "none";
-        noSignalContainerElement.style.display = "flex";
         break;
       case "restart":
         await handleStreamAction("stop");
         await handleStreamAction("start");
         break;
       case "mute":
-        if (!streamState.canvas || 
-          !streamState.audioController || 
-          streamState.isAudioTrackMuted === true) {
-          return;
-        }
-
-        // save current volume before muting
-        streamState.previousVolume = streamState.audioController.gain.value;
-
-        if (streamState.currentVolume > 0.0) {
-          // set volume to 0
-          streamState.audioController.gain.value = 0.0;
-          streamState.currentVolume = streamState.audioController.gain.value; // update volume data
-        }
-
-        // show mute icon indicator on screen
-        streamState.isAudioTrackMuted = true;
-        mutedIconElement.style.display = "block";
+        toggleStreamMute(true);
         break;
       case "unmute":
-        if (!streamState.canvas || 
-          !streamState.audioController || 
-          streamState.isAudioTrackMuted === false) {
-          return;
-        }
-
-        // set volume back to what it was before the stream was muted
-        streamState.audioController.gain.value = streamState.previousVolume;
-        streamState.currentVolume = streamState.audioController.gain.value; // update volume data
-
-        // hide mute icon indicator
-        streamState.isAudioTrackMuted = false;
-        mutedIconElement.style.display = "none";
+        toggleStreamMute(false);
       default:
         // when no argument is passed the default action
         // will always be to start the stream
@@ -194,8 +201,6 @@ const handleStreamAction = async (action = "start") => {
 
 const handleWindowAction = async (action = "preview") => {
   try {
-    const canvasElement = document.querySelector("#canvas-element");
-
     if (!canvasElement) {
       return;
     }
@@ -222,11 +227,6 @@ const initializeEventHandler = async () => {
     // start stream
     await handleStreamAction();
 
-    // controllers
-    const navbarContainerElement = document.querySelector("#navbar-container");
-    const mutedIconElement = document.querySelector("#muted-icon");
-    const tabsContainerElement = document.querySelector("#tabs-container");
-
     // event listeners
     window.ipcRenderer.on("start-stream", () => handleStreamAction("start"));
     window.ipcRenderer.on("stop-stream", () => handleStreamAction("stop"));
@@ -239,12 +239,6 @@ const initializeEventHandler = async () => {
     mutedIconElement.addEventListener("click", () => handleStreamAction("unmute"));
 
     if (navbarContainerElement) {
-      const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
-      const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
-      const settingsButtonElement = document.querySelector("#settings-button");
-      const muteButtonElement = document.querySelector("#mute-button");
-      const refreshButtonElement = document.querySelector("#refresh-button");
-
       previewTabElement.addEventListener("click", () =>
         handleWindowAction("preview")
       );

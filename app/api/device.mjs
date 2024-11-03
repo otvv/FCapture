@@ -143,5 +143,6 @@ export const setupStreamFromDevice = async () => {
     return rawMedia;
   } catch (err) {
     console.error("[fcapture] - renderer@setupStreamFromDevice:", err);
+    return null;
   }
 };

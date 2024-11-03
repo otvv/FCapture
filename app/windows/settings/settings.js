@@ -9,6 +9,13 @@ FCapture
 
 "use strict";
 
+// element querying
+const descriptionTextElement = document.querySelector("#description-text");
+const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
+const imageSmoothingCheckboxElement = document.querySelector("#image-smoothing-checkbox");
+const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
+const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
+
 const populateStreamOverview = async (canvasData) => {
   try {
     if (!canvasData) {
@@ -16,8 +23,6 @@ const populateStreamOverview = async (canvasData) => {
     }
 
     const devices = await import("../../api/device.mjs");
-
-    const descriptionTextElement = document.querySelector("#description-text");
 
     if (descriptionTextElement === null) {
       console.log(
@@ -76,10 +81,6 @@ const requestConfigData = () => {
 
 const initializeEventHandler = async () => {
   try {
-    const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
-    const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
-    const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
-
     // request window state from config file 
     // when the settings window is ready
     window.addEventListener('DOMContentLoaded', () => {
@@ -99,7 +100,10 @@ const initializeEventHandler = async () => {
 
       // update control elements using the data pulled from the config file
       if (configPayload) {
+        // TODO: query all checkboxes or any other type of form element
+        // and update them all dynamically using loop
         debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
+        imageSmoothingCheckboxElement.checked = configPayload.imageSmoothing;
         bassBoostCheckboxElement.checked = configPayload.bassBoost;
         surroundAudioCheckboxElement.checked = configPayload.surroundAudio;
       }
@@ -109,6 +113,10 @@ const initializeEventHandler = async () => {
     // control element state
     debugOverlayCheckboxElement.addEventListener('change', (event) => {
       ipcRenderer.send('update-config-info', { debugOverlay: event.target.checked } );
+    });
+
+    imageSmoothingCheckboxElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageSmoothing: event.target.checked } );
     });
     
     surroundAudioCheckboxElement.addEventListener('change', (event) => {

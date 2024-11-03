@@ -10,16 +10,10 @@ FCapture
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { configObjectTemplate } from '../configTemplate.js';
 
 // set path to config file
 const configPath = path.join(app.getPath('userData'), 'fcapture-config.json');
-
-// default config object template
-export let configObjectTemplate = {
-    debugOverlay: false,
-    surroundAudio: false,
-    bassBoost: false
-};
 
 export const saveConfigState = () => {
   try {
@@ -39,7 +33,7 @@ export const loadConfigState = () => {
 
       // replace the original config object 
       // with data parsed from the config file
-      configObjectTemplate = JSON.parse(configPayload);
+      Object.assign(configObjectTemplate, JSON.parse(configPayload));
     } else {
       console.error("[fcapture] - config@loadConfigState: the config file was not found.");
 

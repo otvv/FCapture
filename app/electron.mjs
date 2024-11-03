@@ -8,7 +8,8 @@ FCapture
 */
 
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
-import { loadConfigState, saveConfigState, configObjectTemplate } from "./api/config.mjs";
+import { loadConfigState, saveConfigState } from "./api/config.mjs";
+import { configObjectTemplate } from "./configTemplate.js";
 import process from "process";
 import path from "path";
 
