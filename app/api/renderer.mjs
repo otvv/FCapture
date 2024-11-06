@@ -66,7 +66,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     }
 
     // request data from config file
-    // and update window state 
+    // and update window state
     requestConfigData();
     updateWindowState();
 
@@ -75,13 +75,23 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       console.error("[fcapture] - renderer@temporaryVideoElementPromise:", err);
     });
 
+    // get image brightness, contrast and saturation percentages
+    const imageBrightnessValue = configObjectTemplate.imageBrightness / 100;
+    const imageContrastValue = configObjectTemplate.imageContrast / 100;
+    const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
+
     // apply temporary image filters
-    canvasElement.style.filter =
-      "brightness(1.00) contrast(0.80) saturate(0.90)";
+    canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
 
     // setup overlay (will only display if you are in debug mode)
     // or if you manually enable it (passing true as an argument)
     const drawOverlay = setupOverlay();
+
+    // enable image smoothing for resized frames
+    if (configObjectTemplate.imageSmoothing) {
+      canvasContext.imageSmoothingEnabled = true;
+      canvasContext.imageSmoothingQuality = "high";
+    }
 
     const drawFrameOnScreen = async () => {
       if (
@@ -104,19 +114,15 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
           canvasElement.width,
           canvasElement.height
         );
-
-        // enable debug overlay
-        if (drawOverlay && configObjectTemplate.debugOverlay) {
-          drawOverlay(canvasContext, canvasElement, rawStreamData);
-        }
-
-        // enable image smoothing for resized frames
-        canvasContext.imageSmoothingEnabled = configObjectTemplate.imageSmoothing;
-        canvasContext.imageSmoothingQuality = "high";
       }
 
       // render frames recursively
       requestAnimationFrame(drawFrameOnScreen);
+
+      // enable debug overlay
+      if (drawOverlay && configObjectTemplate.debugOverlay) {
+        drawOverlay(canvasContext, canvasElement, rawStreamData);
+      }
     };
 
     // setup canvas element using the data pulled
@@ -158,14 +164,14 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up-down)
     pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front-back)
     //
-    
+
     if (configObjectTemplate.surroundAudio) {
       delayNode.delayTime.value = 0.05;
     } else {
       delayNode.delayTime.value = 0.0;
     }
 
-    // connect audio source to nodes and nodes 
+    // connect audio source to nodes and nodes
     // to the audio destination (device)
     audioSource.connect(gainNode);
     gainNode.connect(bassBoostNode);

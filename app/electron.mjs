@@ -19,6 +19,10 @@ const __dirname = import.meta.dirname;
 // hardware acceleration flags
 app.commandLine.appendSwitch('ignore-gpu-blacklist')
 app.commandLine.appendSwitch('enable-gpu-rasterization')
+// FIXME: figure out which one of these flags 
+// below actually do something 
+// (I know one of these helps mitigate screen tearing)
+// TODO: after I figure it out which flag "enables" VSYNC, turn this into a setting.
 app.commandLine.appendSwitch('enable-accelerated-video')
 app.commandLine.appendSwitch('enable-accelerated-video-decode')
 app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder')

@@ -13,6 +13,10 @@ FCapture
 const descriptionTextElement = document.querySelector("#description-text");
 const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
 const imageSmoothingCheckboxElement = document.querySelector("#image-smoothing-checkbox");
+const imageBrightnessSliderElement = document.querySelector("#image-brightness-slider");
+const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
+const imageSaturationSliderElement = document.querySelector("#image-saturation-slider");
+
 const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 
@@ -104,6 +108,10 @@ const initializeEventHandler = async () => {
         // and update them all dynamically using loop
         debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
         imageSmoothingCheckboxElement.checked = configPayload.imageSmoothing;
+        imageBrightnessSliderElement.value = configPayload.imageBrightness;
+        imageContrastSliderElement.value = configPayload.imageContrast;
+        imageSaturationSliderElement.value = configPayload.imageSaturation;
+        //
         bassBoostCheckboxElement.checked = configPayload.bassBoost;
         surroundAudioCheckboxElement.checked = configPayload.surroundAudio;
       }
@@ -125,6 +133,18 @@ const initializeEventHandler = async () => {
 
     bassBoostCheckboxElement.addEventListener('change', (event) => {
       ipcRenderer.send('update-config-info', { bassBoost: event.target.checked } );
+    });
+
+    imageBrightnessSliderElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageBrightness: event.target.value } );
+    });
+
+    imageContrastSliderElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageContrast: event.target.value } );
+    });
+
+    imageSaturationSliderElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageSaturation: event.target.value } );
     });
   } catch (err) {
     console.error("[fcapture] - settings@initializeEventHandler:", err);
