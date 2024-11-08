@@ -20,6 +20,39 @@ const imageSaturationSliderElement = document.querySelector("#image-saturation-s
 const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 
+const getRefreshRateOnce = () => {
+  return new Promise((resolve) => {
+    const UPDATE_INTERVAL = 1000; // 1 second in ms
+    
+    let frameCount = 0;
+    const calculateRefreshRate = () => {
+      frameCount++;
+    };
+
+    // count frames for 1 second
+    // so we can get our canvas refresh 
+    // rate (fps) estimate
+    const interval = setInterval(() => {
+      // return the number of frames counted in the 1 second
+      resolve(frameCount); 
+
+      // stop counting after 1 second
+      clearInterval(interval); 
+
+    }, UPDATE_INTERVAL);
+
+    const frame = () => {
+      calculateRefreshRate();
+
+      // continue counting frames
+      requestAnimationFrame(frame); 
+    }
+    
+    // start counting frames
+    requestAnimationFrame(frame);
+  });
+};
+
 const populateStreamOverview = async (canvasData) => {
   try {
     if (!canvasData) {
@@ -35,7 +68,7 @@ const populateStreamOverview = async (canvasData) => {
     }
 
     // unnecessary call
-    // FIXME: pass the rvalue of this function through an event listener
+    // FIXME: pass the rvalue of this function through an event
     // since this is already being retrieved in another place
     const rawStreamData = await devices.setupStreamFromDevice();
 
@@ -43,9 +76,17 @@ const populateStreamOverview = async (canvasData) => {
       return;
     }
 
-    // get some more additional info
+    // get more additional info
     const outputWidth = canvasData.width || "0";
     const outputHeight = canvasData.height || "0";
+
+    // TODO: maybe cache this value? so the app don't need
+    // to keep calculating the rfresh rate when 
+    // opening the settings window 
+    const outputFps = await getRefreshRateOnce().then((estimateRefreshRate) => {
+      return estimateRefreshRate;
+    }) || "0";
+
     const targetWidth =
       rawStreamData.getVideoTracks()[0].getSettings().width || "0";
     const targetHeight =
@@ -71,7 +112,7 @@ const populateStreamOverview = async (canvasData) => {
 
     descriptionTextElement.innerHTML = `
       <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
-      <b>Output</b>: ${outputWidth}x${outputHeight} @ ${targetFps} FPS <i>(Canvas)</i><br>
+      <b>Output</b>: ${outputWidth}x${outputHeight} @ ${outputFps} FPS <i>(Canvas)</i><br>
       <b>Audio</b>: ${targetAudioChannelCount} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
   } catch (err) {
     console.error("[fcapture] - settings@populateStreamOverview:", err);

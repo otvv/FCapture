@@ -16,8 +16,8 @@ const ASPECT_RATIO_TABLE = Object.freeze({
 // this will be filled with more devices in the future
 const AVAILABLE_DEVICE_LABELS = Object.freeze({
   // generic
-  USB_VIDEO: "USB Video", // macOS and Linux
-  USB_AUDIO: "USB Digital Audio", // macOS
+  USB_VIDEO: "USB Video", // macOS, Linux and Windows
+  USB_AUDIO: "USB Digital Audio", // macOS and Windows
   USB_AUDIO_ALT: "USB Video", // Linux
   // semi-generic
 
@@ -49,7 +49,8 @@ const getAvailableDevices = async () => {
       // DEBUG PURPOSES ONLY
       // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
-      // ignore OBS related virtual devices
+      // prevent the renderer from fallbacking to the default device
+      // and ignore virtual devices (OBS, etc)
       if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL)) {
         return;
       }
@@ -108,8 +109,11 @@ export const setupStreamFromDevice = async () => {
         // image quality from the device
         width: { ideal: 99999999 }, 
         height: { ideal: 99999999 },
-        frameRate: { ideal: 99999999 },
-        bitrate: { ideal: 99999999 },
+        frameRate: { ideal: 30 }, // FIXME: 
+                                  // for some reason on Windows we can't really force the highest possible FPS
+                                  // we need to specify the specific value otherwise the capture 
+                                  // card will glitch out attempting to display 99999999 frames (image will start flashing)
+                                  // an alternative to this method is to get the device FPS constraint and get the last value of the array.
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
@@ -120,7 +124,12 @@ export const setupStreamFromDevice = async () => {
         // audio quality from the device
         sampleRate: { ideal: 99999999 },
         sampleSize: { ideal: 99999999 },
-        channelCount: { ideal: 99999999 },
+        channelCount: { ideal: 99999999 }, // FIXME:
+                                           // for some reason on Windows the capture card doesn't support stereo audio
+                                           // while using the highest sample rate, in my case 96000khz
+                                           // also I cant seem to be able to change the sample rate either
+                                           // (prolly due to Windows using the device as well)
+
         // TODO: add an option to only passthrough audio
         echoCancellation: false,
       },

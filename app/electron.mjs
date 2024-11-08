@@ -9,7 +9,7 @@ FCapture
 
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import { loadConfigState, saveConfigState } from "./api/config.mjs";
-import { configObjectTemplate } from "./configTemplate.js";
+import { configObjectTemplate } from "./configTemplate.mjs";
 import process from "process";
 import path from "path";
 

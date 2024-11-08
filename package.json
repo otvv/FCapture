@@ -1,6 +1,6 @@
 {
   "name": "fcapture",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "a previewer/recorder (eventually) software for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {
@@ -25,10 +25,12 @@
   },
   "scripts": {
     "start": "npx electron .",
-    "test": "ELECTRON_ENV=development npx electron .",
-    "build": "sudo sh build/build.sh",
-    "buildAlt": "electron-builder",
-    "signMac": "codesign --deep --force --sign - dist/mac/*.app"
+    "test": "npx cross-env ELECTRON_ENV=development electron .",
+    "build": "node app/build.mjs",
+    "buildAltUnix": "sudo sh build/build.sh",
+    "buildAltWin": "powershell -File build/build.ps1",
+    "buildAltGlobal": "electron-builder",
+    "appSignMac": "codesign --deep --force --sign - dist/mac/*.app"
   },
   "repository": {
     "type": "git",

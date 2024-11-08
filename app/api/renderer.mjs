@@ -9,7 +9,7 @@ FCapture
 
 import { setupOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
-import { configObjectTemplate } from "../configTemplate.js";
+import { configObjectTemplate } from "../configTemplate.mjs";
 
 const requestConfigData = () => {
   // request the current config when the settings window loads
@@ -116,13 +116,13 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
         );
       }
 
-      // render frames recursively
-      requestAnimationFrame(drawFrameOnScreen);
-
       // enable debug overlay
       if (drawOverlay && configObjectTemplate.debugOverlay) {
         drawOverlay(canvasContext, canvasElement, rawStreamData);
       }
+
+      // render frames recursively
+      requestAnimationFrame(drawFrameOnScreen);
     };
 
     // setup canvas element using the data pulled
@@ -151,7 +151,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     bassBoostNode.frequency.setValueAtTime(150, audioContext.currentTime); // frequency ceiling (will target frequencies bellow 150hz)
 
     if (configObjectTemplate.bassBoost) {
-      bassBoostNode.gain.setValueAtTime(12, audioContext.currentTime);
+      bassBoostNode.gain.setValueAtTime(10, audioContext.currentTime);
     } else {
       bassBoostNode.gain.setValueAtTime(0, audioContext.currentTime);
     }
