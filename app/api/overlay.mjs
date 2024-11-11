@@ -21,11 +21,6 @@ const overlaySettings = Object.freeze({
 });
 
 export const setupOverlay = () => {
-  // enable the overlay only when in debug mode
-  if (!window.ipcRenderer.isInDebugMode()) {
-    return false;
-  }
-
   // state variables
   let lastFrameTime = performance.now();
   let refreshRateStartTime = performance.now();

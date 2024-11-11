@@ -104,31 +104,32 @@ export const setupStreamFromDevice = async () => {
       // it will use the respective setting internal default/ideal value
       video: {
         deviceId: { exact: device.video.id },
-        
-        // wacky way to get the highest possible 
+
+        // wacky way to get the highest possible
         // image quality from the device
-        width: { ideal: 99999999 }, 
+        width: { ideal: 99999999 },
         height: { ideal: 99999999 },
-        frameRate: { ideal: 30 }, // FIXME: 
-                                  // for some reason on Windows we can't really force the highest possible FPS
-                                  // we need to specify the specific value otherwise the capture 
-                                  // card will glitch out attempting to display 99999999 frames (image will start flashing)
-                                  // an alternative to this method is to get the device FPS constraint and get the last value of the array.
+        frameRate: { ideal: 99999999 }, // FIXME:
+        // for some reason on Windows we can't really force the highest possible FPS
+        // we need to specify a valid value otherwise the capture card
+        // will glitch out attempting to display 99999999 frames (image will start flashing)
+        // an alternative to this method is to get the device max FPS capability array (constraint)
+        // get the last value of this array and use it instead.
+
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
       audio: {
         deviceId: { exact: device.audio.id },
-        
-        // wacky way to get the highest possible 
+
+        // wacky way to get the highest possible
         // audio quality from the device
         sampleRate: { ideal: 99999999 },
         sampleSize: { ideal: 99999999 },
         channelCount: { ideal: 99999999 }, // FIXME:
-                                           // for some reason on Windows the capture card doesn't support stereo audio
-                                           // while using the highest sample rate, in my case 96000khz
-                                           // also I cant seem to be able to change the sample rate either
-                                           // (prolly due to Windows using the device as well)
+        // for some reason on Windows the capture card doesn't support stereo audio
+        // while using the highest sample rate, in my case 96000khz
+        // also I can't seem to be able to change the sample rate either
 
         // TODO: add an option to only passthrough audio
         echoCancellation: false,
@@ -144,7 +145,7 @@ export const setupStreamFromDevice = async () => {
     // console.log("[fcapture] renderer@setupStreamFromDevice raw:", rawMedia);
 
     if (!rawMedia) {
-      console.log(
+      console.warn(
         "[fcapture] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
       );
     }

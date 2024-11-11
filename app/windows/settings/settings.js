@@ -12,11 +12,10 @@ FCapture
 // element querying
 const descriptionTextElement = document.querySelector("#description-text");
 const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
-const imageSmoothingCheckboxElement = document.querySelector("#image-smoothing-checkbox");
+const imageRenderingPrioritySelectElement = document.querySelector("#image-rendering-priority-select");
 const imageBrightnessSliderElement = document.querySelector("#image-brightness-slider");
 const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
 const imageSaturationSliderElement = document.querySelector("#image-saturation-slider");
-
 const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 
@@ -24,32 +23,33 @@ const getRefreshRateOnce = () => {
   return new Promise((resolve) => {
     const UPDATE_INTERVAL = 1000; // 1 second in ms
     
-    let frameCount = 0;
-    const calculateRefreshRate = () => {
-      frameCount++;
+    let frameCounter = 0;
+    const countFrames = () => {
+      frameCounter++;
     };
 
-    // count frames for 1 second
-    // so we can get our canvas refresh 
-    // rate (fps) estimate
+    // count frames for a specific time
+    // so we can get the estimated canvas 
+    // refresh rate (fps)
     const interval = setInterval(() => {
-      // return the number of frames counted in the 1 second
-      resolve(frameCount); 
-
+      // return the number of frames counted in a
+      // specific timeframe (1 second)
+      resolve(frameCounter); 
+      
       // stop counting after 1 second
       clearInterval(interval); 
-
+      
     }, UPDATE_INTERVAL);
-
-    const frame = () => {
-      calculateRefreshRate();
+    
+    const calculateRefreshRate = () => {
+      countFrames();
 
       // continue counting frames
-      requestAnimationFrame(frame); 
+      requestAnimationFrame(calculateRefreshRate); 
     }
     
     // start counting frames
-    requestAnimationFrame(frame);
+    requestAnimationFrame(calculateRefreshRate);
   });
 };
 
@@ -81,12 +81,12 @@ const populateStreamOverview = async (canvasData) => {
     const outputHeight = canvasData.height || "0";
 
     // TODO: maybe cache this value? so the app don't need
-    // to keep calculating the rfresh rate when 
-    // opening the settings window 
-    const outputFps = await getRefreshRateOnce().then((estimateRefreshRate) => {
-      return estimateRefreshRate;
-    }) || "0";
-
+    // to keep calculating the refresh rate when 
+    // opening the settings window each time
+    const outputFps =
+      (await getRefreshRateOnce().then(
+        (estimateRefreshRate) => estimateRefreshRate
+      )) || "0";
     const targetWidth =
       rawStreamData.getVideoTracks()[0].getSettings().width || "0";
     const targetHeight =
@@ -97,9 +97,9 @@ const populateStreamOverview = async (canvasData) => {
       rawStreamData.getAudioTracks()[0].getSettings().sampleRate || "0";
     const targetAudioSampleSize =
       rawStreamData.getAudioTracks()[0].getSettings().sampleSize || "0";
-
     let targetAudioChannelCount =
       rawStreamData.getAudioTracks()[0].getSettings().channelCount || "1";
+
     if (targetAudioChannelCount === 1) {
       targetAudioChannelCount = "Mono";
     } else if (targetAudioChannelCount === 2) {
@@ -148,7 +148,7 @@ const initializeEventHandler = async () => {
         // TODO: query all checkboxes or any other type of form element
         // and update them all dynamically using loop
         debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
-        imageSmoothingCheckboxElement.checked = configPayload.imageSmoothing;
+        imageRenderingPrioritySelectElement.value = configPayload.imageRenderingPriority;
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
         imageContrastSliderElement.value = configPayload.imageContrast;
         imageSaturationSliderElement.value = configPayload.imageSaturation;
@@ -164,8 +164,8 @@ const initializeEventHandler = async () => {
       ipcRenderer.send('update-config-info', { debugOverlay: event.target.checked } );
     });
 
-    imageSmoothingCheckboxElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageSmoothing: event.target.checked } );
+    imageRenderingPrioritySelectElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageRenderingPriority: event.target.value } );
     });
     
     surroundAudioCheckboxElement.addEventListener('change', (event) => {

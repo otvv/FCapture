@@ -42,7 +42,6 @@ const generateParentWindow = () => {
     minWidth: 640,
     minHeight: 480,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -59,10 +58,8 @@ const generateParentWindow = () => {
   appState.parentWindow.loadFile("app/windows/main/main.html");
 
   // DEBUG PURPOSES ONLY
-  if (process.env.ELECTRON_ENV === "development") {
-    appState.parentWindow.openDevTools();
-    appState.parentWindow.setMenuBarVisibility(true);
-  }
+  appState.parentWindow.openDevTools();
+  appState.parentWindow.setMenuBarVisibility(true);
 };
 
 const generateChildWindow = () => {
@@ -85,7 +82,6 @@ const generateChildWindow = () => {
     minimizable: false,
     fullscreenable: false,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "assets/icons/fcapture-512x512.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -105,10 +101,8 @@ const generateChildWindow = () => {
   appState.childWindow.loadFile("app/windows/settings/settings.html");
   
   // DEBUG PURPOSES ONLY
-  if (process.env.ELECTRON_ENV === "development") {
-    appState.childWindow.webContents.openDevTools();
-    appState.childWindow.setMenuBarVisibility(true);
-  }
+  appState.childWindow.webContents.openDevTools();
+  appState.childWindow.setMenuBarVisibility(true);
 };
 
 const generateTemplateMenu = () => {

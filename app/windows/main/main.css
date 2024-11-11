@@ -141,16 +141,16 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #282828;
+  background-color: #000;
+
+  margin: none;
+  padding: none;
 }
 
 .canvas-wrapper {
   width: 100vw;
   height: 100vh;
-  background-color: #000;
-  /* TODO: create different priorities options
-   when it comes to image quality when resizing */
-  image-rendering: optimizeQuality;
+
   /* TODO: create different fitting modes */
   object-fit: contain;
 }

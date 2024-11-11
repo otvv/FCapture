@@ -26,18 +26,25 @@
           <input type="checkbox" name="Enable debug overlay" id="debug-overlay-checkbox">
           <label for="debug-overlay-checkbox">Enable debug overlay</label>
           <br>
-          <input checked type="checkbox" name="Enable image smoothing" id="image-smoothing-checkbox">
-          <label for="image-smoothing-checkbox">Enable image smoothing</label>
-          <br>
-          <div class="slider-container">
+          <div class="input-container">
+            <label for="image-rendering-priority-select">Image rendering priority</label>
+            <select id="image-rendering-priority-select">
+              <option value="auto">Auto</option>
+              <option value="crisp-edges">Crisp-edges</option>
+              <option value="pixelated">Pixelated</option>
+              <option value="optimizeQuality">Quality</option>
+              <option value="optimizeSpeed">Speed</option>
+            </select>
+          </div>
+          <div class="input-container">
             <label for="image-brightness-slider">Image brightness percentage</label>
             <input min=0 max=200 value=100 type="range" name="Image brightness percentage" id="image-brightness-slider">
           </div>
-          <div class="slider-container">
+          <div class="input-container">
             <label for="image-contrast-slider">Image contrast percentage</label>
             <input min=0 max=200 value=100 type="range" name="Image contrast percentage" id="image-contrast-slider">
           </div>
-          <div class="slider-container">
+          <div class="input-container">
             <label for="image-saturation-slider">Image saturation percentage</label>
             <input min=100 max=200 value=100 type="range" name="Image saturation percentage" id="image-saturation-slider">
           </div>

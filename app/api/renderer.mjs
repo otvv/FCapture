@@ -11,12 +11,11 @@ import { setupOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../configTemplate.mjs";
 
-const requestConfigData = () => {
-  // request the current config when the settings window loads
-  window.ipcRenderer.send("request-config-info");
-}
-
 const updateWindowState = () => {
+  // request the current config data
+  window.ipcRenderer.send("request-config-info");
+
+  // handle window state update when config info is received 
   window.ipcRenderer.on("config-loaded", (configPayload) => {
     console.log(
       "[fcapture] - renderer@renderRawFrameOnCanvas: config payload received.",
@@ -67,7 +66,6 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
 
     // request data from config file
     // and update window state
-    requestConfigData();
     updateWindowState();
 
     // start video playback
@@ -80,18 +78,20 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     const imageContrastValue = configObjectTemplate.imageContrast / 100;
     const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
 
-    // apply temporary image filters
+    // image filters
     canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
+    
+    // image rendering quality priority
+    canvasElement.style.imageRendering = configObjectTemplate.imageRenderingPriority;
+
+    // setup canvas element using the data pulled
+    // from the rawStream object
+    canvasElement.width = temporaryVideoElement.videoWidth;
+    canvasElement.height = temporaryVideoElement.videoHeight;
 
     // setup overlay (will only display if you are in debug mode)
     // or if you manually enable it (passing true as an argument)
     const drawOverlay = setupOverlay();
-
-    // enable image smoothing for resized frames
-    if (configObjectTemplate.imageSmoothing) {
-      canvasContext.imageSmoothingEnabled = true;
-      canvasContext.imageSmoothingQuality = "high";
-    }
 
     const drawFrameOnScreen = async () => {
       if (
@@ -125,11 +125,6 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       requestAnimationFrame(drawFrameOnScreen);
     };
 
-    // setup canvas element using the data pulled
-    // from the rawStream object (the user will have the option to change this later)
-    canvasElement.width = temporaryVideoElement.videoWidth;
-    canvasElement.height = temporaryVideoElement.videoHeight;
-
     // continue rendering frames
     requestAnimationFrame(drawFrameOnScreen);
 
@@ -160,9 +155,9 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     pannerNode.panningModel = "HRTF"; // Head-Related Transfer Function for realistic 3D sound
     pannerNode.distanceModel = "linear"; // how volume will decrease over distance/switching sides
     //
-    pannerNode.positionX.setValueAtTime(0, audioContext.currentTime); // X (left-right)
-    pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up-down)
-    pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front-back)
+    pannerNode.positionX.setValueAtTime(0, audioContext.currentTime); // X (left/right)
+    pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up/down)
+    pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front/back)
     //
 
     if (configObjectTemplate.surroundAudio) {
@@ -171,8 +166,8 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       delayNode.delayTime.value = 0.0;
     }
 
-    // connect audio source to nodes and nodes
-    // to the audio destination (device)
+    // connect audio source (device) to nodes and nodes
+    // to the audio destination (final output)
     audioSource.connect(gainNode);
     gainNode.connect(bassBoostNode);
     bassBoostNode.connect(pannerNode);

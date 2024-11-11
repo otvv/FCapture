@@ -54,7 +54,7 @@ fieldset {
   margin-bottom: 10px;
 }
 
-.slider-container {
+.input-container {
   display: flex;
   flex-direction: column;
   align-items: start;
