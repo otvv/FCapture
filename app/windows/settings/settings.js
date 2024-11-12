@@ -73,6 +73,10 @@ const populateStreamOverview = async (canvasData) => {
     const rawStreamData = await devices.setupStreamFromDevice();
 
     if (!rawStreamData) {
+      descriptionTextElement.innerHTML = `
+      <b>Input</b>: Invalid video or audio device constraints applied. <i>(Device)</i><br>
+      <b>Output</b>: Canvas not initialized due to rawStreamData being unavailable. <i>(Canvas)</i> <br>
+      <b>Audio</b>: Invalid video or audio device constraints applied. <i>(Device)</i>`;
       return;
     }
 
@@ -86,13 +90,13 @@ const populateStreamOverview = async (canvasData) => {
     const outputFps =
       (await getRefreshRateOnce().then(
         (estimateRefreshRate) => estimateRefreshRate
-      )) || "0";
+      )).toFixed(0) || "0";
     const targetWidth =
       rawStreamData.getVideoTracks()[0].getSettings().width || "0";
     const targetHeight =
       rawStreamData.getVideoTracks()[0].getSettings().height || "0";
     const targetFps =
-      rawStreamData.getVideoTracks()[0].getSettings().frameRate || "0";
+      rawStreamData.getVideoTracks()[0].getSettings().frameRate.toFixed(0) || "0";
     const targetAudioSampleRate =
       rawStreamData.getAudioTracks()[0].getSettings().sampleRate || "0";
     const targetAudioSampleSize =

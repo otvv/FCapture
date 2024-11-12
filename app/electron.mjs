@@ -58,8 +58,8 @@ const generateParentWindow = () => {
   appState.parentWindow.loadFile("app/windows/main/main.html");
 
   // DEBUG PURPOSES ONLY
-  appState.parentWindow.openDevTools();
-  appState.parentWindow.setMenuBarVisibility(true);
+  // appState.parentWindow.openDevTools();
+  // appState.parentWindow.setMenuBarVisibility(true);
 };
 
 const generateChildWindow = () => {
@@ -72,7 +72,6 @@ const generateChildWindow = () => {
   appState.childWindow = new BrowserWindow({
     title: "Settings",
     parent: appState.parentWindow,
-    modal: true,
     show: true,
     width: 640,
     height: 480,
@@ -80,6 +79,7 @@ const generateChildWindow = () => {
     resizable: false,
     maximizable: false,
     minimizable: false,
+    modal: (process.platform === 'win32' || process.platform === 'linux'),
     fullscreenable: false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -101,8 +101,8 @@ const generateChildWindow = () => {
   appState.childWindow.loadFile("app/windows/settings/settings.html");
   
   // DEBUG PURPOSES ONLY
-  appState.childWindow.webContents.openDevTools();
-  appState.childWindow.setMenuBarVisibility(true);
+  // appState.childWindow.webContents.openDevTools();
+  // appState.childWindow.setMenuBarVisibility(true);
 };
 
 const generateTemplateMenu = () => {

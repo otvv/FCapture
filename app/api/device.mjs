@@ -112,27 +112,25 @@ export const setupStreamFromDevice = async () => {
         frameRate: { ideal: 99999999 }, // FIXME:
         // for some reason on Windows we can't really force the highest possible FPS
         // we need to specify a valid value otherwise the capture card
-        // will glitch out attempting to display 99999999 frames (image will start flashing)
-        // an alternative to this method is to get the device max FPS capability array (constraint)
-        // get the last value of this array and use it instead.
+        // will glitch out attempting to display more than 60 frames (image will start flashing)
+        // an alternative to this method is to get the device max FPS from the arrain 
+        // in the video constraints
 
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
       audio: {
         deviceId: { exact: device.audio.id },
-
-        // wacky way to get the highest possible
-        // audio quality from the device
         sampleRate: { ideal: 99999999 },
         sampleSize: { ideal: 99999999 },
-        channelCount: { ideal: 99999999 }, // FIXME:
-        // for some reason on Windows the capture card doesn't support stereo audio
-        // while using the highest sample rate, in my case 96000khz
-        // also I can't seem to be able to change the sample rate either
+        channelCount: { ideal: 99999999 },
 
         // TODO: add an option to only passthrough audio
         echoCancellation: false,
+        autoGainControl: false,
+        noiseSuppression: false,
+        voiceIsolation: false,
+        latency: 0,
       },
     });
 
