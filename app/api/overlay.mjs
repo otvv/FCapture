@@ -94,7 +94,7 @@ export const setupOverlay = () => {
     const outputHeight = canvasElement.height || "0";
     const targetWidth = rawStreamData.getVideoTracks()[0].getSettings().width || "0";
     const targetHeight = rawStreamData.getVideoTracks()[0].getSettings().height || "0";
-    const targetFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate || "0";
+    const targetFps = rawStreamData.getVideoTracks()[0].getSettings().frameRate.toFixed(0) || "0";
 
     // draw overlay
     drawStaticOverlay(canvasContext, overlaySettings);

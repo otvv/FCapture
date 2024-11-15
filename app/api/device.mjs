@@ -23,7 +23,7 @@ const AVAILABLE_DEVICE_LABELS = Object.freeze({
 
   // branded
 
-  // software based 
+  // software based
   // (most likely to be ignored)
   OBS_VIRTUAL: "OBS Virtual Camera",
 });
@@ -33,11 +33,8 @@ const getAvailableDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     if (!devices) {
-      return;
+      return null;
     }
-
-    // dummy
-    let usbDeviceFound = false;
 
     // store device payload info
     const deviceInfoPayload = {
@@ -45,26 +42,20 @@ const getAvailableDevices = async () => {
       audio: { id: "", label: "" },
     };
 
-    devices.forEach((device) => {
+    for (const device of devices) {
       // DEBUG PURPOSES ONLY
       // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // prevent the renderer from fallbacking to the default device
       // and ignore virtual devices (OBS, etc)
       if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL)) {
-        return;
+        continue;
       }
 
       // filter each device for a specific type
-      // TODO: improve this method later to handle more types of devices and/in other systems
-      // where they might be handled differently (Windows)
-      if (
-        device.kind === "videoinput" &&
-        device.label.includes(AVAILABLE_DEVICE_LABELS.USB_VIDEO)
-      ) {
+      if (device.kind === "videoinput" && device.label.includes(AVAILABLE_DEVICE_LABELS.USB_VIDEO)) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
-        usbDeviceFound = true;
       }
 
       if (
@@ -75,17 +66,12 @@ const getAvailableDevices = async () => {
         deviceInfoPayload.audio.id = device.deviceId;
         deviceInfoPayload.audio.label = device.label;
       }
-    });
-
-    // prevent the renderer from fallbacking to the default device
-    // in case the desired device has not been found or initialized yet
-    if (!usbDeviceFound) {
-      return;
     }
 
     return deviceInfoPayload;
   } catch (err) {
     console.error("[fcapture] - renderer@getAvailableDevices:", err);
+    return null;
   }
 };
 
@@ -95,7 +81,8 @@ export const setupStreamFromDevice = async () => {
     const device = await getAvailableDevices();
 
     if (!device) {
-      return;
+      console.warn("[fcapture] - renderer@setupStreamFromDevice: invalid device payload.");
+      return null;
     }
 
     // setup raw input video and audio properties
@@ -113,7 +100,7 @@ export const setupStreamFromDevice = async () => {
         // for some reason on Windows we can't really force the highest possible FPS
         // we need to specify a valid value otherwise the capture card
         // will glitch out attempting to display more than 60 frames (image will start flashing)
-        // an alternative to this method is to get the device max FPS from the arrain 
+        // an alternative to this method is to get the device max FPS from the arrain
         // in the video constraints
 
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
@@ -146,6 +133,7 @@ export const setupStreamFromDevice = async () => {
       console.warn(
         "[fcapture] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
       );
+      return null;
     }
 
     return rawMedia;

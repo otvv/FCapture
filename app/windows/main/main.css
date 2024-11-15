@@ -11,10 +11,13 @@ FCapture
   user-select: none;
   overflow: hidden;
   -webkit-user-drag: none;
+  -webkit-user-select: none;
   appearance: none;
   font-family: system-ui, sans-serif;
   font-size: 13px;
   margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 *:focus {
@@ -22,7 +25,32 @@ FCapture
 }
 
 html, body {
+  background-color: #000;
+}
+
+canvas {
   height: 100vh;
+}
+
+.drag-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 20px;
+  background-color: transparent;
+  
+  z-index: 2000;
+  cursor: grab;
+  -webkit-app-region: drag;
+}
+
+.drag-area:hover {
+  cursor: move;
+}
+
+.drag-area:active {
+  cursor: grabbing;
 }
 
 /* navbar */
@@ -58,9 +86,10 @@ html, body {
 
 /* tab panel */
 .tabs-container {
-  display: flex;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   gap: 10px;
-  margin-left: 10px;
   background-color: transparent;
 }
 
@@ -141,18 +170,8 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #000;
 
-  margin: none;
-  padding: none;
-}
-
-.canvas-wrapper {
-  width: 100vw;
-  height: 100vh;
-
-  /* TODO: create different fitting modes */
-  object-fit: contain;
+  object-fit: cover;
 }
 
 /* mute icon on canvas */

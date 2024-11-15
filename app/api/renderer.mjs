@@ -40,7 +40,9 @@ const createVideoElement = (srcObject) => {
   // assign raw stream object/data to the video element
   // and perform initial configurations
   videoElement.srcObject = srcObject;
+  videoElement.playsInline = true;
   videoElement.muted = true;
+  videoElement.controls = false;
   videoElement.disablePictureInPicture = true;
 
   return videoElement;
@@ -78,37 +80,27 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     const imageContrastValue = configObjectTemplate.imageContrast / 100;
     const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
 
-    // image filters
-    canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
-    
-    // image rendering quality priority
-    canvasElement.style.imageRendering = configObjectTemplate.imageRenderingPriority;
-
-    // setup canvas element using the data pulled
-    // from the rawStream object
+    // change canvas resolution and aspect ratio
+    // to match the resolution of the video stream
     canvasElement.width = temporaryVideoElement.videoWidth;
     canvasElement.height = temporaryVideoElement.videoHeight;
 
-    // setup overlay (will only display if you are in debug mode)
-    // or if you manually enable it (passing true as an argument)
-    const drawOverlay = setupOverlay();
+    // image filters
+    canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
+
+    // image rendering quality priority
+    canvasElement.style.imageRendering = configObjectTemplate.imageRenderingPriority;
 
     const drawFrameOnScreen = async () => {
-      if (
-        temporaryVideoElement.readyState ===
-        temporaryVideoElement.HAVE_ENOUGH_DATA
-      ) {
-        // clean old frames
-        canvasContext.clearRect(
-          0,
-          0,
-          canvasElement.width,
-          canvasElement.height
-        );
-
+      if (temporaryVideoElement.readyState === temporaryVideoElement.HAVE_ENOUGH_DATA) {
+        
         // draw new frame
         canvasContext.drawImage(
           temporaryVideoElement,
+          0,
+          0,
+          temporaryVideoElement.videoWidth,
+          temporaryVideoElement.videoHeight,
           0,
           0,
           canvasElement.width,
@@ -117,8 +109,12 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       }
 
       // enable debug overlay
-      if (drawOverlay && configObjectTemplate.debugOverlay) {
-        drawOverlay(canvasContext, canvasElement, rawStreamData);
+      if (configObjectTemplate.debugOverlay) {
+        const drawOverlay = setupOverlay();
+
+        if (drawOverlay) {
+          drawOverlay(canvasContext, canvasElement, rawStreamData);
+        }
       }
 
       // render frames recursively

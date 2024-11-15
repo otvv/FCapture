@@ -118,7 +118,7 @@ const handleStreamAction = async (action = "start") => {
         // display canvas and hide no signal screen
         // if device is and stream is working
         noSignalContainerElement.style.display = "none";
-        canvasElement.style.display = "block";
+        canvasElement.style.display = "flex";
 
         // store gain node for volume control
         streamState.audioController = streamState.canvas.gainNode;

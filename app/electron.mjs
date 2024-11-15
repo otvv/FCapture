@@ -42,6 +42,7 @@ const generateParentWindow = () => {
     minWidth: 640,
     minHeight: 480,
     autoHideMenuBar: true,
+    titleBarStyle: (process.platform === 'darwin') ? "hiddenInset" : "default",
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
