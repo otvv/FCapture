@@ -16,21 +16,42 @@ import path from "path";
 // dirname
 const __dirname = import.meta.dirname;
 
-// hardware acceleration flags
-app.commandLine.appendSwitch('ignore-gpu-blacklist')
-app.commandLine.appendSwitch('enable-gpu-rasterization')
-// FIXME: figure out which one of these flags 
-// below actually do something 
-// (I know one of these helps mitigate screen tearing)
-// TODO: after I figure it out which flag "enables" VSYNC, turn this into a setting.
-app.commandLine.appendSwitch('enable-accelerated-video')
-app.commandLine.appendSwitch('enable-accelerated-video-decode')
-app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder')
-
 const appState = {
   parentWindow: null,
   childWindow: null,
-  canvasData: {}
+  canvasData: {},
+};
+
+// handle hardware acceleration on different
+// platforms
+const handleHardwareAcceleration = () => {
+  console.log("[fcapture] - electron@handleHardwareAcceleration: setting up hardware acceleration.");
+
+  switch (process.platform) {
+    case "darwin": // macOS
+      app.disableHardwareAcceleration(); // disabled for now
+      break;
+    case "linux":
+      app.commandLine.appendSwitch("enable-gpu-rasterization");
+      app.commandLine.appendSwitch("enable-accelerated-video-decode");
+      app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
+      app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
+      app.commandLine.appendSwitch("enable-accelerated-av1-decode");
+      app.commandLine.appendSwitch("enable-accelerated-hevc");
+      app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
+      break;
+    case "win32":
+    app.commandLine.appendSwitch("enable-gpu-rasterization");
+    app.commandLine.appendSwitch("enable-accelerated-video-decode");
+    app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
+    app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
+    app.commandLine.appendSwitch("enable-accelerated-av1-decode");
+    app.commandLine.appendSwitch("enable-accelerated-hevc");
+    app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
+    default:
+      app.disableHardwareAcceleration(); // disabled if an unsupported OS is detected
+      break;
+  }
 };
 
 const generateParentWindow = () => {
@@ -42,7 +63,7 @@ const generateParentWindow = () => {
     minWidth: 640,
     minHeight: 480,
     autoHideMenuBar: true,
-    titleBarStyle: (process.platform === 'darwin') ? "hiddenInset" : "default",
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -50,9 +71,7 @@ const generateParentWindow = () => {
   });
 
   if (appState.parentWindow === null) {
-    throw new Error(
-      "[fcapture] - electron@generateParentWindow: failed to generate window."
-    );
+    throw new Error("[fcapture] - electron@generateParentWindow: failed to generate window.");
   }
 
   // load parent window HTML structure
@@ -80,7 +99,7 @@ const generateChildWindow = () => {
     resizable: false,
     maximizable: false,
     minimizable: false,
-    modal: (process.platform === 'win32' || process.platform === 'linux'),
+    modal: process.platform === "win32" || process.platform === "linux",
     fullscreenable: false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -89,25 +108,22 @@ const generateChildWindow = () => {
   });
 
   if (appState.childWindow === null) {
-    throw new Error(
-      "[fcapture] - electron@generateChildWindow: failed to generate child window."
-    );
+    throw new Error("[fcapture] - electron@generateChildWindow: failed to generate child window.");
   }
 
   appState.childWindow.on("closed", () => {
-    appState.childWindow = null;  // reset ref
+    appState.childWindow = null; // reset ref
   });
 
   // load child window HTML structure
   appState.childWindow.loadFile("app/windows/settings/settings.html");
-  
+
   // DEBUG PURPOSES ONLY
   // appState.childWindow.webContents.openDevTools();
   // appState.childWindow.setMenuBarVisibility(true);
 };
 
 const generateTemplateMenu = () => {
-
   const menuBarTemplate = Menu.buildFromTemplate([
     {
       label: "View",
@@ -220,6 +236,10 @@ const generateTemplateMenu = () => {
 
 const initializeEventHandler = async () => {
   try {
+    // handle hardware acceleration
+    // based on platform
+    handleHardwareAcceleration();
+
     // initialize app
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
 
@@ -240,18 +260,16 @@ const initializeEventHandler = async () => {
         if (appState.childWindow.webContents.isLoading()) {
           appState.childWindow.webContents.once("did-finish-load", () => {
             // send canvas info payload back to the settings window
-            appState.childWindow.webContents.send(
-              "send-canvas-info",
-              appState.canvasData
-            );
+            appState.childWindow.webContents.send("send-canvas-info", appState.canvasData);
           });
         }
       }
     });
 
-    ipcMain.on("update-config-info", (event, newConfigPayload) => { // save
+    ipcMain.on("update-config-info", (event, newConfigPayload) => {
+      // save
       Object.assign(configObjectTemplate, newConfigPayload);
-      
+
       // save updated config payload state
       saveConfigState();
 
@@ -259,7 +277,8 @@ const initializeEventHandler = async () => {
       console.log("[fcapture] - electron@initializeEventHandler: config saved.");
     });
 
-    ipcMain.on("request-config-info", (event) => { // load
+    ipcMain.on("request-config-info", (event) => {
+      // load
 
       console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
 
@@ -273,9 +292,7 @@ const initializeEventHandler = async () => {
 // initialize event handler
 initializeEventHandler()
   .then(() => {
-    console.log(
-      "[fcapture] - electron@initializeEventHandlerPromise: event handler initialized."
-    );
+    console.log("[fcapture] - electron@initializeEventHandlerPromise: event handler initialized.");
   })
   .catch((err) => {
     console.error("[fcapture] - electron@initializeEventHandlerPromise:", err);
