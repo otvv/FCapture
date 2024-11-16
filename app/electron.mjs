@@ -29,9 +29,17 @@ const handleHardwareAcceleration = () => {
 
   switch (process.platform) {
     case "darwin": // macOS
-      app.disableHardwareAcceleration(); // disabled for now
+      app.commandLine.appendSwitch("ignore-gpu-blacklist");
+      app.commandLine.appendSwitch("enable-gpu-rasterization");
+      app.commandLine.appendSwitch("enable-accelerated-video-decode");
+      app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
+      app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
+      app.commandLine.appendSwitch("enable-accelerated-av1-decode");
+      app.commandLine.appendSwitch("enable-accelerated-hevc");
+      app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
       break;
     case "linux":
+      app.commandLine.appendSwitch("ignore-gpu-blacklist");
       app.commandLine.appendSwitch("enable-gpu-rasterization");
       app.commandLine.appendSwitch("enable-accelerated-video-decode");
       app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
@@ -41,13 +49,14 @@ const handleHardwareAcceleration = () => {
       app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
       break;
     case "win32":
-    app.commandLine.appendSwitch("enable-gpu-rasterization");
-    app.commandLine.appendSwitch("enable-accelerated-video-decode");
-    app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
-    app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
-    app.commandLine.appendSwitch("enable-accelerated-av1-decode");
-    app.commandLine.appendSwitch("enable-accelerated-hevc");
-    app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
+      app.commandLine.appendSwitch("ignore-gpu-blacklist");
+      app.commandLine.appendSwitch("enable-gpu-rasterization");
+      app.commandLine.appendSwitch("enable-accelerated-video-decode");
+      app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
+      app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
+      app.commandLine.appendSwitch("enable-accelerated-av1-decode");
+      app.commandLine.appendSwitch("enable-accelerated-hevc");
+      app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
     default:
       app.disableHardwareAcceleration(); // disabled if an unsupported OS is detected
       break;
