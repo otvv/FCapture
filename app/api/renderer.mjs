@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import { setupOverlay } from "./overlay.mjs";
+import { drawStaticCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../configTemplate.mjs";
 
@@ -85,15 +85,14 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     canvasElement.width = temporaryVideoElement.videoWidth;
     canvasElement.height = temporaryVideoElement.videoHeight;
 
-    // image filters
+    // image filters setting
     canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
 
-    // image rendering quality priority
+    // image rendering quality priority setting
     canvasElement.style.imageRendering = configObjectTemplate.imageRenderingPriority;
 
     const drawFrameOnScreen = async () => {
       if (temporaryVideoElement.readyState === temporaryVideoElement.HAVE_ENOUGH_DATA) {
-        
         // draw new frame
         canvasContext.drawImage(
           temporaryVideoElement,
@@ -108,67 +107,52 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
         );
       }
 
-      // enable debug overlay
-      if (configObjectTemplate.debugOverlay) {
-        const drawOverlay = setupOverlay();
-
-        if (drawOverlay) {
-          drawOverlay(canvasContext, canvasElement, rawStreamData);
-        }
-      }
-
       // render frames recursively
       requestAnimationFrame(drawFrameOnScreen);
+
+      // enable debug overlay
+      if (configObjectTemplate.debugOverlay) {
+        drawStaticCapsuleOverlay(canvasContext);
+      }
     };
 
     // continue rendering frames
     requestAnimationFrame(drawFrameOnScreen);
 
-    // get audio source from raw stream
+    // create audio source from raw stream
+    // and setup filter nodes
     const audioSource = audioContext.createMediaStreamSource(rawStreamData);
-
-    // gain node to control volume (mute/unmute)
     const gainNode = audioContext.createGain();
-
-    // bass boost node
     const bassBoostNode = audioContext.createBiquadFilter();
-
-    // panner and delay nodes for surround sound
     const pannerNode = audioContext.createPanner();
     const delayNode = audioContext.createDelay();
 
-    // set up bass boost
+    // bass boost
+    const bassBoostAmount = 10;
     bassBoostNode.type = "lowshelf";
-    bassBoostNode.frequency.setValueAtTime(150, audioContext.currentTime); // frequency ceiling (will target frequencies bellow 150hz)
+    bassBoostNode.frequency.value = 150; // target frequencies bellow 150hz
+    bassBoostNode.gain.value = configObjectTemplate.bassBoost ? bassBoostAmount : 0;
 
-    if (configObjectTemplate.bassBoost) {
-      bassBoostNode.gain.setValueAtTime(10, audioContext.currentTime);
-    } else {
-      bassBoostNode.gain.setValueAtTime(0, audioContext.currentTime);
-    }
+    // surround sound
+    Object.assign(pannerNode, {
+      panningModel: "HRTF", // Head-Related Transfer Function for realistic 3D sound
+      distanceModel: "linear", // how volume will decrease over distance/switching sides
+    });
 
-    // set up surround
-    pannerNode.panningModel = "HRTF"; // Head-Related Transfer Function for realistic 3D sound
-    pannerNode.distanceModel = "linear"; // how volume will decrease over distance/switching sides
-    //
-    pannerNode.positionX.setValueAtTime(0, audioContext.currentTime); // X (left/right)
-    pannerNode.positionY.setValueAtTime(0, audioContext.currentTime); // Y (up/down)
-    pannerNode.positionZ.setValueAtTime(-1, audioContext.currentTime); // Z (front/back)
-    //
+    ["positionX", "positionY", "positionZ"].forEach((axis, index) => 
+      pannerNode[axis].value = index === 2 ? -1 : 0 // Z: -1, X: 0, Y: 0
+    );
 
-    if (configObjectTemplate.surroundAudio) {
-      delayNode.delayTime.value = 0.05;
-    } else {
-      delayNode.delayTime.value = 0.0;
-    }
-
+    delayNode.delayTime.value = configObjectTemplate.surroundAudio ? 0.05 : 0.0;
+    
     // connect audio source (device) to nodes and nodes
     // to the audio destination (final output)
-    audioSource.connect(gainNode);
-    gainNode.connect(bassBoostNode);
-    bassBoostNode.connect(pannerNode);
-    pannerNode.connect(delayNode);
-    delayNode.connect(audioContext.destination);
+    audioSource
+    .connect(gainNode)
+    .connect(bassBoostNode)
+    .connect(pannerNode)
+    .connect(delayNode)
+    .connect(audioContext.destination);
 
     return { rawStreamData, gainNode, temporaryVideoElement };
   } catch (err) {

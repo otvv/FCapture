@@ -71,8 +71,8 @@ const generateParentWindow = () => {
     height: 720,
     minWidth: 640,
     minHeight: 480,
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default", // TODO: check if this is the root cause of my kernel-panic
     autoHideMenuBar: true,
-    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -101,15 +101,15 @@ const generateChildWindow = () => {
   appState.childWindow = new BrowserWindow({
     title: "Settings",
     parent: appState.parentWindow,
-    show: true,
     width: 640,
     height: 480,
+    show: true,
     darkTheme: true,
     resizable: false,
     maximizable: false,
     minimizable: false,
-    modal: process.platform === "win32" || process.platform === "linux",
     fullscreenable: false,
+    modal: process.platform === "win32" || process.platform === "linux",
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -287,10 +287,9 @@ const initializeEventHandler = async () => {
     });
 
     ipcMain.on("request-config-info", (event) => {
-      // load
-
       console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
-
+      
+      // load
       event.reply("config-loaded", configObjectTemplate);
     });
   } catch (err) {
