@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import { drawCapsuleOverlay } from "./overlay.mjs";
+import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../configTemplate.mjs";
 
@@ -55,6 +55,8 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     if (!rawStreamData) {
       return;
     }
+
+    let overlayInstance;
 
     // create video element and perform initial configurations
     const temporaryVideoElement = createVideoElement(rawStreamData);
@@ -107,13 +109,20 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
         );
       }
 
-      // render frames recursively
-      requestAnimationFrame(drawFrameOnScreen);
-
       // enable debug overlay
       if (configObjectTemplate.debugOverlay) {
-        drawCapsuleOverlay(canvasElement, canvasContext);
+
+        if (!overlayInstance) {
+          overlayInstance = setupCapsuleOverlay();
+        }
+
+        if (overlayInstance) {
+          overlayInstance(canvasContext);
+        }
       }
+
+      // render frames recursively
+      requestAnimationFrame(drawFrameOnScreen);
     };
 
     // continue rendering frames
