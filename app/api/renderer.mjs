@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import { drawStaticCapsuleOverlay } from "./overlay.mjs";
+import { drawCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../configTemplate.mjs";
 
@@ -112,7 +112,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
 
       // enable debug overlay
       if (configObjectTemplate.debugOverlay) {
-        drawStaticCapsuleOverlay(canvasContext);
+        drawCapsuleOverlay(canvasElement, canvasContext);
       }
     };
 

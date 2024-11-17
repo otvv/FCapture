@@ -96,12 +96,7 @@ export const setupStreamFromDevice = async () => {
         // image quality from the device
         width: { ideal: 99999999 },
         height: { ideal: 99999999 },
-        frameRate: { ideal: 99999999 }, // FIXME:
-        // for some reason on Windows we can't really force the highest possible FPS
-        // we need to specify a valid value otherwise the capture card
-        // will glitch out attempting to display more than 60 frames (image will start flashing)
-        // an alternative to this method is to get the device max FPS from the arrain
-        // in the video constraints
+        frameRate: { ideal: 99999999 },
 
         // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
