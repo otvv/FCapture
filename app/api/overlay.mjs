@@ -126,7 +126,7 @@ export const setupCapsuleOverlay = () => {
     canvasContext.fill();
     canvasContext.stroke();
 
-    let currentX = capsuleLeft + 25;
+    let currentX = capsuleLeft + 35;
 
     const metrics = [
       { label: "FPS:", value: fps.toFixed(0) },
