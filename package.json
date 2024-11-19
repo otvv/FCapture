@@ -1,6 +1,6 @@
 {
   "name": "fcapture",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "a previewer/recorder (eventually) software for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {
@@ -54,5 +54,8 @@
   "devDependencies": {
     "electron": "^32.1.2",
     "electron-builder": "^25.0.5"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0"
   }
 }

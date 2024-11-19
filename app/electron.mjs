@@ -8,10 +8,13 @@ FCapture
 */
 
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
-import { loadConfigState, saveConfigState } from "./api/config.mjs";
+import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
+import { getCorrectPicturesFolder } from "./api/utils/utils.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
+import { format } from 'date-fns';
 import process from "process";
 import path from "path";
+import fs from 'fs';
 
 // dirname
 const __dirname = import.meta.dirname;
@@ -40,21 +43,25 @@ const handleHardwareAcceleration = () => {
       break;
     case "linux":
       app.commandLine.appendSwitch("ignore-gpu-blacklist");
+      app.commandLine.appendSwitch('use-gl', 'desktop');
       app.commandLine.appendSwitch("enable-gpu-rasterization");
       app.commandLine.appendSwitch("enable-accelerated-video-decode");
       app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
       app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
       app.commandLine.appendSwitch("enable-accelerated-av1-decode");
+      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
       app.commandLine.appendSwitch("enable-accelerated-hevc");
       app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
       break;
     case "win32":
       app.commandLine.appendSwitch("ignore-gpu-blacklist");
+      app.commandLine.appendSwitch('use-gl', 'desktop');
       app.commandLine.appendSwitch("enable-gpu-rasterization");
       app.commandLine.appendSwitch("enable-accelerated-video-decode");
       app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
       app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
       app.commandLine.appendSwitch("enable-accelerated-av1-decode");
+      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
       app.commandLine.appendSwitch("enable-accelerated-hevc");
       app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
     default:
@@ -71,7 +78,7 @@ const generateParentWindow = () => {
     height: 720,
     minWidth: 640,
     minHeight: 480,
-    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default", // TODO: check if this is the root cause of my kernel-panic
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     autoHideMenuBar: true,
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
@@ -260,6 +267,38 @@ const initializeEventHandler = async () => {
       if (canvasInfo) {
         appState.canvasData = canvasInfo;
       }
+    });
+
+    ipcMain.on("save-screenshot", async (_event, dataUrl) => {
+      const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+      const buffer = Buffer.from(base64Data, "base64");
+
+      // get the system's Pictures folder
+      const picturesFolder = getCorrectPicturesFolder();
+
+      // timestamp file format name
+      const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
+
+      // screenshot save folder
+      const saveFolder = path.join(picturesFolder, "FCapture");
+
+      // create a folder for FCapture screenshots if it doesn't exist
+      if (!fs.existsSync(saveFolder)) {
+        fs.mkdirSync(saveFolder, { recursive: true });
+      }
+
+      // generate filepath with timestamp
+      const filePath = path.join(saveFolder, `screenshot_${timestamp}.png`);
+
+      // write file to specified path
+      fs.writeFile(filePath, buffer, (err) => {
+        if (err) {
+          console.warn("[fcapture] - electron@initializeEventHandler:", err);
+          return;
+        }
+
+        console.log(`[fcapture] - electron@initializeEventHandler: screenshot saved @ ${filePath}`);
+      });
     });
 
     ipcMain.on("open-settings", (_event) => {

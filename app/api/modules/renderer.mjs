@@ -9,7 +9,7 @@ FCapture
 
 import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
-import { configObjectTemplate } from "../configTemplate.mjs";
+import { configObjectTemplate } from "../../configTemplate.mjs";
 
 const updateWindowState = () => {
   // request the current config data

@@ -32,27 +32,6 @@ canvas {
   height: 100vh;
 }
 
-.drag-area {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 20px;
-  background-color: transparent;
-  
-  z-index: 2000;
-  cursor: grab;
-  -webkit-app-region: drag;
-}
-
-.drag-area:hover {
-  cursor: move;
-}
-
-.drag-area:active {
-  cursor: grabbing;
-}
-
 /* navbar */
 .navbar-container {
   position: fixed;
@@ -136,11 +115,16 @@ canvas {
 }
 
 /* icons */
-.mute-icon, .settings-icon, .refresh-icon {
+.mute-icon, .settings-icon, .refresh-icon, .print-icon {
   color: #dedede;
   font-size: 15px;
   filter: drop-shadow(1px 1px 3px #282828);
   transition: color 0.2s ease;
+}
+
+.print-icon:hover {
+  color: #fff;
+  cursor: pointer;
 }
 
 .mute-icon:hover {
@@ -161,7 +145,7 @@ canvas {
   animation: spin 0.4s ease-in-out;
 }
 
-.mute-icon:active, .settings-icon:active, .refresh-icon:active {
+.mute-icon:active, .settings-icon:active, .refresh-icon:active, .print-icon:active {
   color: #ff5f57 !important;
 }
 

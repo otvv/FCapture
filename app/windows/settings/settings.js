@@ -59,7 +59,7 @@ const populateStreamOverview = async (canvasData) => {
       return;
     }
 
-    const devices = await import("../../api/device.mjs");
+    const devices = await import("../../api/modules/device.mjs");
 
     if (descriptionTextElement === null) {
       console.log(

@@ -19,6 +19,7 @@ const navbarContainerElement = document.querySelector("#navbar-container");
 const tabsContainerElement = document.querySelector("#tabs-container");
 const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
 const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
+const printButtonElement = document.querySelector("#print-button");
 const settingsButtonElement = document.querySelector("#settings-button");
 const muteButtonElement = document.querySelector("#mute-button");
 const refreshButtonElement = document.querySelector("#refresh-button");
@@ -54,7 +55,7 @@ const toggleStreamMute = (state) => {
 
 const handleStreamAction = async (action = "start") => {
   try {
-    const renderer = await import("../../api/renderer.mjs");
+    const renderer = await import("../../api/modules/renderer.mjs");
 
     if (canvasElement === null) {
       console.error(
@@ -71,11 +72,16 @@ const handleStreamAction = async (action = "start") => {
         if (streamState.canvas) {
           return;
         }
-                
+
         // initialize canvas and audio context
         streamState.canvasContext = canvasElement.getContext("2d", {
           willReadFrequently: true,
         });
+
+        // disable image smoothing for pixel-perfect
+        // image quality
+        streamState.canvasContext.imageSmoothingEnabled = false;
+
         streamState.audioContext = new window.AudioContext();
 
         // render frames of the raw stream from the canvas
@@ -89,12 +95,7 @@ const handleStreamAction = async (action = "start") => {
         // in case the user starts the app without any device connected
         if (!streamState.canvas) {
           // clear context from residual frames
-          streamState.canvasContext.clearRect(
-            0,
-            0,
-            canvasElement.width,
-            canvasElement.height
-          );
+          streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
           // hide canvas and show no signal screen
           canvasElement.style.display = "none";
@@ -126,7 +127,7 @@ const handleStreamAction = async (action = "start") => {
         if (streamState.audioController) {
           streamState.currentVolume = streamState.audioController.gain.value; // update volume data
           streamState.isAudioTrackMuted = false;
-        } 
+        }
         break;
       case "stop":
         if (
@@ -138,12 +139,7 @@ const handleStreamAction = async (action = "start") => {
         }
 
         // clear canvas
-        streamState.canvasContext.clearRect(
-          0,
-          0,
-          canvasElement.width,
-          canvasElement.height
-        );
+        streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
         // get allcanvasElement available stream video/audio tracks
         const streamTracks = await streamState.canvas.rawStreamData.getTracks();
@@ -188,6 +184,7 @@ const handleStreamAction = async (action = "start") => {
         break;
       case "unmute":
         toggleStreamMute(false);
+        break;
       default:
         // when no argument is passed the default action
         // will always be to start the stream
@@ -215,6 +212,25 @@ const handleWindowAction = async (action = "preview") => {
         break;
       case "settings":
         window.ipcRenderer.send("open-settings");
+        break;
+      case "screenshot":
+        // don't do anything in case we don't have a running
+        // stream
+        if (!streamState.canvas) {
+          return;
+        }
+
+        // disable image smoothing for 
+        // pixel-perfect image quality
+        streamState.canvasContext.imageSmoothingEnabled = false;
+
+        // send event to electron's main process
+        // to save a screenshot at Pictures folder
+        const dataUrl = streamState.canvasContext.canvas.toDataURL("image/png");
+
+        // snd the dataUrl and filePath to the main process to save the screenshot
+        window.ipcRenderer.send('save-screenshot', dataUrl);
+        
         break;
     }
   } catch (err) {
@@ -244,6 +260,9 @@ const initializeEventHandler = async () => {
       );
       recordingsTabElement.addEventListener("click", () =>
         handleWindowAction("recordings")
+      );
+      printButtonElement.addEventListener("click", () =>
+        handleWindowAction("screenshot")
       );
       muteButtonElement.addEventListener("click", () => {
         if (streamState.isAudioTrackMuted) {
