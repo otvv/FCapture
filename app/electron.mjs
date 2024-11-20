@@ -28,44 +28,47 @@ const appState = {
 // handle hardware acceleration on different
 // platforms
 const handleHardwareAcceleration = () => {
-  console.log("[fcapture] - electron@handleHardwareAcceleration: setting up hardware acceleration.");
+  const globalSwitches = [
+    'ignore-gpu-blacklist',
+    'enable-gpu-rasterization',
+    'enable-accelerated-video-decode',
+    'enable-accelerated-mjpeg-decode',
+    'enable-accelerated-vpx-decode',
+    'enable-accelerated-av1-decode',
+    'enable-accelerated-hevc',
+    'enable-native-gpu-memory-buffers'
+  ];
+
+  // apply global switches
+  globalSwitches.forEach(the_switch => {
+    app.commandLine.appendSwitch(the_switch);
+  });
 
   switch (process.platform) {
     case "darwin": // macOS
-      app.commandLine.appendSwitch("ignore-gpu-blacklist");
-      app.commandLine.appendSwitch("enable-gpu-rasterization");
-      app.commandLine.appendSwitch("enable-accelerated-video-decode");
-      app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
-      app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
-      app.commandLine.appendSwitch("enable-accelerated-av1-decode");
-      app.commandLine.appendSwitch("enable-accelerated-hevc");
-      app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
+    console.log(
+      "[fcapture] - electron@handleHardwareAcceleration: setting up macOS hardware acceleration."
+    );
+      // no additional switches needed
       break;
     case "linux":
-      app.commandLine.appendSwitch("ignore-gpu-blacklist");
       app.commandLine.appendSwitch('use-gl', 'desktop');
-      app.commandLine.appendSwitch("enable-gpu-rasterization");
-      app.commandLine.appendSwitch("enable-accelerated-video-decode");
-      app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
-      app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
-      app.commandLine.appendSwitch("enable-accelerated-av1-decode");
-      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
-      app.commandLine.appendSwitch("enable-accelerated-hevc");
-      app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
+      app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder');
+      console.log(
+        "[fcapture] - electron@handleHardwareAcceleration: setting up Linux hardware acceleration."
+      );
       break;
     case "win32":
-      app.commandLine.appendSwitch("ignore-gpu-blacklist");
-      app.commandLine.appendSwitch('use-gl', 'desktop');
-      app.commandLine.appendSwitch("enable-gpu-rasterization");
-      app.commandLine.appendSwitch("enable-accelerated-video-decode");
-      app.commandLine.appendSwitch("enable-accelerated-mjpeg-decode");
-      app.commandLine.appendSwitch("enable-accelerated-vpx-decode");
-      app.commandLine.appendSwitch("enable-accelerated-av1-decode");
-      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
-      app.commandLine.appendSwitch("enable-accelerated-hevc");
-      app.commandLine.appendSwitch("enable-native-gpu-memory-buffers");
+      console.log(
+        "[fcapture] - electron@handleHardwareAcceleration: setting up Windows hardware acceleration."
+      );
+        // no additional switches needed
+        break;
     default:
-      app.disableHardwareAcceleration(); // disabled if an unsupported OS is detected
+      console.log(
+        "[fcapture] - electron@handleHardwareAcceleration: unsuported platform, disabling hardware acceleration."
+      );
+      app.disableHardwareAcceleration(); // disable if an unsupported OS is detected
       break;
   }
 };
@@ -116,8 +119,8 @@ const generateChildWindow = () => {
     maximizable: false,
     minimizable: false,
     fullscreenable: false,
-    modal: process.platform === "win32" || process.platform === "linux",
     autoHideMenuBar: true,
+    modal: process.platform === "win32" || process.platform === "linux",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },

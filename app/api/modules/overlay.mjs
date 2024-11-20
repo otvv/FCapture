@@ -9,16 +9,16 @@ FCapture
 
 // overlay constraints
 const overlaySettings = Object.freeze({
-  backgroundColor: "rgba(0, 0, 0, 0.7)",
-  borderColor: "rgba(215, 215, 215, 0.2)",
-  fontTitleColor: "rgba(255, 215, 215, 1.0)",
-  fontValueColor: "rgba(215, 215, 215, 1.0)",
+  backgroundColor: "rgba(35, 35, 35, 0.5)",
+  borderColor: "rgba(194, 194, 194, 0.2)",
+  fontTitleColor: "rgba(194, 94, 94, 1.0)",
+  fontValueColor: "rgba(194, 194, 194, 1.0)",
 
   width: 450,
   height: 50,
   radius: 25,
 
-  fontFamily: "bold 15px system-ui",
+  fontFamily: "14px system-ui",
 });
 
 const getTextSize = (canvasContext, textString) => {
@@ -126,7 +126,7 @@ export const setupCapsuleOverlay = () => {
     canvasContext.fill();
     canvasContext.stroke();
 
-    let currentX = capsuleLeft + 35;
+    let currentX = capsuleLeft + 55;
 
     const metrics = [
       { label: "FPS:", value: fps.toFixed(0) },
