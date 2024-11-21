@@ -95,7 +95,6 @@ const generateDrawFrameOnScreenFunction = (
   const drawFrameOnScreen = () => {
     // more precise frame rendering
     if (temporaryVideoElement.readyState >= temporaryVideoElement.HAVE_CURRENT_DATA) {
-
       // draw new frame off and on screen for better speed
       offscreenContext.drawImage(temporaryVideoElement, 0, 0);
       canvasContext.drawImage(offscreenCanvasElement, 0, 0);

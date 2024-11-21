@@ -7,10 +7,14 @@ FCapture
 
 */
 
+// TODO import module instead of individual functions
+import { getTextSize, drawText, drawCapsule } from "../utils/surface.mjs";
+
+const UPDATE_INTERVAL = 1000; // 1 second in ms
+
 // overlay constraints
 const overlaySettings = Object.freeze({
   backgroundColor: "rgba(35, 35, 35, 0.5)",
-  borderColor: "rgba(194, 194, 194, 0.2)",
   fontTitleColor: "rgba(194, 94, 94, 1.0)",
   fontValueColor: "rgba(194, 194, 194, 1.0)",
 
@@ -18,26 +22,13 @@ const overlaySettings = Object.freeze({
   height: 50,
   radius: 25,
 
-  fontFamily: "14px system-ui",
+  fontFamily: "bold 14px system-ui",
 });
 
-const getTextSize = (canvasContext, textString) => {
-  const textMetrics = canvasContext.measureText(textString);
-  const textWidth = textMetrics.actualBoundingBoxRight + textMetrics.actualBoundingBoxLeft;
-  const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-
-  return [+textWidth, +textHeight];
-};
-
-const drawText = (canvasContext, textString, x, y, color) => {
-  canvasContext.fillStyle = color;
-  canvasContext.fillText(textString, x, y);
-};
-
 export const setupCapsuleOverlay = () => {
-  let calculateMetrics;
+  let calculateMetrics = null;
 
-  const createFrameMetricsCalculator = (updateInterval = 1000 /* 1 second in ms */) => {
+  const createFrameMetricsCalculator = (updateInterval = UPDATE_INTERVAL) => {
     let frameCount = 0;
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
@@ -54,7 +45,7 @@ export const setupCapsuleOverlay = () => {
       const deltaTime = currentTime - lastTime;
 
       if (deltaTime >= updateInterval) {
-        fps = (frameCount / deltaTime) * updateInterval; // calculate FPS
+        fps = (frameCount / deltaTime) * 1000; // calculate FPS
         refreshRate = frameCount; // calculate refresh rate
         frameCount = 0; // reset frame count
         lastTime = currentTime; // reset time
@@ -85,46 +76,21 @@ export const setupCapsuleOverlay = () => {
     const { fps, refreshRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
-    const { backgroundColor, borderColor, fontTitleColor, fontValueColor, fontFamily } = overlaySettings;
+    const { backgroundColor, fontTitleColor, fontValueColor, fontFamily } = overlaySettings;
 
-    // set capsule overlay properties
-    canvasContext.fillStyle = backgroundColor;
-    canvasContext.strokeStyle = borderColor;
+    // set overlay font
     canvasContext.font = fontFamily;
-    canvasContext.lineWidth = 2;
 
     // draw capsule
-    canvasContext.beginPath();
-    canvasContext.moveTo(capsuleLeft + capsuleRadius, capsuleTop);
-    canvasContext.lineTo(capsuleLeft + capsuleWidth - capsuleRadius, capsuleTop);
-    canvasContext.arcTo(
-      capsuleLeft + capsuleWidth,
+    drawCapsule(
+      canvasContext,
+      capsuleLeft,
       capsuleTop,
-      capsuleLeft + capsuleWidth,
-      capsuleTop + capsuleRadius,
-      capsuleRadius
+      capsuleWidth,
+      capsuleHeight,
+      capsuleRadius,
+      backgroundColor
     );
-    canvasContext.lineTo(capsuleLeft + capsuleWidth, capsuleTop + capsuleHeight - capsuleRadius);
-    canvasContext.arcTo(
-      capsuleLeft + capsuleWidth,
-      capsuleTop + capsuleHeight,
-      capsuleLeft + capsuleWidth - capsuleRadius,
-      capsuleTop + capsuleHeight,
-      capsuleRadius
-    );
-    canvasContext.lineTo(capsuleLeft + capsuleRadius, capsuleTop + capsuleHeight);
-    canvasContext.arcTo(
-      capsuleLeft,
-      capsuleTop + capsuleHeight,
-      capsuleLeft,
-      capsuleTop + capsuleHeight - capsuleRadius,
-      capsuleRadius
-    );
-    canvasContext.lineTo(capsuleLeft, capsuleTop + capsuleRadius);
-    canvasContext.arcTo(capsuleLeft, capsuleTop, capsuleLeft + capsuleRadius, capsuleTop, capsuleRadius);
-    canvasContext.closePath();
-    canvasContext.fill();
-    canvasContext.stroke();
 
     let currentX = capsuleLeft + 55;
 

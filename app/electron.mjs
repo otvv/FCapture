@@ -11,10 +11,10 @@ import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
 import { getCorrectPicturesFolder } from "./api/utils/utils.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 import process from "process";
 import path from "path";
-import fs from 'fs';
+import fs from "fs";
 
 // dirname
 const __dirname = import.meta.dirname;
@@ -29,31 +29,31 @@ const appState = {
 // platforms
 const handleHardwareAcceleration = () => {
   const globalSwitches = [
-    'ignore-gpu-blacklist',
-    'enable-gpu-rasterization',
-    'enable-accelerated-video-decode',
-    'enable-accelerated-mjpeg-decode',
-    'enable-accelerated-vpx-decode',
-    'enable-accelerated-av1-decode',
-    'enable-accelerated-hevc',
-    'enable-native-gpu-memory-buffers'
+    "ignore-gpu-blacklist",
+    "enable-gpu-rasterization",
+    "enable-accelerated-video-decode",
+    "enable-accelerated-mjpeg-decode",
+    "enable-accelerated-vpx-decode",
+    "enable-accelerated-av1-decode",
+    "enable-accelerated-hevc",
+    "enable-native-gpu-memory-buffers",
   ];
 
   // apply global switches
-  globalSwitches.forEach(the_switch => {
+  globalSwitches.forEach((the_switch) => {
     app.commandLine.appendSwitch(the_switch);
   });
 
   switch (process.platform) {
     case "darwin": // macOS
-    console.log(
-      "[fcapture] - electron@handleHardwareAcceleration: setting up macOS hardware acceleration."
-    );
+      console.log(
+        "[fcapture] - electron@handleHardwareAcceleration: setting up macOS hardware acceleration."
+      );
       // no additional switches needed
       break;
     case "linux":
-      app.commandLine.appendSwitch('use-gl', 'desktop');
-      app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder');
+      app.commandLine.appendSwitch("use-gl", "desktop");
+      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
       console.log(
         "[fcapture] - electron@handleHardwareAcceleration: setting up Linux hardware acceleration."
       );
@@ -62,8 +62,8 @@ const handleHardwareAcceleration = () => {
       console.log(
         "[fcapture] - electron@handleHardwareAcceleration: setting up Windows hardware acceleration."
       );
-        // no additional switches needed
-        break;
+      // no additional switches needed
+      break;
     default:
       console.log(
         "[fcapture] - electron@handleHardwareAcceleration: unsuported platform, disabling hardware acceleration."
@@ -330,7 +330,7 @@ const initializeEventHandler = async () => {
 
     ipcMain.on("request-config-info", (event) => {
       console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
-      
+
       // load
       event.reply("config-loaded", configObjectTemplate);
     });
