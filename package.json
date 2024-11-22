@@ -25,12 +25,10 @@
   },
   "scripts": {
     "start": "npx electron .",
-    "test": "npx electron .",
     "build": "node app/build.mjs",
     "buildAltUnix": "sudo sh build/build.sh",
     "buildAltWin": "powershell -File build/build.ps1",
-    "buildAltGlobal": "electron-builder",
-    "appSignMac": "codesign --deep --force --sign - dist/mac/*.app"
+    "signAppMac": "codesign --deep --force --sign - dist/mac/*.app"
   },
   "repository": {
     "type": "git",
