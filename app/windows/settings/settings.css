@@ -9,7 +9,7 @@ FCapture
 
 * {
   user-select: none;
-  overflow: hidden;
+  overflow: auto;
   -webkit-user-drag: none;
   font-family: system-ui, sans-serif;
   font-size: 13px;

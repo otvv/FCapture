@@ -23,9 +23,21 @@
         <legend>Video</legend>
 
         <form>
-          <input type="checkbox" name="Enable debug overlay" id="debug-overlay-checkbox">
-          <label for="debug-overlay-checkbox">Enable debug overlay</label>
-          <br>
+          <div class="input-container">
+            <label for="video-mode-select">Video mode</label>
+            <select id="video-mode-select">
+              <option value="2160p30">Ultra HD @ 30 FPS (2160p30)</option>
+              <option value="2160p60">Ultra HD @ 60 FPS (2160p60)</option>
+              <option value="1440p30">Quad HD @ 30 FPS (1440p30)</option>
+              <option value="1440p60">Quad HD @ 60 FPS (1440p60)</option>
+              <option value="1080p30">Full HD @ 30 FPS (1080p30)</option>
+              <option value="1080p60">Full HD @ 60 FPS (1080p60)</option>
+              <option value="720p30">HD @ 30 FPS (720p30)</option>
+              <option value="720p60">HD @ 60 FPS (720p60)</option>
+              <option value="480p30">SD @ 30 FPS (480p30)</option>
+              <option value="480p60">SD @ 60 FPS (480p60)</option>
+            </select>
+          </div>
           <div class="input-container">
             <label for="image-rendering-priority-select">Image rendering priority</label>
             <select id="image-rendering-priority-select">
@@ -48,13 +60,21 @@
             <label for="image-saturation-slider">Image saturation percentage</label>
             <input min=100 max=200 value=100 type="range" name="Image saturation percentage" id="image-saturation-slider">
           </div>
-          <br>
+          <input type="checkbox" name="Enable debug overlay" id="debug-overlay-checkbox">
+          <label for="debug-overlay-checkbox">Enable debug overlay</label>
         </form>
       </fieldset>
       <fieldset class="container">
         <legend>Audio</legend>
         
         <form>
+          <div class="input-container">
+            <label for="audio-mode-select">Audio mode</label>
+            <select id="audio-mode-select">
+              <option value="normalQuality">Standard</option>
+              <option value="highQuality">High Quality</option>
+            </select>
+          </div>
           <input type="checkbox" name="Enable HRTF Surround Audio filter (Experimental)" id="surround-checkbox">
           <label for="surround-checkbox">Enable HRTF Surround audio filter (Experimental)</label>
           <br>

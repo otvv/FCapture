@@ -7,6 +7,8 @@ FCapture
 
 */
 
+import { configObjectTemplate } from "../../configTemplate.mjs";
+
 const ASPECT_RATIO_TABLE = Object.freeze({
   STANDARD: 4 / 3,
   WIDESCREEN: 16 / 9,
@@ -28,6 +30,54 @@ const AVAILABLE_DEVICE_LABELS = Object.freeze({
   OBS_VIRTUAL: "OBS Virtual Camera",
 });
 
+// this will be used to store the different video modes
+// available for the app 
+// (some of these might not work on your device)
+const VIDEO_MODES = {
+  "2160p30": { width: 3840, height: 2160, frameRate: 30 },
+  "2160p60": { width: 3840, height: 2160, frameRate: 60 },
+  //
+  "1440p30": { width: 2560, height: 1440, frameRate: 30 },
+  "1440p60": { width: 2560, height: 1440, frameRate: 60 },
+  //
+  "1080p30": { width: 1920, height: 1080, frameRate: 30 },
+  "1080p60": { width: 1920, height: 1080, frameRate: 60 },
+  //
+  "720p30": { width: 1280, height: 720, frameRate: 30 },
+  "720p60": { width: 1280, height: 720, frameRate: 60 },
+  //
+  "480p30": { width: 640, height: 480, frameRate: 30 },
+  "480p60": { width: 640, height: 480, frameRate: 60 }
+};
+
+const AUDIO_MODES = { 
+  "normalQuality": { sampleRate: 48000, sampleSize: 16, channelCount: 2 },
+
+  // wacky way to get the highest audio quality
+  // possible from the device
+  "highQuality": { sampleRate: 99999999, sampleSize: 99999999, channelCount: 99999999 },
+}
+
+const updateWindowState = () => {
+  // request the current config data
+  window.ipcRenderer.send("request-config-info");
+
+  // handle window state update when config info is received 
+  window.ipcRenderer.on("config-loaded", (configPayload) => {
+    console.log("[fcapture] - device@updateWindowState: config payload received.");
+
+    // update original config object template
+    // using the data pulled from the config file
+    if (configPayload) {
+      for (const key in configPayload) {
+        if (configObjectTemplate[key] !== configPayload[key]) {
+          configObjectTemplate[key] = configPayload[key];
+        }
+      }
+    }
+  });
+}
+
 const getAvailableDevices = async () => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -44,7 +94,7 @@ const getAvailableDevices = async () => {
 
     for (const device of devices) {
       // DEBUG PURPOSES ONLY
-      // console.log(`[fcapture] - renderer@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
+      // console.log(`[fcapture] - device@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // prevent the renderer from fallbacking to the default device
       // and ignore virtual devices (OBS, etc)
@@ -70,12 +120,12 @@ const getAvailableDevices = async () => {
 
     return deviceInfoPayload;
   } catch (err) {
-    console.error("[fcapture] - renderer@getAvailableDevices:", err);
+    console.error("[fcapture] - device@getAvailableDevices:", err);
     return null;
   }
 };
 
-export const setupStreamFromDevice = async () => {
+export const setupStreamFromDevice = async (deviceMode, audioMode) => {
   try {
     // get filtered device payload to pull video from
     const device = await getAvailableDevices();
@@ -85,6 +135,14 @@ export const setupStreamFromDevice = async () => {
       return null;
     }
 
+    // request the current config data
+    // and update window state
+    updateWindowState();
+
+    // get video and audio mode constraints
+    const videoConstraints = VIDEO_MODES[configObjectTemplate.videoMode];
+    const audioConstraints = AUDIO_MODES[configObjectTemplate.audioMode];
+
     // setup raw input video and audio properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
       // NOTE: if device doesnt have support for any of these settings
@@ -92,48 +150,62 @@ export const setupStreamFromDevice = async () => {
       video: {
         deviceId: { exact: device.video.id },
 
-        // wacky way to get the highest possible
-        // image quality from the device
-        width: { ideal: 99999999 },
-        height: { ideal: 99999999 },
-        frameRate: { ideal: 99999999 },
-
-        // TODO: make different video modes (1080p30, 1080p60, 720p30, 720p60)
+        // set desired video quality based on the video mode selected
+        width: { ideal: videoConstraints.width },
+        height: { ideal: videoConstraints.height },
+        frameRate: { ideal: videoConstraints.frameRate },
         aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
       },
       audio: {
         deviceId: { exact: device.audio.id },
-        sampleRate: { ideal: 99999999 },
-        sampleSize: { ideal: 99999999 },
-        channelCount: { ideal: 99999999 },
 
-        // TODO: add an option to only passthrough audio
+        sampleRate: { ideal:audioConstraints.sampleRate },
+        sampleSize: { ideal:audioConstraints.sampleSize },
+        channelCount: { ideal:audioConstraints.channelCount },
+
         echoCancellation: false,
         autoGainControl: false,
         noiseSuppression: false,
         voiceIsolation: false,
-        latency: 0,
       },
     });
 
     // DEBUG PURPOSES ONLY
     // console.log(
-    //   "[fcapture] - renderer@setupStreamFromDevice:",
+    //   "[fcapture] - device@setupStreamFromDevice:",
     //   rawMedia.getVideoTracks()[0].getCapabilities(),
     //   rawMedia.getAudioTracks()[0].getCapabilities()
     // );
-    // console.log("[fcapture] renderer@setupStreamFromDevice raw:", rawMedia);
+    // console.log("[fcapture] device@setupStreamFromDevice raw:", rawMedia);
 
     if (!rawMedia) {
       console.warn(
-        "[fcapture] - renderer@setupStreamFromDevice: raw stream input not active, is your device initialized?"
+        "[fcapture] - device@setupStreamFromDevice: raw stream input not active, is your device initialized?"
       );
       return null;
     }
 
+    // generate a simple object with the necessary device
+    // info to populate the settings window description
+    const deviceVideoSettings = rawMedia.getVideoTracks()[0].getSettings();
+    const deviceAudioSettings = rawMedia.getAudioTracks()[0].getSettings();
+    if (rawMedia) {
+      const deviceInfo = {
+        width: deviceVideoSettings.width,
+        height: deviceVideoSettings.height,
+        frameRate: deviceVideoSettings.frameRate,
+        //
+        sampleRate: deviceAudioSettings.sampleRate,
+        sampleSize: deviceAudioSettings.sampleSize,
+        channelCount: deviceAudioSettings.channelCount,
+      };
+
+      window.ipcRenderer.send("receive-device-info", deviceInfo);
+    }
+
     return rawMedia;
   } catch (err) {
-    console.error("[fcapture] - renderer@setupStreamFromDevice:", err);
+    console.error("[fcapture] - device@setupStreamFromDevice:", err);
     return null;
   }
 };

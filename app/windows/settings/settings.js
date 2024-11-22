@@ -11,11 +11,13 @@ FCapture
 
 // element querying
 const descriptionTextElement = document.querySelector("#description-text");
-const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
+const videoModeSelectElement = document.querySelector("#video-mode-select");
 const imageRenderingPrioritySelectElement = document.querySelector("#image-rendering-priority-select");
 const imageBrightnessSliderElement = document.querySelector("#image-brightness-slider");
 const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
 const imageSaturationSliderElement = document.querySelector("#image-saturation-slider");
+const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
+const audioModeSelectElement = document.querySelector("#audio-mode-select");
 const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 
@@ -53,13 +55,11 @@ const getRefreshRateOnce = () => {
   });
 };
 
-const populateStreamOverview = async (canvasData) => {
+const populateStreamOverview = async (canvasData, deviceData) => {
   try {
     if (!canvasData) {
       return;
     }
-
-    const devices = await import("../../api/modules/device.mjs");
 
     if (descriptionTextElement === null) {
       console.log(
@@ -67,12 +67,7 @@ const populateStreamOverview = async (canvasData) => {
       );
     }
 
-    // unnecessary call
-    // FIXME: pass the rvalue of this function through an event
-    // since this is already being retrieved in another place
-    const rawStreamData = await devices.setupStreamFromDevice();
-
-    if (!rawStreamData) {
+    if (!deviceData) {
       descriptionTextElement.innerHTML = `
       <b>Input</b>: Invalid video or audio device constraints applied. <i>(Device)</i><br>
       <b>Output</b>: Canvas not initialized due to rawStreamData being unavailable. <i>(Canvas)</i> <br>
@@ -80,29 +75,13 @@ const populateStreamOverview = async (canvasData) => {
       return;
     }
 
-    // get more additional info
-    const outputWidth = canvasData.width || "0";
-    const outputHeight = canvasData.height || "0";
-
-    // TODO: maybe cache this value? so the app don't need
-    // to keep calculating the refresh rate when 
-    // opening the settings window each time
-    const outputFps =
-      (await getRefreshRateOnce().then(
-        (estimateRefreshRate) => estimateRefreshRate
-      )).toFixed(0) || "0";
-    const targetWidth =
-      rawStreamData.getVideoTracks()[0].getSettings().width || "0";
-    const targetHeight =
-      rawStreamData.getVideoTracks()[0].getSettings().height || "0";
-    const targetFps =
-      rawStreamData.getVideoTracks()[0].getSettings().frameRate.toFixed(0) || "0";
-    const targetAudioSampleRate =
-      rawStreamData.getAudioTracks()[0].getSettings().sampleRate || "0";
-    const targetAudioSampleSize =
-      rawStreamData.getAudioTracks()[0].getSettings().sampleSize || "0";
-    let targetAudioChannelCount =
-      rawStreamData.getAudioTracks()[0].getSettings().channelCount || "1";
+    // get device info to display
+    const targetWidth = deviceData.width || "0";
+    const targetHeight = deviceData.height || "0";
+    const targetFps = deviceData.frameRate.toFixed(0) || "0";
+    const targetAudioSampleRate = deviceData.sampleRate || "0";
+    const targetAudioSampleSize = deviceData.sampleSize || "0";
+    let targetAudioChannelCount = deviceData.channelCount || "1";
 
     if (targetAudioChannelCount === 1) {
       targetAudioChannelCount = "Mono";
@@ -111,8 +90,25 @@ const populateStreamOverview = async (canvasData) => {
     } else if (targetAudioChannelCount > 2) {
       targetAudioChannelCount = "Surround";
     } else {
-      targetAudioChannelCount = "unknown";
+      targetAudioChannelCount = "Unknown";
     }
+
+    if (!canvasData) {
+      descriptionTextElement.innerHTML = `
+        <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
+        <b>Output</b>: Canvas not initialized due to canvasData being unavailable. <i>(Canvas)</i> <br>
+        <b>Audio</b>: ${targetAudioChannelCount} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
+      return;
+    }
+
+    // get canvas info to display
+    const outputWidth = canvasData.width || "0";
+    const outputHeight = canvasData.height || "0";
+    // TODO: maybe cache this value? so the app don't need
+    // to keep calculating the refresh rate when 
+    // opening the settings window each time
+    const outputFps =
+      (await getRefreshRateOnce().then((estimateRefreshRate) => estimateRefreshRate)).toFixed(0) || "0";
 
     descriptionTextElement.innerHTML = `
       <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
@@ -137,10 +133,10 @@ const initializeEventHandler = async () => {
     });
 
     // event listeners
-    window.ipcRenderer.on("send-canvas-info", (canvasInfo) => {
+    window.ipcRenderer.on("send-canvas-info", (canvasInfo, deviceInfo) => {
       // populate settings menu description
-      if (canvasInfo) {
-        populateStreamOverview(canvasInfo);
+      if (canvasInfo && deviceInfo) {
+        populateStreamOverview(canvasInfo, deviceInfo);
       }
     });
 
@@ -150,13 +146,15 @@ const initializeEventHandler = async () => {
       // update control elements using the data pulled from the config file
       if (configPayload) {
         // TODO: query all checkboxes or any other type of form element
-        // and update them all dynamically using loop
-        debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
+        // and update them all dynamically using a loop
+        videoModeSelectElement.value = configPayload.videoMode;
         imageRenderingPrioritySelectElement.value = configPayload.imageRenderingPriority;
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
         imageContrastSliderElement.value = configPayload.imageContrast;
         imageSaturationSliderElement.value = configPayload.imageSaturation;
+        debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
         //
+        audioModeSelectElement.value = configPayload.audioMode;
         bassBoostCheckboxElement.checked = configPayload.bassBoost;
         surroundAudioCheckboxElement.checked = configPayload.surroundAudio;
       }
@@ -164,33 +162,43 @@ const initializeEventHandler = async () => {
     
     // update config file according with the settings window
     // control element state
-    debugOverlayCheckboxElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { debugOverlay: event.target.checked } );
+    videoModeSelectElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { videoMode: event.target.value } );
     });
-
+    
     imageRenderingPrioritySelectElement.addEventListener('change', (event) => {
       ipcRenderer.send('update-config-info', { imageRenderingPriority: event.target.value } );
+    });
+    imageBrightnessSliderElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageBrightness: event.target.value } );
+    });
+    
+    imageContrastSliderElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageContrast: event.target.value } );
+    });
+    
+    imageSaturationSliderElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { imageSaturation: event.target.value } );
+    });
+    
+    debugOverlayCheckboxElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", { debugOverlay: event.target.checked });
+    });
+
+    //
+
+    audioModeSelectElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { audioMode: event.target.value } );
     });
     
     surroundAudioCheckboxElement.addEventListener('change', (event) => {
       ipcRenderer.send('update-config-info', { surroundAudio: event.target.checked } );
     });
-
+    
     bassBoostCheckboxElement.addEventListener('change', (event) => {
       ipcRenderer.send('update-config-info', { bassBoost: event.target.checked } );
     });
-
-    imageBrightnessSliderElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageBrightness: event.target.value } );
-    });
-
-    imageContrastSliderElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageContrast: event.target.value } );
-    });
-
-    imageSaturationSliderElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageSaturation: event.target.value } );
-    });
+    
   } catch (err) {
     console.error("[fcapture] - settings@initializeEventHandler:", err);
   }

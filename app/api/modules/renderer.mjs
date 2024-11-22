@@ -21,10 +21,7 @@ const updateWindowState = () => {
 
   // handle window state update when config info is received 
   window.ipcRenderer.on("config-loaded", (configPayload) => {
-    console.log(
-      "[fcapture] - renderer@renderRawFrameOnCanvas: config payload received.",
-      configPayload
-    );
+    console.log("[fcapture] - renderer@updateWindowState: config payload received.");
 
     // update original config object template
     // using the data pulled from the config file
@@ -126,31 +123,33 @@ const generateDrawFrameOnScreenFunction = (
 
 export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audioContext) => {
   try {
-    const rawStreamData = await setupStreamFromDevice();
+    // request data from config file
+    // and update window state
+    // TODO: move this function to another place
+    // in case it needs  to be reused
+    updateWindowState();
 
+    // get raw stream data
+    // based on the parameters passed by the app
+    const rawStreamData = await setupStreamFromDevice(configObjectTemplate.videoMode, configObjectTemplate.audioMode);
+    
     if (!rawStreamData) {
       return;
     }
-
+    
     // create video element and perform initial configurations
     const temporaryVideoElement = createVideoElement(rawStreamData);
-
+    
     if (!temporaryVideoElement) {
-      console.error(
-        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize video element."
-      );
+      console.error("[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize video element.");
       return;
     }
-
-    // request data from config file
-    // and update window state
-    updateWindowState();
-
+    
     // start video playback
     await temporaryVideoElement.play().catch((err) => {
       console.error("[fcapture] - renderer@temporaryVideoElementPromise:", err);
     });
-
+    
     // change canvas resolution and aspect ratio
     // to match the resolution of the video stream
     canvasElement.width = temporaryVideoElement.videoWidth;
@@ -197,7 +196,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
 
     // hrtf surround filter
     audioNodes.delay.delayTime.setValueAtTime(
-      configObjectTemplate.surroundAudio ? SURROUND_DELAY_TIME : 0.00,
+      configObjectTemplate.surroundAudio ? SURROUND_DELAY_TIME : 0.0,
       audioContext.currentTime
     );
 

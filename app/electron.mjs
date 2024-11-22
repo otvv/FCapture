@@ -23,6 +23,7 @@ const appState = {
   parentWindow: null,
   childWindow: null,
   canvasData: {},
+  deviceData: {}
 };
 
 // handle hardware acceleration on different
@@ -159,7 +160,7 @@ const generateTemplateMenu = () => {
         {
           label: "Settings",
           click: () => {
-            ipcMain.emit("open-settings", appState.canvasData);
+            ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
           },
         },
       ],
@@ -244,7 +245,7 @@ const generateTemplateMenu = () => {
       {
         label: "Settings",
         click: () => {
-          ipcMain.emit("open-settings", appState.canvasData);
+          ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
         },
       },
     ]);
@@ -269,6 +270,12 @@ const initializeEventHandler = async () => {
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
         appState.canvasData = canvasInfo;
+      }
+    });
+
+    ipcMain.on("receive-device-info", (_event, deviceInfo) => {
+      if (deviceInfo) {
+        appState.deviceData = deviceInfo;
       }
     });
 
@@ -310,8 +317,13 @@ const initializeEventHandler = async () => {
       if (appState.childWindow) {
         if (appState.childWindow.webContents.isLoading()) {
           appState.childWindow.webContents.once("did-finish-load", () => {
-            // send canvas info payload back to the settings window
-            appState.childWindow.webContents.send("send-canvas-info", appState.canvasData);
+            // send canvas and device info payload
+            // back to the settings window
+            appState.childWindow.webContents.send(
+              "send-canvas-info",
+              appState.canvasData,
+              appState.deviceData
+            );
           });
         }
       }
@@ -329,10 +341,10 @@ const initializeEventHandler = async () => {
     });
 
     ipcMain.on("request-config-info", (event) => {
-      console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
-
       // load
       event.reply("config-loaded", configObjectTemplate);
+
+      console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
     });
   } catch (err) {
     console.error("[fcapture] - electron@initializeEventHandler:", err);
