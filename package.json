@@ -51,7 +51,9 @@
   "homepage": "https://github.com/otvv/fcapture#readme",
   "devDependencies": {
     "electron": "^32.1.2",
-    "electron-builder": "^25.0.5",
+    "electron-builder": "^25.0.5"
+  },
+  "dependencies": {
     "date-fns": "^4.1.0"
   }
 }

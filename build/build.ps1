@@ -13,7 +13,8 @@ if (-not (Get-Command electron-builder -ErrorAction SilentlyContinue)) {
 
 # Check if jq is installed
 if (-not (Get-Command jq -ErrorAction SilentlyContinue)) {
-    Write-Host "[fbuild] - jq command could not be found. Please install jq to proceed."
+    Write-Host "[fbuild] - jq command could not be found."
+    Write-Host "[fbuild] - please run 'winget install jqlang.jq' if on Windows to proceed."
     exit 1
 }
 
