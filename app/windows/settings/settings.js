@@ -21,40 +21,6 @@ const audioModeSelectElement = document.querySelector("#audio-mode-select");
 const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 
-const getRefreshRateOnce = () => {
-  return new Promise((resolve) => {
-    const UPDATE_INTERVAL = 1000; // 1 second in ms
-    
-    let frameCounter = 0;
-    const countFrames = () => {
-      frameCounter++;
-    };
-
-    // count frames for a specific time
-    // so we can get the estimated canvas 
-    // refresh rate (fps)
-    const interval = setInterval(() => {
-      // return the number of frames counted in a
-      // specific timeframe (1 second)
-      resolve(frameCounter); 
-      
-      // stop counting after 1 second
-      clearInterval(interval); 
-      
-    }, UPDATE_INTERVAL);
-    
-    const calculateRefreshRate = () => {
-      countFrames();
-
-      // continue counting frames
-      requestAnimationFrame(calculateRefreshRate); 
-    }
-    
-    // start counting frames
-    requestAnimationFrame(calculateRefreshRate);
-  });
-};
-
 const populateStreamOverview = async (canvasData, deviceData) => {
   try {
     if (!canvasData) {
@@ -104,11 +70,7 @@ const populateStreamOverview = async (canvasData, deviceData) => {
     // get canvas info to display
     const outputWidth = canvasData.width || "0";
     const outputHeight = canvasData.height || "0";
-    // TODO: maybe cache this value? so the app don't need
-    // to keep calculating the refresh rate when 
-    // opening the settings window each time
-    const outputFps =
-      (await getRefreshRateOnce().then((estimateRefreshRate) => estimateRefreshRate)).toFixed(0) || "0";
+    const outputFps = canvasData.frameRate || "0";
 
     descriptionTextElement.innerHTML = `
       <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
@@ -136,6 +98,7 @@ const initializeEventHandler = async () => {
     window.ipcRenderer.on("send-canvas-info", (canvasInfo, deviceInfo) => {
       // populate settings menu description
       if (canvasInfo && deviceInfo) {
+        console.log("[fcapture] - payload received:", canvasInfo, deviceInfo);
         populateStreamOverview(canvasInfo, deviceInfo);
       }
     });

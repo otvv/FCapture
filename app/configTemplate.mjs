@@ -8,13 +8,12 @@ FCapture
 */
 
 // default config object template
-// TODO: turn this into a json file?
 export let configObjectTemplate = {
   videoMode: "",
   imageRenderingPriority: "auto",
-  imageBrightness: 100, // percentage (from 0% to 200%)
-  imageContrast: 100, // percentage (from 0% to 200%)
-  imageSaturation: 100, // percentage (from 100% to 200%)
+  imageBrightness: 100, // percentage (ranges from 0% to 200%)
+  imageContrast: 100, // percentage (ranges from 0% to 200%)
+  imageSaturation: 100, // percentage (ranges from 100% to 200%)
   debugOverlay: false,
   //
   audioMode: "",

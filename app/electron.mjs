@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain, screen } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
 import { getCorrectPicturesFolder } from "./api/utils/utils.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
@@ -25,6 +25,18 @@ const appState = {
   canvasData: {},
   deviceData: {}
 };
+
+// get current monitor that the electron window is residing
+const getCurrentDisplayForWindow = (electronWindow) => {
+  if (!electronWindow) {
+    return null;
+  }
+
+  const bounds = electronWindow.getBounds();
+  const currentDisplay = screen.getDisplayMatching(bounds);
+
+  return currentDisplay;
+}
 
 // handle hardware acceleration on different
 // platforms
@@ -270,6 +282,9 @@ const initializeEventHandler = async () => {
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
         appState.canvasData = canvasInfo;
+        appState.canvasData.frameRate = getCurrentDisplayForWindow(
+          appState.parentWindow
+        ).displayFrequency;
       }
     });
 
@@ -354,7 +369,7 @@ const initializeEventHandler = async () => {
 // initialize event handler
 initializeEventHandler()
   .then(() => {
-    console.log("[fcapture] - electron@initializeEventHandlerPromise: event handler initialized.");
+    console.log("[fcapture] - electron@initializeEventHandlerPromise: event handler initialized. ");
   })
   .catch((err) => {
     console.error("[fcapture] - electron@initializeEventHandlerPromise:", err);

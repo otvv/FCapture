@@ -7,8 +7,8 @@ FCapture
 
 */
 
-import path from "path";
 import os from 'os';
+import path from "path";
 import { execSync } from "child_process";
 
 export const getCorrectPicturesFolder = () => {

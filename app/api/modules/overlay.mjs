@@ -28,11 +28,11 @@ const overlaySettings = Object.freeze({
 export const setupCapsuleOverlay = () => {
   let calculateMetrics = null;
 
-  const createFrameMetricsCalculator = (updateInterval = UPDATE_INTERVAL) => {
+  const calculateOverlayMetrics = (updateInterval = UPDATE_INTERVAL) => {
     let frameCount = 0;
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
-    let fps = 0;
+    let frameRate = 0;
     let refreshRate = 0;
     let frameTime = 0;
 
@@ -45,13 +45,13 @@ export const setupCapsuleOverlay = () => {
       const deltaTime = currentTime - lastTime;
 
       if (deltaTime >= updateInterval) {
-        fps = (frameCount / deltaTime) * 1000; // calculate FPS
+        frameRate = (frameCount / deltaTime) * 1000; // calculate FPS
         refreshRate = frameCount; // calculate refresh rate
         frameCount = 0; // reset frame count
         lastTime = currentTime; // reset time
       }
 
-      return { fps, refreshRate, frameTime };
+      return { frameRate, refreshRate, frameTime };
     };
   };
 
@@ -62,7 +62,7 @@ export const setupCapsuleOverlay = () => {
 
     // initialize metrics calculator
     if (!calculateMetrics) {
-      calculateMetrics = createFrameMetricsCalculator();
+      calculateMetrics = calculateOverlayMetrics();
     }
 
     // capsule properties
@@ -73,7 +73,7 @@ export const setupCapsuleOverlay = () => {
     const capsuleRadius = overlaySettings.radius;
 
     // performance metrics
-    const { fps, refreshRate, frameTime } = calculateMetrics();
+    const { frameRate, refreshRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
     const { backgroundColor, fontTitleColor, fontValueColor, fontFamily } = overlaySettings;
@@ -95,7 +95,7 @@ export const setupCapsuleOverlay = () => {
     let currentX = capsuleLeft + 55;
 
     const metrics = [
-      { label: "FPS:", value: fps.toFixed(0) },
+      { label: "FPS:", value: frameRate.toFixed(0) },
       { label: "FRAMETIME:", value: `${frameTime.toFixed(2)}ms` },
       { label: "REFRESHRATE:", value: `${refreshRate.toFixed(0)}hz` },
     ];
