@@ -7,16 +7,15 @@ FCapture
 
 */
 
-import { app, BrowserWindow, Menu, dialog, ipcMain, screen } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
-import { getCorrectPicturesFolder } from "./api/utils/utils.mjs";
+import { getCorrectPicturesFolder, getCurrentDisplayForWindow } from "./api/utils/utils.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
 import { format } from "date-fns";
 import process from "process";
 import path from "path";
 import fs from "fs";
 
-// dirname
 const __dirname = import.meta.dirname;
 
 const appState = {
@@ -25,18 +24,6 @@ const appState = {
   canvasData: {},
   deviceData: {}
 };
-
-// get current monitor that the electron window is residing
-const getCurrentDisplayForWindow = (electronWindow) => {
-  if (!electronWindow) {
-    return null;
-  }
-
-  const bounds = electronWindow.getBounds();
-  const currentDisplay = screen.getDisplayMatching(bounds);
-
-  return currentDisplay;
-}
 
 // handle hardware acceleration on different
 // platforms

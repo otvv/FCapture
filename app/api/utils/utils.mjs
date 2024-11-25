@@ -7,8 +7,9 @@ FCapture
 
 */
 
-import os from 'os';
+import os from "os";
 import path from "path";
+import { screen } from "electron";
 import { execSync } from "child_process";
 
 export const getCorrectPicturesFolder = () => {
@@ -17,10 +18,12 @@ export const getCorrectPicturesFolder = () => {
   switch (process.platform) {
     case "win32":
       try {
-        // use %USERPROFILE% environment variable to get 
+        // use %USERPROFILE% environment variable to get
         // the localized Pictures directory on windows
-        const picturesFolder = execSync("echo %USERPROFILE%\\Pictures", { shell: "cmd.exe" }).toString().trim();
-        
+        const picturesFolder = execSync("echo %USERPROFILE%\\Pictures", { shell: "cmd.exe" })
+          .toString()
+          .trim();
+
         return picturesFolder;
       } catch (err) {
         return fallbackFolder;
@@ -42,4 +45,15 @@ export const getCorrectPicturesFolder = () => {
     default:
       return fallbackFolder;
   }
+};
+
+export const getCurrentDisplayForWindow = (electronWindow) => {
+  if (!electronWindow) {
+    return null;
+  }
+
+  const bounds = electronWindow.getBounds();
+  const currentDisplay = screen.getDisplayMatching(bounds);
+
+  return currentDisplay;
 };

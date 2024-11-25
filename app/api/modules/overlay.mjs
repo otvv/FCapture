@@ -22,7 +22,7 @@ const overlaySettings = Object.freeze({
   height: 50,
   radius: 25,
 
-  fontFamily: "bold 14px system-ui",
+  fontFamily: "bold 17px system-ui",
 });
 
 export const setupCapsuleOverlay = () => {
@@ -33,7 +33,6 @@ export const setupCapsuleOverlay = () => {
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
     let frameRate = 0;
-    let refreshRate = 0;
     let frameTime = 0;
 
     return () => {
@@ -46,12 +45,11 @@ export const setupCapsuleOverlay = () => {
 
       if (deltaTime >= updateInterval) {
         frameRate = (frameCount / deltaTime) * 1000; // calculate FPS
-        refreshRate = frameCount; // calculate refresh rate
         frameCount = 0; // reset frame count
         lastTime = currentTime; // reset time
       }
 
-      return { frameRate, refreshRate, frameTime };
+      return { frameRate, frameTime };
     };
   };
 
@@ -73,7 +71,7 @@ export const setupCapsuleOverlay = () => {
     const capsuleRadius = overlaySettings.radius;
 
     // performance metrics
-    const { frameRate, refreshRate, frameTime } = calculateMetrics();
+    const { frameRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
     const { backgroundColor, fontTitleColor, fontValueColor, fontFamily } = overlaySettings;
@@ -92,13 +90,23 @@ export const setupCapsuleOverlay = () => {
       backgroundColor
     );
 
-    let currentX = capsuleLeft + 55;
-
     const metrics = [
       { label: "FPS:", value: frameRate.toFixed(0) },
       { label: "FRAMETIME:", value: `${frameTime.toFixed(2)}ms` },
-      { label: "REFRESHRATE:", value: `${refreshRate.toFixed(0)}hz` },
     ];
+
+    const textPadding = 15;
+    let totalTextWidth = 0;
+
+    metrics.forEach(({ label, value }) => {
+      totalTextWidth += getTextSize(canvasContext, label)[0];
+      totalTextWidth += getTextSize(canvasContext, value)[0];
+    });
+    totalTextWidth += textPadding;
+
+    // calculate starting x position for centering
+    const capsuleCenterX = capsuleLeft + capsuleWidth / 2;
+    let currentX = capsuleCenterX - totalTextWidth / 2;
 
     // draw metrics
     metrics.forEach(({ label, value }) => {
