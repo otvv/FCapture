@@ -57,3 +57,54 @@ export const getCurrentDisplayForWindow = (electronWindow) => {
 
   return currentDisplay;
 };
+
+export const handleHardwareAcceleration = (app) => {
+  if (!app) {
+    return;
+  }
+
+  const globalSwitches = [
+    "ignore-gpu-blacklist",
+    "enable-gpu-rasterization",
+    "enable-accelerated-video-decode",
+    "enable-accelerated-mjpeg-decode",
+    "enable-accelerated-vpx-decode",
+    "enable-accelerated-av1-decode",
+    "enable-accelerated-hevc",
+    "enable-native-gpu-memory-buffers",
+  ];
+
+  // apply global switches
+  globalSwitches.forEach((the_switch) => {
+    app.commandLine.appendSwitch(the_switch);
+  });
+
+  switch (process.platform) {
+    case "darwin": // macOS
+      console.log(
+        "[fcapture] - utils@handleHardwareAcceleration: setting up macOS hardware acceleration."
+      );
+      // no additional switches needed
+      break;
+    case "linux":
+      app.commandLine.appendSwitch("use-gl", "desktop");
+      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
+      console.log(
+        "[fcapture] - utils@handleHardwareAcceleration: setting up Linux hardware acceleration."
+      );
+      break;
+    case "win32":
+      console.log(
+        "[fcapture] - utils@handleHardwareAcceleration: setting up Windows hardware acceleration."
+      );
+      // no additional switches needed
+      break;
+    default:
+      console.log(
+        "[fcapture] - utils@handleHardwareAcceleration: unsuported platform, disabling hardware acceleration."
+      );
+      app.disableHardwareAcceleration(); // disable if an unsupported OS is detected
+      break;
+  }
+};
+

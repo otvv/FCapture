@@ -95,13 +95,14 @@ export const setupCapsuleOverlay = () => {
       { label: "FRAMETIME:", value: `${frameTime.toFixed(2)}ms` },
     ];
 
-    const textPadding = 15;
     let totalTextWidth = 0;
-
+    
     metrics.forEach(({ label, value }) => {
       totalTextWidth += getTextSize(canvasContext, label)[0];
       totalTextWidth += getTextSize(canvasContext, value)[0];
     });
+
+    const textPadding = 15;
     totalTextWidth += textPadding;
 
     // calculate starting x position for centering
@@ -117,7 +118,7 @@ export const setupCapsuleOverlay = () => {
       drawText(canvasContext, label, currentX, baseline, fontTitleColor);
       currentX += labelSize[0] + 5;
       drawText(canvasContext, value, currentX, baseline, fontValueColor);
-      currentX += valueSize[0] + 15;
+      currentX += valueSize[0] + textPadding;
     });
   };
 };

@@ -9,68 +9,25 @@ FCapture
 
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
-import { getCorrectPicturesFolder, getCurrentDisplayForWindow } from "./api/utils/utils.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
 import { format } from "date-fns";
 import process from "process";
 import path from "path";
 import fs from "fs";
+import {
+  getCorrectPicturesFolder,
+  getCurrentDisplayForWindow,
+  handleHardwareAcceleration,
+} from "./api/utils/utils.mjs";
 
 const __dirname = import.meta.dirname;
+const __filename = import.meta.filename;
 
 const appState = {
   parentWindow: null,
   childWindow: null,
   canvasData: {},
   deviceData: {}
-};
-
-// handle hardware acceleration on different
-// platforms
-const handleHardwareAcceleration = () => {
-  const globalSwitches = [
-    "ignore-gpu-blacklist",
-    "enable-gpu-rasterization",
-    "enable-accelerated-video-decode",
-    "enable-accelerated-mjpeg-decode",
-    "enable-accelerated-vpx-decode",
-    "enable-accelerated-av1-decode",
-    "enable-accelerated-hevc",
-    "enable-native-gpu-memory-buffers",
-  ];
-
-  // apply global switches
-  globalSwitches.forEach((the_switch) => {
-    app.commandLine.appendSwitch(the_switch);
-  });
-
-  switch (process.platform) {
-    case "darwin": // macOS
-      console.log(
-        "[fcapture] - electron@handleHardwareAcceleration: setting up macOS hardware acceleration."
-      );
-      // no additional switches needed
-      break;
-    case "linux":
-      app.commandLine.appendSwitch("use-gl", "desktop");
-      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
-      console.log(
-        "[fcapture] - electron@handleHardwareAcceleration: setting up Linux hardware acceleration."
-      );
-      break;
-    case "win32":
-      console.log(
-        "[fcapture] - electron@handleHardwareAcceleration: setting up Windows hardware acceleration."
-      );
-      // no additional switches needed
-      break;
-    default:
-      console.log(
-        "[fcapture] - electron@handleHardwareAcceleration: unsuported platform, disabling hardware acceleration."
-      );
-      app.disableHardwareAcceleration(); // disable if an unsupported OS is detected
-      break;
-  }
 };
 
 const generateParentWindow = () => {
@@ -257,7 +214,7 @@ const initializeEventHandler = async () => {
   try {
     // handle hardware acceleration
     // based on platform
-    handleHardwareAcceleration();
+    handleHardwareAcceleration(app);
 
     // initialize app
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
