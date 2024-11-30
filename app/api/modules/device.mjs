@@ -34,24 +34,26 @@ const AVAILABLE_DEVICE_LABELS = Object.freeze({
 // available for the app 
 // (some of these might not work on your device)
 const VIDEO_MODES = {
-  "2160p30": { width: 3840, height: 2160, frameRate: 30 },
-  "2160p60": { width: 3840, height: 2160, frameRate: 60 },
+  "2160p60": { width: 3840, height: 2160, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
+  "2160p30": { width: 3840, height: 2160, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
   //
-  "1440p30": { width: 2560, height: 1440, frameRate: 30 },
-  "1440p60": { width: 2560, height: 1440, frameRate: 60 },
+  "1440p60": { width: 2560, height: 1440, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
+  "1440p30": { width: 2560, height: 1440, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
   //
-  "1080p30": { width: 1920, height: 1080, frameRate: 30 },
-  "1080p60": { width: 1920, height: 1080, frameRate: 60 },
+  "1080p60": { width: 1920, height: 1080, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
+  "1080p30": { width: 1920, height: 1080, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
   //
-  "720p30": { width: 1280, height: 720, frameRate: 30 },
-  "720p60": { width: 1280, height: 720, frameRate: 60 },
+  "720p60": { width: 1280, height: 720, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
+  "720p30": { width: 1280, height: 720, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
   //
-  "480p30": { width: 640, height: 480, frameRate: 30 },
-  "480p60": { width: 640, height: 480, frameRate: 60 }
+  "480p60": { width: 640, height: 480, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.STANDARD },
+  "480p30": { width: 640, height: 480, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.STANDARD },
 };
 
 const AUDIO_MODES = { 
-  "normalQuality": { sampleRate: 48000, sampleSize: 16, channelCount: 2 },
+  // sometimes your device migh ignore these constraints values
+  // and use its own "default" values 
+  "normalQuality": { sampleRate: 48000, sampleSize: 16, channelCount: 2 }, 
 
   // wacky way to get the highest audio quality
   // possible from the device
@@ -98,11 +100,11 @@ const getAvailableDevices = async () => {
 
       // prevent the renderer from fallbacking to the default device
       // and ignore virtual devices (OBS, etc)
-      if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL)) {
+      if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL) || !device) {
         continue;
       }
 
-      // filter each device for a specific type
+      // filter each device
       if (device.kind === "videoinput" && device.label.includes(AVAILABLE_DEVICE_LABELS.USB_VIDEO)) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
@@ -125,13 +127,13 @@ const getAvailableDevices = async () => {
   }
 };
 
-export const setupStreamFromDevice = async (deviceMode, audioMode) => {
+export const setupStreamFromDevice = async () => {
   try {
     // get filtered device payload to pull video from
     const device = await getAvailableDevices();
 
     if (!device) {
-      console.warn("[fcapture] - renderer@setupStreamFromDevice: invalid device payload.");
+      console.warn("[fcapture] - device@setupStreamFromDevice: invalid device payload.");
       return null;
     }
 
@@ -154,14 +156,14 @@ export const setupStreamFromDevice = async (deviceMode, audioMode) => {
         width: { ideal: videoConstraints.width },
         height: { ideal: videoConstraints.height },
         frameRate: { ideal: videoConstraints.frameRate },
-        aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN,
+        aspectRatio: { exact: videoConstraints.aspectRatio },
       },
       audio: {
         deviceId: { exact: device.audio.id },
 
-        sampleRate: { ideal:audioConstraints.sampleRate },
-        sampleSize: { ideal:audioConstraints.sampleSize },
-        channelCount: { ideal:audioConstraints.channelCount },
+        sampleRate: { ideal: audioConstraints.sampleRate },
+        sampleSize: { ideal: audioConstraints.sampleSize },
+        channelCount: { ideal: audioConstraints.channelCount },
 
         echoCancellation: false,
         autoGainControl: false,
@@ -185,23 +187,27 @@ export const setupStreamFromDevice = async (deviceMode, audioMode) => {
       return null;
     }
 
-    // generate a simple object with the necessary device
-    // info to populate the settings window description
     const deviceVideoSettings = rawMedia.getVideoTracks()[0].getSettings();
     const deviceAudioSettings = rawMedia.getAudioTracks()[0].getSettings();
-    if (rawMedia) {
-      const deviceInfo = {
-        width: deviceVideoSettings.width,
-        height: deviceVideoSettings.height,
-        frameRate: deviceVideoSettings.frameRate,
-        //
-        sampleRate: deviceAudioSettings.sampleRate,
-        sampleSize: deviceAudioSettings.sampleSize,
-        channelCount: deviceAudioSettings.channelCount,
-      };
 
-      window.ipcRenderer.send("receive-device-info", deviceInfo);
+    if (!deviceVideoSettings || !deviceAudioSettings) {
+      return null;
     }
+
+    // generate a simple object with the necessary device
+    // info to populate the settings window description
+    const deviceInfo = {
+      width: deviceVideoSettings.width,
+      height: deviceVideoSettings.height,
+      frameRate: deviceVideoSettings.frameRate,
+      aspectRatio: deviceVideoSettings.aspectRatio,
+      //
+      sampleRate: deviceAudioSettings.sampleRate,
+      sampleSize: deviceAudioSettings.sampleSize,
+      channelCount: deviceAudioSettings.channelCount,
+    };
+    
+    window.ipcRenderer.send("receive-device-info", deviceInfo);
 
     return rawMedia;
   } catch (err) {

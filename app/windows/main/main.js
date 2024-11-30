@@ -31,6 +31,7 @@ const streamState = {
   audioController: null,
   currentVolume: 0,
   previousVolume: 0,
+  isStreamActive: false,
   isAudioTrackMuted: false,
 };
 
@@ -68,8 +69,9 @@ const handleStreamAction = async (action = "start") => {
     switch (action) {
       case "start":
         // dont do anything if the stream data is already pulled
-        // in other words (if the stream is already running)
-        if (streamState.canvas) {
+        // in other words: if the stream is active
+        if (streamState.canvas || streamState.isStreamActive) {
+          console.warn("[fcapture] - main@handleStreamAction: stream already active, skipping..");
           return;
         }
 
@@ -96,6 +98,7 @@ const handleStreamAction = async (action = "start") => {
         if (!streamState.canvas) {
           // clear context from residual frames
           streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
+          streamState.isStreamActive = false;
 
           // hide canvas and show no signal screen
           canvasElement.style.display = "none";
@@ -128,12 +131,16 @@ const handleStreamAction = async (action = "start") => {
           streamState.currentVolume = streamState.audioController.gain.value; // update volume data
           streamState.isAudioTrackMuted = false;
         }
+
+        // tell the renderer that theres a stream active in the moment
+        streamState.isStreamActive = true;
         break;
       case "stop":
         if (
           !streamState.canvas ||
           !streamState.canvas.rawStreamData ||
-          !streamState.canvas.temporaryVideoElement
+          !streamState.canvas.temporaryVideoElement ||
+          !streamState.isStreamActive
         ) {
           return;
         }
@@ -173,16 +180,29 @@ const handleStreamAction = async (action = "start") => {
           streamState.canvas = null;
           streamState.canvasContext = null;
           streamState.audioContext = null;
+          streamState.isStreamActive = false;
         }
         break;
       case "restart":
+        if (!streamState.isStreamActive) {
+          return;
+        }
+
         await handleStreamAction("stop");
         await handleStreamAction("start");
         break;
       case "mute":
+        if (!streamState.isStreamActive) {
+          return;
+        }
+
         toggleStreamMute(true);
         break;
       case "unmute":
+        if (!streamState.isStreamActive) {
+          return;
+        }
+        
         toggleStreamMute(false);
         break;
       default:

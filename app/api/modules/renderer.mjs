@@ -131,7 +131,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
 
     // get raw stream data
     // based on the parameters passed by the app
-    const rawStreamData = await setupStreamFromDevice(configObjectTemplate.videoMode, configObjectTemplate.audioMode);
+    const rawStreamData = await setupStreamFromDevice();
     
     if (!rawStreamData) {
       return;
