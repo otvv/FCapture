@@ -9,10 +9,10 @@ FCapture
 
 import os from "os";
 import path from "path";
-import { screen } from "electron";
+import { App, BrowserWindow, Display, screen } from "electron";
 import { execSync } from "child_process";
 
-export const getCorrectPicturesFolder = () => {
+export const getCorrectPicturesFolder = (): string => {
   const fallbackFolder = path.join(os.homedir(), "Pictures");
 
   switch (process.platform) {
@@ -47,7 +47,7 @@ export const getCorrectPicturesFolder = () => {
   }
 };
 
-export const getCurrentDisplayForWindow = (electronWindow) => {
+export const getCurrentDisplayForWindow = (electronWindow: BrowserWindow): Display | null => {
   if (!electronWindow) {
     return null;
   }
@@ -58,7 +58,7 @@ export const getCurrentDisplayForWindow = (electronWindow) => {
   return currentDisplay;
 };
 
-export const handleHardwareAcceleration = (app) => {
+export const handleHardwareAcceleration = (app: App): void => {
   if (!app) {
     return;
   }

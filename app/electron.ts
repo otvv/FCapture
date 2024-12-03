@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import { app, BrowserWindow, Menu, dialog, ipcMain, BaseWindow } from "electron";
+import { app, BrowserWindow, Menu, dialog, ipcMain, BaseWindow, IpcMainEvent } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.ts";
 import { configObjectTemplate } from "./configTemplate.ts";
 import { format } from "date-fns";
@@ -128,16 +128,16 @@ const generateTemplateMenu = (): void => {
       submenu: [
         {
           label: "Refresh Stream",
-          click: () => appState.parentWindow?.webContents.send("restart-stream"),
+          click: (): void => appState.parentWindow?.webContents.send("restart-stream"),
         },
         {
           label: "Close Stream",
-          click: () => appState.parentWindow?.webContents.send("stop-stream"),
+          click: (): void => appState.parentWindow?.webContents.send("stop-stream"),
         },
         { type: "separator" },
         {
           label: "Settings",
-          click: () => {
+          click: (): void => {
             ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
           },
         },
@@ -148,11 +148,11 @@ const generateTemplateMenu = (): void => {
       submenu: [
         {
           label: "Mute",
-          click: () => appState.parentWindow?.webContents.send("mute-stream"),
+          click: (): void => appState.parentWindow?.webContents.send("mute-stream"),
         },
         {
           label: "Unmute",
-          click: () => appState.parentWindow?.webContents.send("unmute-stream"),
+          click: (): void => appState.parentWindow?.webContents.send("unmute-stream"),
         },
       ],
     },
@@ -232,7 +232,7 @@ const generateTemplateMenu = (): void => {
   }
 };
 
-const initializeEventHandler = async () => {
+const initializeEventHandler = async (): Promise<void> => {
   try {
     // handle hardware acceleration
     // based on platform
@@ -245,22 +245,27 @@ const initializeEventHandler = async () => {
     loadConfigState();
 
     // event listeners
-    ipcMain.on("receive-canvas-info", (_event, canvasInfo: ICanvasInfo) => {
-      if (canvasInfo && appState.parentWindow) {
+    ipcMain.on("receive-canvas-info", (_event: IpcMainEvent, canvasInfo: ICanvasInfo): void => {
+      if (canvasInfo) {
         appState.canvasData = canvasInfo;
-        appState.canvasData.frameRate = getCurrentDisplayForWindow(
-          appState.parentWindow
-        ).displayFrequency;
+
+        if (appState.parentWindow) {
+          const currentDisplay = getCurrentDisplayForWindow(appState.parentWindow);
+
+          if (currentDisplay) {
+            appState.canvasData.frameRate = currentDisplay.displayFrequency;
+          }
+        }
       }
     });
 
-    ipcMain.on("receive-device-info", (_event, deviceInfo: IDeviceInfo) => {
+    ipcMain.on("receive-device-info", (_event: IpcMainEvent, deviceInfo: IDeviceInfo): void => {
       if (deviceInfo) {
         appState.deviceData = deviceInfo;
       }
     });
 
-    ipcMain.on("save-screenshot", async (_event, dataUrl) => {
+    ipcMain.on("save-screenshot", async (_event: IpcMainEvent, dataUrl): Promise<void> => {
       const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
 
@@ -292,7 +297,7 @@ const initializeEventHandler = async () => {
       });
     });
 
-    ipcMain.on("open-settings", (_event) => {
+    ipcMain.on("open-settings", (_event: IpcMainEvent) => {
       generateChildWindow();
 
       if (appState.childWindow) {
@@ -310,7 +315,7 @@ const initializeEventHandler = async () => {
       }
     });
 
-    ipcMain.on("update-config-info", (event, newConfigPayload) => {
+    ipcMain.on("update-config-info", (event: IpcMainEvent, newConfigPayload): void => {
       // save
       Object.assign(configObjectTemplate, newConfigPayload);
 
@@ -321,7 +326,7 @@ const initializeEventHandler = async () => {
       console.log("[fcapture] - electron@initializeEventHandler: config saved.");
     });
 
-    ipcMain.on("request-config-info", (event) => {
+    ipcMain.on("request-config-info", (event: IpcMainEvent): void => {
       // load
       event.reply("config-loaded", configObjectTemplate);
 
