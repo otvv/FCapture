@@ -63,7 +63,7 @@ const generateParentWindow = (): void => {
     autoHideMenuBar: true,
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.ts"),
     },
   });
 
@@ -100,7 +100,7 @@ const generateChildWindow = (): BaseWindow | null => {
     autoHideMenuBar: true,
     modal: process.platform === "win32" || process.platform === "linux",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.ts"),
     },
   });
 
