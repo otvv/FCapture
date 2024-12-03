@@ -12,8 +12,24 @@ import { getTextSize, drawText, drawCapsule } from "../utils/surface.ts";
 
 const UPDATE_INTERVAL = 1000; // 1 second in ms
 
-// overlay constraints
-const overlaySettings = Object.freeze({
+// interfaces
+interface IOverlayStructure {
+  backgroundColor: string;
+  fontTitleColor: string;
+  fontValueColor: string;
+  width: number;
+  height: number;
+  radius: number;
+  fontFamily: string;
+}
+
+interface IMetrics {
+  label: string;
+  value: string;
+}
+
+// overlay constraints object
+const overlaySettings: Readonly<IOverlayStructure> = {
   backgroundColor: "rgba(35, 35, 35, 0.5)",
   fontTitleColor: "rgba(194, 94, 94, 1.0)",
   fontValueColor: "rgba(194, 194, 194, 1.0)",
@@ -23,12 +39,14 @@ const overlaySettings = Object.freeze({
   radius: 25,
 
   fontFamily: "bold 17px system-ui",
-});
+};
+
+
 
 export const setupCapsuleOverlay = () => {
-  let calculateMetrics = null;
+  let calculateMetrics: (() => { frameRate: number; frameTime: number }) | null = null;
 
-  const calculateOverlayMetrics = (updateInterval = UPDATE_INTERVAL) => {
+  const calculateOverlayMetrics = (updateInterval: number = UPDATE_INTERVAL) => {
     let frameCount = 0;
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
@@ -53,7 +71,7 @@ export const setupCapsuleOverlay = () => {
     };
   };
 
-  return (canvasContext) => {
+  return (canvasContext: CanvasRenderingContext2D): void => {
     if (!canvasContext) {
       return;
     }
@@ -70,7 +88,7 @@ export const setupCapsuleOverlay = () => {
     const capsuleLeft = canvasContext.canvas.width / 2 - capsuleWidth / 2;
     const capsuleRadius = overlaySettings.radius;
 
-    // performance metrics
+    // extract calculated performance metrics
     const { frameRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
@@ -90,14 +108,14 @@ export const setupCapsuleOverlay = () => {
       backgroundColor
     );
 
-    const metrics = [
+    const metrics: IMetrics[] = [
       { label: "FPS:", value: frameRate.toFixed(0) },
       { label: "FRAMETIME:", value: `${frameTime.toFixed(2)}ms` },
     ];
 
     let totalTextWidth = 0;
     
-    metrics.forEach(({ label, value }) => {
+    metrics.forEach(({ label, value }: IMetrics): void => {
       totalTextWidth += getTextSize(canvasContext, label)[0];
       totalTextWidth += getTextSize(canvasContext, value)[0];
     });
@@ -110,7 +128,7 @@ export const setupCapsuleOverlay = () => {
     let currentX = capsuleCenterX - totalTextWidth / 2;
 
     // draw metrics
-    metrics.forEach(({ label, value }) => {
+    metrics.forEach(({ label, value }: IMetrics): void => {
       const labelSize = getTextSize(canvasContext, label);
       const valueSize = getTextSize(canvasContext, value);
       const baseline = capsuleTop + capsuleHeight / 2 + labelSize[1] / 2;
