@@ -56,7 +56,7 @@ const toggleStreamMute = (state) => {
 
 const handleStreamAction = async (action = "start") => {
   try {
-    const renderer = await import("../../api/modules/renderer.mjs");
+    const renderer = await import("../../api/modules/renderer");
 
     if (canvasElement === null) {
       console.error(

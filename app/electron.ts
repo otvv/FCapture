@@ -8,8 +8,8 @@ FCapture
 */
 
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
-import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
-import { configObjectTemplate } from "./configTemplate.mjs";
+import { loadConfigState, saveConfigState } from "./api/modules/config";
+import { configObjectTemplate } from "./configTemplate";
 import { format } from "date-fns";
 import process from "process";
 import path from "path";
@@ -18,7 +18,7 @@ import {
   getCorrectPicturesFolder,
   getCurrentDisplayForWindow,
   handleHardwareAcceleration,
-} from "./api/utils/utils.mjs";
+} from "./api/utils/utils.js";
 
 const __dirname = import.meta.dirname;
 const __filename = import.meta.filename;

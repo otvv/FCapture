@@ -10,7 +10,7 @@ FCapture
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
-import { configObjectTemplate } from '../../configTemplate.mjs';
+import { configObjectTemplate } from '../../configTemplate';
 
 // set path to config file
 const configPath = path.join(app.getPath('userData'), 'fcapture-config.json');

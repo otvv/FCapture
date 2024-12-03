@@ -2,7 +2,7 @@
   "name": "fcapture",
   "version": "0.2.9",
   "description": "a previewer/recorder (eventually) software for generic USB capture cards",
-  "main": "app/electron.mjs",
+  "main": "app/electron.ts",
   "build": {
     "productName": "FCapture",
     "mac": {
@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "npx electron .",
-    "build": "node app/build.mjs",
+    "build": "node app/build.ts",
     "buildAltUnix": "sudo sh build/build.sh",
     "buildAltWin": "powershell -File build/build.ps1",
     "signAppMac": "codesign --deep --force --sign - dist/mac/*.app"
