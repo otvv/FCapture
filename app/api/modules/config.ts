@@ -15,7 +15,7 @@ import { configObjectTemplate } from '../../configTemplate.ts';
 // set path to config file
 const configPath = path.join(app.getPath('userData'), 'fcapture-config.json');
 
-export const saveConfigState = () => {
+export const saveConfigState = (): void => {
   try {
     // parse object to file
     fs.writeFileSync(configPath, JSON.stringify(configObjectTemplate));
@@ -24,7 +24,7 @@ export const saveConfigState = () => {
   }
 };
 
-export const loadConfigState = () => {
+export const loadConfigState = (): void => {
   try {
     // check if config exists
     if (fs.existsSync(configPath)) {
@@ -33,7 +33,7 @@ export const loadConfigState = () => {
 
       // replace the original config object 
       // with data parsed from the config file
-      Object.assign(configObjectTemplate, JSON.parse(configPayload));
+      Object.assign(configObjectTemplate, JSON.parse(configPayload.toString())); // TODO: check if the toString solution works
     } else {
       console.error("[fcapture] - config@loadConfigState: the config file was not found.");
 

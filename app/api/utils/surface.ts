@@ -7,7 +7,7 @@ FCapture
 
 */
 
-export const getTextSize = (canvasContext: CanvasRenderingContext2D, textString: string) => {
+export const getTextSize = (canvasContext: CanvasRenderingContext2D, textString: string): number[] => {
   const textMetrics = canvasContext.measureText(textString);
   const textWidth = textMetrics.actualBoundingBoxRight + textMetrics.actualBoundingBoxLeft;
   const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
