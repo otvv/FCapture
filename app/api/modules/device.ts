@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import { configObjectTemplate } from "../../configTemplate";
+import { configObjectTemplate } from "../../configTemplate.ts";
 
 const ASPECT_RATIO_TABLE = Object.freeze({
   STANDARD: 4 / 3,

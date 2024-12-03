@@ -7,9 +7,9 @@ FCapture
 
 */
 
-import { setupCapsuleOverlay } from "./overlay";
-import { setupStreamFromDevice } from "./device";
-import { configObjectTemplate } from "../../configTemplate";
+import { setupCapsuleOverlay } from "./overlay.ts";
+import { setupStreamFromDevice } from "./device.ts";
+import { configObjectTemplate } from "../../configTemplate.ts";
 
 const BASS_BOST_AMOUNT = 10;
 const BASS_BOOST_FREQUENCY = 150;

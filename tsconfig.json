@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "CommonJS",
+    "module": "NodeNext",
     "strict": true,
     "esModuleInterop": true,
     "outDir": "./dist",
     "sourceMap": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
     "types": ["node", "electron"],
     "baseUrl": "./",
     "paths": {

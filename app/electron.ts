@@ -7,30 +7,51 @@ FCapture
 
 */
 
-import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
-import { loadConfigState, saveConfigState } from "./api/modules/config";
-import { configObjectTemplate } from "./configTemplate";
+import { app, BrowserWindow, Menu, dialog, ipcMain, BaseWindow } from "electron";
+import { loadConfigState, saveConfigState } from "./api/modules/config.ts";
+import { configObjectTemplate } from "./configTemplate.ts";
 import { format } from "date-fns";
-import process from "process";
-import path from "path";
-import fs from "fs";
+import * as process from "process";
+import * as path from "path";
+import * as fs from "fs";
 import {
   getCorrectPicturesFolder,
   getCurrentDisplayForWindow,
   handleHardwareAcceleration,
 } from "./api/utils/utils.js";
 
-const __dirname = import.meta.dirname;
-const __filename = import.meta.filename;
+const __dirname: string = import.meta.dirname;
+const __filename: string = import.meta.filename;
 
-const appState = {
-  parentWindow: null,
-  childWindow: null,
+// interfaces (TODO: move to another file)
+interface IAppStructure {
+  parentWindow?: BrowserWindow | undefined;
+  childWindow?: BrowserWindow | undefined;
+  canvasData: {
+    frameRate?: number;
+    [key: string]: any; // TODO: declare the correct keys and types later
+  };
+  deviceData: {
+    [key: string]: any; // TODO: declare the correct keys and types later
+  };
+}
+
+const appState: IAppStructure = {
+  parentWindow: undefined,
+  childWindow: undefined,
   canvasData: {},
   deviceData: {}
 };
 
-const generateParentWindow = () => {
+interface ICanvasInfo {
+  [key: string]: any;
+}
+
+interface IDeviceInfo {
+  [key: string]: any;
+}
+
+const generateParentWindow = (): void => {
   // setup properties
   appState.parentWindow = new BrowserWindow({
     title: "FCapture",
@@ -58,7 +79,7 @@ const generateParentWindow = () => {
   // appState.parentWindow.setMenuBarVisibility(true);
 };
 
-const generateChildWindow = () => {
+const generateChildWindow = (): BaseWindow | null => {
   if (appState.childWindow && !appState.childWindow.isDestroyed()) {
     appState.childWindow.focus();
     return appState.childWindow;
@@ -88,7 +109,7 @@ const generateChildWindow = () => {
   }
 
   appState.childWindow.on("closed", () => {
-    appState.childWindow = null; // reset ref
+    appState.childWindow = undefined; // reset ref
   });
 
   // load child window HTML structure
@@ -97,20 +118,21 @@ const generateChildWindow = () => {
   // DEBUG PURPOSES ONLY
   // appState.childWindow.webContents.openDevTools();
   // appState.childWindow.setMenuBarVisibility(true);
+  return appState.childWindow;
 };
 
-const generateTemplateMenu = () => {
+const generateTemplateMenu = (): void => {
   const menuBarTemplate = Menu.buildFromTemplate([
     {
       label: "View",
       submenu: [
         {
           label: "Refresh Stream",
-          click: () => appState.parentWindow.webContents.send("restart-stream"),
+          click: () => appState.parentWindow?.webContents.send("restart-stream"),
         },
         {
           label: "Close Stream",
-          click: () => appState.parentWindow.webContents.send("stop-stream"),
+          click: () => appState.parentWindow?.webContents.send("stop-stream"),
         },
         { type: "separator" },
         {
@@ -126,11 +148,11 @@ const generateTemplateMenu = () => {
       submenu: [
         {
           label: "Mute",
-          click: () => appState.parentWindow.webContents.send("mute-stream"),
+          click: () => appState.parentWindow?.webContents.send("mute-stream"),
         },
         {
           label: "Unmute",
-          click: () => appState.parentWindow.webContents.send("unmute-stream"),
+          click: () => appState.parentWindow?.webContents.send("unmute-stream"),
         },
       ],
     },
@@ -154,7 +176,7 @@ const generateTemplateMenu = () => {
         },
         {
           label: "Enable DevTools",
-          role: "toggledevtools",
+          role: "toggleDevTools",
         },
         { type: "separator" },
         {
@@ -182,20 +204,20 @@ const generateTemplateMenu = () => {
     const dockMenuTemplate = Menu.buildFromTemplate([
       {
         label: "Refresh Stream",
-        click: () => appState.parentWindow.webContents.send("restart-stream"),
+        click: () => appState.parentWindow?.webContents.send("restart-stream"),
       },
       {
         label: "Close Stream",
-        click: () => appState.parentWindow.webContents.send("stop-stream"),
+        click: () => appState.parentWindow?.webContents.send("stop-stream"),
       },
       { type: "separator" },
       {
         label: "Mute Audio",
-        click: () => appState.parentWindow.webContents.send("mute-stream"),
+        click: () => appState.parentWindow?.webContents.send("mute-stream"),
       },
       {
         label: "Unmute Audio",
-        click: () => appState.parentWindow.webContents.send("unmute-stream"),
+        click: () => appState.parentWindow?.webContents.send("unmute-stream"),
       },
       { type: "separator" },
       {
@@ -223,8 +245,8 @@ const initializeEventHandler = async () => {
     loadConfigState();
 
     // event listeners
-    ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
-      if (canvasInfo) {
+    ipcMain.on("receive-canvas-info", (_event, canvasInfo: ICanvasInfo) => {
+      if (canvasInfo && appState.parentWindow) {
         appState.canvasData = canvasInfo;
         appState.canvasData.frameRate = getCurrentDisplayForWindow(
           appState.parentWindow
@@ -232,7 +254,7 @@ const initializeEventHandler = async () => {
       }
     });
 
-    ipcMain.on("receive-device-info", (_event, deviceInfo) => {
+    ipcMain.on("receive-device-info", (_event, deviceInfo: IDeviceInfo) => {
       if (deviceInfo) {
         appState.deviceData = deviceInfo;
       }
@@ -278,7 +300,7 @@ const initializeEventHandler = async () => {
           appState.childWindow.webContents.once("did-finish-load", () => {
             // send canvas and device info payload
             // back to the settings window
-            appState.childWindow.webContents.send(
+            appState.childWindow?.webContents.send(
               "send-canvas-info",
               appState.canvasData,
               appState.deviceData

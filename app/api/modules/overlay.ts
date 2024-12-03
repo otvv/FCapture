@@ -8,7 +8,7 @@ FCapture
 */
 
 // TODO import module instead of individual functions
-import { getTextSize, drawText, drawCapsule } from "../utils/surface.mjs";
+import { getTextSize, drawText, drawCapsule } from "../utils/surface.ts";
 
 const UPDATE_INTERVAL = 1000; // 1 second in ms
 
