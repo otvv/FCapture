@@ -50,8 +50,11 @@
   },
   "homepage": "https://github.com/otvv/fcapture#readme",
   "devDependencies": {
+    "@types/electron": "^1.4.38",
+    "@types/node": "^22.10.1",
     "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.2"
   },
   "dependencies": {
     "date-fns": "^4.1.0"

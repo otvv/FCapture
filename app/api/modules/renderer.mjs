@@ -88,37 +88,64 @@ const generateDrawFrameOnScreenFunction = (
   canvasContext
 ) => {
   let overlayInstance = null;
+  let animationId = 0;
+
+  const createAndTransferImageBitmap = async () => {
+    try {
+      // create ImageBitmap from the temporary video element frame
+      const imageBitmap = await createImageBitmap(temporaryVideoElement, {
+        resizeWidth: offscreenCanvasElement.width,
+        resizeHeight: offscreenCanvasElement.height,
+        resizeQuality: "high",
+      });
+
+      // transfer the bitmap to the offscreen canvas
+      offscreenContext.drawImage(imageBitmap, 0, 0);
+
+      // draw from offscreen canvas to the main canvas
+      canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+
+      // setup debug overlay
+      if (configObjectTemplate.debugOverlay) {
+        if (!overlayInstance) {
+          try {
+            overlayInstance = setupCapsuleOverlay(canvasContext);
+          } catch (err) {
+            console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
+          }
+        }
+
+        if (overlayInstance) {
+          overlayInstance(canvasContext);
+        }
+      }
+
+      imageBitmap.close();
+    } catch (err) {
+      console.error("[fcapture] - renderer@createAndTransferImageBitmap:", err);
+    }
+  };
 
   const drawFrameOnScreen = () => {
     // more precise frame rendering
     if (temporaryVideoElement.readyState >= temporaryVideoElement.HAVE_CURRENT_DATA) {
-      // draw new frame off and on screen for better speed
-      offscreenContext.drawImage(temporaryVideoElement, 0, 0);
-      canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+      Promise.resolve().then(createAndTransferImageBitmap);
     }
-
-    // setup debug overlay
-    if (configObjectTemplate.debugOverlay) {
-      if (!overlayInstance) {
-        try {
-          overlayInstance = setupCapsuleOverlay(canvasContext);
-        } catch (err) {
-          console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
-        }
-      }
-
-      if (overlayInstance) {
-        overlayInstance(canvasContext);
-      }
-    }
-
+    
     // schedule next frame
-    requestAnimationFrame(drawFrameOnScreen);
+    animationId = requestAnimationFrame(drawFrameOnScreen);
   };
 
   return {
-    start: () => requestAnimationFrame(drawFrameOnScreen),
-  };
+    start: () => {
+      animationId = requestAnimationFrame(drawFrameOnScreen)
+    },
+    stop: () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    }
+  }
 };
 
 export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audioContext) => {
@@ -167,8 +194,8 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     const offscreenCanvasElement = new OffscreenCanvas(canvasElement.width, canvasElement.height);
 
     const offscreenContext = offscreenCanvasElement.getContext("2d", {
-      willReadFrequently: true,
       alpha: false,
+      willReadFrequently: true
     });
 
     // generate a function to draw frames using
