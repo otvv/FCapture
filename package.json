@@ -1,6 +1,6 @@
 {
   "name": "fcapture",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "description": "a previewer/recorder (eventually) software for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {
@@ -17,6 +17,7 @@
       "executableName": "FCapture",
       "icon": "app/assets/icons/fcapture-icon.ico"
     },
+
     "linux": {
       "executableName": "FCapture",
       "icon": "app/assets/icons/fcapture-icon-512x512.png",

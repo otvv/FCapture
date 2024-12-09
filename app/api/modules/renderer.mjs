@@ -11,34 +11,14 @@ import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../../configTemplate.mjs";
 
-const BASS_BOST_AMOUNT = 10;
-const BASS_BOOST_FREQUENCY = 150;
+const BASS_BOST_AMOUNT = 9;
+const BASS_BOOST_FREQUENCY = 100;
 const SURROUND_DELAY_TIME = 0.05;
-
-const updateWindowState = () => {
-  // request the current config data
-  window.ipcRenderer.send("request-config-info");
-
-  // handle window state update when config info is received 
-  window.ipcRenderer.on("config-loaded", (configPayload) => {
-    console.log("[fcapture] - renderer@updateWindowState: config payload received.");
-
-    // update original config object template
-    // using the data pulled from the config file
-    if (configPayload) {
-      for (const key in configPayload) {
-        if (configObjectTemplate[key] !== configPayload[key]) {
-          configObjectTemplate[key] = configPayload[key];
-        }
-      }
-    }
-  });
-}
 
 const createVideoElement = (() => {
   let cachedVideoElement = null;
 
-  return (srcObject) => {
+  return (rawStreamData) => {
     // initialize temporary video player element
     if (!cachedVideoElement) {
       cachedVideoElement = document.createElement("video");
@@ -53,7 +33,7 @@ const createVideoElement = (() => {
     }
 
     // assign raw stream object/data to the video element
-    cachedVideoElement.srcObject = srcObject;
+    cachedVideoElement.srcObject = rawStreamData;
 
     return cachedVideoElement;
   };
@@ -82,7 +62,7 @@ const createAudioNodeChain = (audioContext) => {
 }
 
 const generateDrawFrameOnScreenFunction = (
-  temporaryVideoElement,
+  videoElement,
   offscreenCanvasElement,
   offscreenContext,
   canvasContext
@@ -91,9 +71,9 @@ const generateDrawFrameOnScreenFunction = (
 
   const drawFrameOnScreen = () => {
     // more precise frame rendering
-    if (temporaryVideoElement.readyState >= temporaryVideoElement.HAVE_CURRENT_DATA) {
+    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
       // draw new frame off and on screen for better speed
-      offscreenContext.drawImage(temporaryVideoElement, 0, 0);
+      offscreenContext.drawImage(videoElement, 0, 0);
       canvasContext.drawImage(offscreenCanvasElement, 0, 0);
     }
 
@@ -123,14 +103,7 @@ const generateDrawFrameOnScreenFunction = (
 
 export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audioContext) => {
   try {
-    // request data from config file
-    // and update window state
-    // TODO: move this function to another place
-    // in case it needs  to be reused
-    updateWindowState();
-
-    // get raw stream data
-    // based on the parameters passed by the app
+    // get raw stream data from the device
     const rawStreamData = await setupStreamFromDevice();
     
     if (!rawStreamData) {
@@ -138,22 +111,23 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     }
     
     // create video element and perform initial configurations
-    const temporaryVideoElement = createVideoElement(rawStreamData);
+    const videoElement = createVideoElement(rawStreamData);
     
-    if (!temporaryVideoElement) {
-      console.error("[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize video element.");
+    if (!videoElement) {
+      console.error("[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.");
       return;
     }
     
     // start video playback
-    await temporaryVideoElement.play().catch((err) => {
-      console.error("[fcapture] - renderer@temporaryVideoElementPromise:", err);
+    await videoElement.play().catch((err) => {
+      console.error("[fcapture] - renderer@videoElementPromise:", err);
+      return;
     });
     
     // change canvas resolution and aspect ratio
     // to match the resolution of the video stream
-    canvasElement.width = temporaryVideoElement.videoWidth;
-    canvasElement.height = temporaryVideoElement.videoHeight;
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
 
     // get image brightness, contrast and saturation percentages
     const imageBrightnessValue = configObjectTemplate.imageBrightness / 100;
@@ -164,8 +138,8 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
     canvasElement.style.imageRendering = configObjectTemplate.imageRenderingPriority;
 
+    // setup offscreen canvas
     const offscreenCanvasElement = new OffscreenCanvas(canvasElement.width, canvasElement.height);
-
     const offscreenContext = offscreenCanvasElement.getContext("2d", {
       willReadFrequently: true,
       alpha: false,
@@ -174,7 +148,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     // generate a function to draw frames using
     // the offscreen canvas
     const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
-      temporaryVideoElement,
+      videoElement,
       offscreenCanvasElement,
       offscreenContext,
       canvasContext
@@ -206,9 +180,9 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       prev.connect(curr)
     );
 
-    return { rawStreamData, gainNode: audioNodes.gain, temporaryVideoElement };
+    return { rawStreamData, gainNode: audioNodes.gain, videoElement };
   } catch (err) {
-    console.log("[fcapture] - renderRawFrameOnCanvas:", err);
+    console.log("[fcapture] - renderer@renderRawFrameOnCanvas:", err);
     return;
   }
 };

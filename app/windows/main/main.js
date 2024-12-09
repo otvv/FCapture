@@ -35,6 +35,28 @@ const streamState = {
   isAudioTrackMuted: false,
 };
 
+const updateWindowState = async () => {
+  const template = await import("../../configTemplate.mjs");
+
+  // request the current config data
+  window.ipcRenderer.send("request-config-info");
+
+  // handle window state update when config info is received 
+  window.ipcRenderer.on("config-loaded", (configPayload) => {
+    console.log("[fcapture] - main@updateWindowState: config payload received.");
+
+    // update original config object template
+    // using the data pulled from the config file
+    if (configPayload) {
+      for (const key in configPayload) {
+        if (template.configObjectTemplate[key] !== configPayload[key]) {
+          template.configObjectTemplate[key] = configPayload[key];
+        }
+      }
+    }
+  });
+}
+
 const toggleStreamMute = (state) => {
   if (!streamState.audioController) {
     return;
@@ -66,6 +88,9 @@ const handleStreamAction = async (action = "start") => {
       return;
     }
 
+    // update window state before any action can be performed
+    await updateWindowState();
+
     switch (action) {
       case "start":
         // dont do anything if the stream data is already pulled
@@ -81,13 +106,11 @@ const handleStreamAction = async (action = "start") => {
         });
 
         // disable image smoothing for pixel-perfect
-        // image quality
+        // image quality and setup audio context
         streamState.canvasContext.imageSmoothingEnabled = false;
-
         streamState.audioContext = new window.AudioContext();
 
-        // render frames of the raw stream from the canvas
-        // onto the video player element
+        // render raw stream frames onto the canvas element
         streamState.canvas = await renderer.renderRawFrameOnCanvas(
           canvasElement,
           streamState.canvasContext,
@@ -109,18 +132,17 @@ const handleStreamAction = async (action = "start") => {
 
         // generate a simple object with the necessary canvas
         // info to populate the settings window description
-        // when needed
-        if (streamState.canvas.temporaryVideoElement) {
+        if (streamState.canvas.videoElement) {
           const canvasInfo = {
-            width: streamState.canvas.temporaryVideoElement.videoWidth,
-            height: streamState.canvas.temporaryVideoElement.videoHeight,
+            width: streamState.canvas.videoElement.videoWidth,
+            height: streamState.canvas.videoElement.videoHeight,
           };
 
           window.ipcRenderer.send("receive-canvas-info", canvasInfo);
         }
 
         // display canvas and hide no signal screen
-        // if device is and stream is working
+        // if device is connected and stream feed is available
         noSignalContainerElement.style.display = "none";
         canvasElement.style.display = "flex";
 
@@ -128,18 +150,19 @@ const handleStreamAction = async (action = "start") => {
         streamState.audioController = streamState.canvas.gainNode;
 
         if (streamState.audioController) {
-          streamState.currentVolume = streamState.audioController.gain.value; // update volume data
+          streamState.currentVolume = streamState.audioController.gain.value;
           streamState.isAudioTrackMuted = false;
         }
 
-        // tell the renderer that theres a stream active in the moment
+        // tell the renderer that theres a stream feed active 
+        // at the moment
         streamState.isStreamActive = true;
         break;
       case "stop":
         if (
           !streamState.canvas ||
           !streamState.canvas.rawStreamData ||
-          !streamState.canvas.temporaryVideoElement ||
+          !streamState.canvas.videoElement ||
           !streamState.isStreamActive
         ) {
           return;
@@ -148,7 +171,7 @@ const handleStreamAction = async (action = "start") => {
         // clear canvas
         streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-        // get allcanvasElement available stream video/audio tracks
+        // get all available tracks from the raw stream data
         const streamTracks = await streamState.canvas.rawStreamData.getTracks();
 
         if (!streamTracks) {
@@ -159,7 +182,7 @@ const handleStreamAction = async (action = "start") => {
         await streamTracks.forEach((track) => track.stop());
         streamState.isAudioTrackMuted = false;
 
-        // close audio controller
+        // close audio controller and context
         if (streamState.audioController) {
           streamState.audioController.disconnect();
         }
@@ -175,11 +198,16 @@ const handleStreamAction = async (action = "start") => {
 
         // clear stream data
         {
-          streamState.canvas.temporaryVideoElement.srcObject = null;
-          streamState.canvas = { temporaryVideoElement: null, gainNode: null, rawStreamData: null };
+          streamState.canvas.videoElement.srcObject = null;
+          streamState.canvas = { rawStreamData: null, gainNode: null, videoElement: null };
+          streamState.canvas.videoElement = null; // just in case
           streamState.canvas = null;
           streamState.canvasContext = null;
           streamState.audioContext = null;
+          streamState.audioController = null;
+
+          // tell the renderer that theres no active stream feed
+          // at the moment
           streamState.isStreamActive = false;
         }
         break;
@@ -234,21 +262,19 @@ const handleWindowAction = async (action = "preview") => {
         window.ipcRenderer.send("open-settings");
         break;
       case "screenshot":
-        // don't do anything in case we don't have a running
-        // stream
-        if (!streamState.canvas) {
+        // don't do anything in case we don't have an active stream
+        if (!streamState.canvas || !streamState.isStreamActive) {
           return;
         }
 
-        // disable image smoothing for 
-        // pixel-perfect image quality
+        // disable image smoothing for pixel-perfect image quality
         streamState.canvasContext.imageSmoothingEnabled = false;
 
         // send event to electron's main process
-        // to save a screenshot at Pictures folder
+        // to save a screenshot at the user's Pictures folder
         const dataUrl = streamState.canvasContext.canvas.toDataURL("image/png");
 
-        // snd the dataUrl and filePath to the main process to save the screenshot
+        // send the current frame to the main process to save the screenshot
         window.ipcRenderer.send('save-screenshot', dataUrl);
         
         break;

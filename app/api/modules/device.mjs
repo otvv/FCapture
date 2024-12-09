@@ -60,26 +60,6 @@ const AUDIO_MODES = {
   "highQuality": { sampleRate: 99999999, sampleSize: 99999999, channelCount: 99999999 },
 }
 
-const updateWindowState = () => {
-  // request the current config data
-  window.ipcRenderer.send("request-config-info");
-
-  // handle window state update when config info is received 
-  window.ipcRenderer.on("config-loaded", (configPayload) => {
-    console.log("[fcapture] - device@updateWindowState: config payload received.");
-
-    // update original config object template
-    // using the data pulled from the config file
-    if (configPayload) {
-      for (const key in configPayload) {
-        if (configObjectTemplate[key] !== configPayload[key]) {
-          configObjectTemplate[key] = configPayload[key];
-        }
-      }
-    }
-  });
-}
-
 const getAvailableDevices = async () => {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -136,10 +116,6 @@ export const setupStreamFromDevice = async () => {
       console.warn("[fcapture] - device@setupStreamFromDevice: invalid device payload.");
       return null;
     }
-
-    // request the current config data
-    // and update window state
-    updateWindowState();
 
     // get video and audio mode constraints
     const videoConstraints = VIDEO_MODES[configObjectTemplate.videoMode];

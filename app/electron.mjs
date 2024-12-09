@@ -217,6 +217,7 @@ const initializeEventHandler = async () => {
     handleHardwareAcceleration(app);
 
     // initialize app
+    app.setAppUserModelId("com.github.otvv.fcapture");
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
 
     // load config internally after app starts
@@ -242,13 +243,8 @@ const initializeEventHandler = async () => {
       const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
 
-      // get the system's Pictures folder
       const picturesFolder = getCorrectPicturesFolder();
-
-      // timestamp file format name
-      const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
-
-      // screenshot save folder
+      const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");i
       const saveFolder = path.join(picturesFolder, "FCapture");
 
       // create a folder for FCapture screenshots if it doesn't exist
@@ -262,8 +258,7 @@ const initializeEventHandler = async () => {
       // write file to specified path
       fs.writeFile(filePath, buffer, (err) => {
         if (err) {
-          console.warn("[fcapture] - electron@initializeEventHandler:", err);
-          return;
+          console.warn("[fcapture] - electron@initializeEventHandler: failed to save screenshot.", err);
         }
 
         console.log(`[fcapture] - electron@initializeEventHandler: screenshot saved @ ${filePath}`);

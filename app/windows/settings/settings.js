@@ -98,7 +98,6 @@ const initializeEventHandler = async () => {
     window.ipcRenderer.on("send-canvas-info", (canvasInfo, deviceInfo) => {
       // populate settings menu description
       if (canvasInfo && deviceInfo) {
-        console.log("[fcapture] - payload received:", canvasInfo, deviceInfo);
         populateStreamOverview(canvasInfo, deviceInfo);
       }
     });
