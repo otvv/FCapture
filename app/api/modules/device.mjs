@@ -13,6 +13,7 @@ const ASPECT_RATIO_TABLE = Object.freeze({
   STANDARD: 4 / 3,
   WIDESCREEN: 16 / 9,
   ULTRAWIDE: 21 / 9,
+  SUPER_ULTRAWIDE: 32 / 9
 });
 
 // this will be filled with more devices in the future
@@ -78,18 +79,18 @@ const getAvailableDevices = async () => {
       // DEBUG PURPOSES ONLY
       // console.log(`[fcapture] - device@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
-      // prevent the renderer from fallbacking to the default device
-      // and ignore virtual devices (OBS, etc)
+      // prevent the device enumerator from fallbacking to a virtual device (OBS, webcam software, etc)
       if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL) || !device) {
         continue;
       }
 
-      // filter each device
+      // filter each usb device capable ofvideo input
       if (device.kind === "videoinput" && device.label.includes(AVAILABLE_DEVICE_LABELS.USB_VIDEO)) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
       }
-
+      
+      // filter each device capable of audio input
       if (
         device.kind === "audioinput" &&
         (device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO) ||
@@ -109,11 +110,12 @@ const getAvailableDevices = async () => {
 
 export const setupStreamFromDevice = async () => {
   try {
-    // get filtered device payload to pull video from
+    // get filtered device info payload
+    // so the renderer can pull the video stream
     const device = await getAvailableDevices();
 
     if (!device) {
-      console.warn("[fcapture] - device@setupStreamFromDevice: invalid device payload.");
+      console.error("[fcapture] - device@setupStreamFromDevice: invalid device payload.");
       return null;
     }
 
@@ -124,7 +126,7 @@ export const setupStreamFromDevice = async () => {
     // setup raw input video and audio properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
       // NOTE: if device doesnt have support for any of these settings
-      // it will use the respective setting internal default/ideal value
+      // it will use it's respective internal default/ideal value
       video: {
         deviceId: { exact: device.video.id },
 
@@ -137,6 +139,7 @@ export const setupStreamFromDevice = async () => {
       audio: {
         deviceId: { exact: device.audio.id },
 
+        // set desired audio quality based on the audio mode selected
         sampleRate: { ideal: audioConstraints.sampleRate },
         sampleSize: { ideal: audioConstraints.sampleSize },
         channelCount: { ideal: audioConstraints.channelCount },

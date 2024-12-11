@@ -275,8 +275,7 @@ const handleWindowAction = async (action = "preview") => {
         const dataUrl = streamState.canvasContext.canvas.toDataURL("image/png");
 
         // send the current frame to the main process to save the screenshot
-        window.ipcRenderer.send('save-screenshot', dataUrl);
-        
+        window.ipcRenderer.send('save-screenshot', dataUrl); 
         break;
     }
   } catch (err) {

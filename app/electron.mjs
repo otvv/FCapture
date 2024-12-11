@@ -239,12 +239,12 @@ const initializeEventHandler = async () => {
       }
     });
 
-    ipcMain.on("save-screenshot", async (_event, dataUrl) => {
+    ipcMain.on("save-screenshot", (_event, dataUrl) => {
       const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
 
       const picturesFolder = getCorrectPicturesFolder();
-      const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");i
+      const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
       const saveFolder = path.join(picturesFolder, "FCapture");
 
       // create a folder for FCapture screenshots if it doesn't exist
@@ -259,6 +259,7 @@ const initializeEventHandler = async () => {
       fs.writeFile(filePath, buffer, (err) => {
         if (err) {
           console.warn("[fcapture] - electron@initializeEventHandler: failed to save screenshot.", err);
+          return;
         }
 
         console.log(`[fcapture] - electron@initializeEventHandler: screenshot saved @ ${filePath}`);
