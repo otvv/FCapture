@@ -12,6 +12,7 @@ import { configObjectTemplate } from "../../configTemplate.mjs";
 const ASPECT_RATIO_TABLE = Object.freeze({
   STANDARD: 4 / 3,
   WIDESCREEN: 16 / 9,
+  WIDESCREEN_ALT: 16 / 10,
   ULTRAWIDE: 21 / 9,
   SUPER_ULTRAWIDE: 32 / 9
 });
@@ -157,7 +158,6 @@ export const setupStreamFromDevice = async () => {
     //   rawMedia.getVideoTracks()[0].getCapabilities(),
     //   rawMedia.getAudioTracks()[0].getCapabilities()
     // );
-    // console.log("[fcapture] device@setupStreamFromDevice raw:", rawMedia);
 
     if (!rawMedia) {
       console.warn(
@@ -173,7 +173,7 @@ export const setupStreamFromDevice = async () => {
       return null;
     }
 
-    // generate a simple object with the necessary device
+    // generate a simple object containing the necessary device
     // info to populate the settings window description
     const deviceInfo = {
       width: deviceVideoSettings.width,

@@ -103,6 +103,8 @@ const handleStreamAction = async (action = "start") => {
         // initialize canvas and audio context
         streamState.canvasContext = canvasElement.getContext("2d", {
           willReadFrequently: true,
+          desyncronized: true,
+          colorSpace: "srgb"
         });
 
         // disable image smoothing for pixel-perfect

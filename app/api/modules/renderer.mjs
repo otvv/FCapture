@@ -84,6 +84,7 @@ const generateDrawFrameOnScreenFunction = (
           overlayInstance = setupCapsuleOverlay(canvasContext);
         } catch (err) {
           console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
+          return;
         }
       }
 
@@ -142,6 +143,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     const offscreenCanvasElement = new OffscreenCanvas(canvasElement.width, canvasElement.height);
     const offscreenContext = offscreenCanvasElement.getContext("2d", {
       willReadFrequently: true,
+      desyncronized: true,
       alpha: false,
     });
 

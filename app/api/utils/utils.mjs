@@ -12,9 +12,20 @@ import path from "path";
 import { screen } from "electron";
 import { execSync } from "child_process";
 
+export const focusWindow = (targetWindow) => {
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return null;
+  }
+
+  // focus window and return target
+  targetWindow.focus();
+  return targetWindow;
+}
+
 export const getCorrectPicturesFolder = () => {
   const fallbackFolder = path.join(os.homedir(), "Pictures");
-
+  const userName = os.userInfo().username;
+  
   switch (process.platform) {
     case "win32":
       try {
@@ -36,6 +47,9 @@ export const getCorrectPicturesFolder = () => {
 
         return picturesFolder;
       } catch {
+        console.warn(`[fcapture] - utils@getCorrectPicturesFolder: error trying to find the user's localized Pictures folder.
+          [fcapture] - utils@getCorrectPicturesFolder: fallbacking to default Pictures folder location. (/${userName}/Pictures)`);
+        
         return fallbackFolder;
       }
     case "darwin":
@@ -47,7 +61,7 @@ export const getCorrectPicturesFolder = () => {
   }
 };
 
-export const getCurrentDisplayForWindow = (electronWindow) => {
+export const getCurrentDisplayOfWindow = (electronWindow) => {
   if (!electronWindow) {
     return null;
   }

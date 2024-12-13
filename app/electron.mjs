@@ -15,8 +15,9 @@ import process from "process";
 import path from "path";
 import fs from "fs";
 import {
+  focusWindow,
   getCorrectPicturesFolder,
-  getCurrentDisplayForWindow,
+  getCurrentDisplayOfWindow,
   handleHardwareAcceleration,
 } from "./api/utils/utils.mjs";
 
@@ -59,10 +60,8 @@ const generateParentWindow = () => {
 };
 
 const generateChildWindow = () => {
-  if (appState.childWindow && !appState.childWindow.isDestroyed()) {
-    appState.childWindow.focus();
-    return appState.childWindow;
-  }
+  // always focus window when opening
+  focusWindow(appState.childWindow);
 
   // setup properties
   appState.childWindow = new BrowserWindow({
@@ -165,7 +164,7 @@ const generateTemplateMenu = () => {
               type: "info",
               message: `FCapture
               
-              A previewer/recorder (eventually) software for generic USB capture cards`,
+              A previewer and recorder (eventually) software for generic USB capture cards`,
               detail: `version: ${app.getVersion()}\n copyright © github.com/otvv`,
             });
           },
@@ -217,7 +216,6 @@ const initializeEventHandler = async () => {
     handleHardwareAcceleration(app);
 
     // initialize app
-    app.setAppUserModelId("com.github.otvv.fcapture");
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
 
     // load config internally after app starts
@@ -227,7 +225,7 @@ const initializeEventHandler = async () => {
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
         appState.canvasData = canvasInfo;
-        appState.canvasData.frameRate = getCurrentDisplayForWindow(
+        appState.canvasData.frameRate = getCurrentDisplayOfWindow(
           appState.parentWindow
         ).displayFrequency;
       }
