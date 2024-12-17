@@ -8,59 +8,7 @@ FCapture
 */
 
 import { configObjectTemplate } from "../../configTemplate.mjs";
-
-const ASPECT_RATIO_TABLE = Object.freeze({
-  STANDARD: 4 / 3,
-  WIDESCREEN: 16 / 9,
-  WIDESCREEN_ALT: 16 / 10,
-  ULTRAWIDE: 21 / 9,
-  SUPER_ULTRAWIDE: 32 / 9
-});
-
-// this will be filled with more devices in the future
-const AVAILABLE_DEVICE_LABELS = Object.freeze({
-  // generic
-  USB_VIDEO: "USB Video", // macOS, Linux and Windows
-  USB_AUDIO: "USB Digital Audio", // macOS and Windows
-  USB_AUDIO_ALT: "USB Video", // Linux
-  // semi-generic
-
-  // branded
-
-  // software based
-  // (most likely to be ignored)
-  OBS_VIRTUAL: "OBS Virtual Camera",
-});
-
-// this will be used to store the different video modes
-// available for the app 
-// (some of these might not work on your device)
-const VIDEO_MODES = {
-  "2160p60": { width: 3840, height: 2160, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  "2160p30": { width: 3840, height: 2160, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  //
-  "1440p60": { width: 2560, height: 1440, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  "1440p30": { width: 2560, height: 1440, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  //
-  "1080p60": { width: 1920, height: 1080, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  "1080p30": { width: 1920, height: 1080, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  //
-  "720p60": { width: 1280, height: 720, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  "720p30": { width: 1280, height: 720, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
-  //
-  "480p60": { width: 640, height: 480, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.STANDARD },
-  "480p30": { width: 640, height: 480, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.STANDARD },
-};
-
-const AUDIO_MODES = { 
-  // sometimes your device migh ignore these constraints values
-  // and use its own "default" values 
-  "normalQuality": { sampleRate: 48000, sampleSize: 16, channelCount: 2 }, 
-
-  // wacky way to get the highest audio quality
-  // possible from the device
-  "highQuality": { sampleRate: 99999999, sampleSize: 99999999, channelCount: 99999999 },
-}
+import * as globals from "../../globals.mjs";
 
 const getAvailableDevices = async () => {
   try {
@@ -81,12 +29,12 @@ const getAvailableDevices = async () => {
       // console.log(`[fcapture] - device@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
       // prevent the device enumerator from fallbacking to a virtual device (OBS, webcam software, etc)
-      if (device.label.includes(AVAILABLE_DEVICE_LABELS.OBS_VIRTUAL) || !device) {
+      if (device.label.includes(globals.DEVICE_LABELS.OBS_VIRTUAL) || !device) {
         continue;
       }
 
       // filter each usb device capable ofvideo input
-      if (device.kind === "videoinput" && device.label.includes(AVAILABLE_DEVICE_LABELS.USB_VIDEO)) {
+      if (device.kind === "videoinput" && device.label.includes(globals.DEVICE_LABELS.USB_VIDEO)) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
       }
@@ -94,8 +42,8 @@ const getAvailableDevices = async () => {
       // filter each device capable of audio input
       if (
         device.kind === "audioinput" &&
-        (device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO) ||
-          device.label.includes(AVAILABLE_DEVICE_LABELS.USB_AUDIO_ALT))
+        (device.label.includes(globals.DEVICE_LABELS.USB_AUDIO) ||
+          device.label.includes(globals.DEVICE_LABELS.USB_AUDIO_ALT))
       ) {
         deviceInfoPayload.audio.id = device.deviceId;
         deviceInfoPayload.audio.label = device.label;
@@ -121,8 +69,8 @@ export const setupStreamFromDevice = async () => {
     }
 
     // get video and audio mode constraints
-    const videoConstraints = VIDEO_MODES[configObjectTemplate.videoMode];
-    const audioConstraints = AUDIO_MODES[configObjectTemplate.audioMode];
+    const videoConstraints = globals.VIDEO_MODES[configObjectTemplate.videoMode];
+    const audioConstraints = globals.AUDIO_MODES[configObjectTemplate.audioMode];
 
     // setup raw input video and audio properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({

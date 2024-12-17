@@ -10,19 +10,12 @@ FCapture
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
+import * as utils from "./api/utils/utils.mjs";
+import * as globals from "./globals.mjs";
 import { format } from "date-fns";
 import process from "process";
 import path from "path";
 import fs from "fs";
-import {
-  focusWindow,
-  getCorrectPicturesFolder,
-  getCurrentDisplayOfWindow,
-  handleHardwareAcceleration,
-} from "./api/utils/utils.mjs";
-
-const __dirname = import.meta.dirname;
-const __filename = import.meta.filename;
 
 const appState = {
   parentWindow: null,
@@ -43,7 +36,7 @@ const generateParentWindow = () => {
     autoHideMenuBar: true,
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(globals.__dirname, "preload.js"),
     },
   });
 
@@ -61,7 +54,7 @@ const generateParentWindow = () => {
 
 const generateChildWindow = () => {
   // always focus window when opening
-  focusWindow(appState.childWindow);
+  utils.focusWindow(appState.childWindow);
 
   // setup properties
   appState.childWindow = new BrowserWindow({
@@ -78,7 +71,7 @@ const generateChildWindow = () => {
     autoHideMenuBar: true,
     modal: process.platform === "win32" || process.platform === "linux",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(globals.__dirname, "preload.js"),
     },
   });
 
@@ -213,7 +206,7 @@ const initializeEventHandler = async () => {
   try {
     // handle hardware acceleration
     // based on platform
-    handleHardwareAcceleration(app);
+    utils.handleHardwareAcceleration(app);
 
     // initialize app
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
@@ -225,7 +218,7 @@ const initializeEventHandler = async () => {
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
         appState.canvasData = canvasInfo;
-        appState.canvasData.frameRate = getCurrentDisplayOfWindow(
+        appState.canvasData.frameRate = utils.getCurrentDisplayOfWindow(
           appState.parentWindow
         ).displayFrequency;
       }
@@ -241,7 +234,7 @@ const initializeEventHandler = async () => {
       const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
       const buffer = Buffer.from(base64Data, "base64");
 
-      const picturesFolder = getCorrectPicturesFolder();
+      const picturesFolder = utils.getCorrectPicturesFolder();
       const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
       const saveFolder = path.join(picturesFolder, "FCapture");
 
@@ -283,21 +276,19 @@ const initializeEventHandler = async () => {
     });
 
     ipcMain.on("update-config-info", (event, newConfigPayload) => {
-      // save
+      // replace config template with the updated config payload
       Object.assign(configObjectTemplate, newConfigPayload);
 
-      // save updated config payload state
+      // save updated config payload to file
+      // and send reply to renderer
       saveConfigState();
-
       event.reply("config-saved", configObjectTemplate);
-      console.log("[fcapture] - electron@initializeEventHandler: config saved.");
     });
 
     ipcMain.on("request-config-info", (event) => {
-      // load
+      // load config payload from file
+      // and send reply to renderer
       event.reply("config-loaded", configObjectTemplate);
-
-      console.log("[fcapture] - electron@initializeEventHandler: config loaded.", configObjectTemplate);
     });
   } catch (err) {
     console.error("[fcapture] - electron@initializeEventHandler:", err);

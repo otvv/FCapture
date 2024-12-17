@@ -7,17 +7,13 @@ FCapture
 
 */
 
+import * as globals from "../../globals.mjs";
 import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../../configTemplate.mjs";
 
-const BASS_BOST_AMOUNT = 9;
-const BASS_BOOST_FREQUENCY = 100;
-const SURROUND_DELAY_TIME = 0.05;
-
-const createVideoElement = (() => {
+const createVideoElement = () => {
   let cachedVideoElement = null;
-
   return (rawStreamData) => {
     // initialize temporary video player element
     if (!cachedVideoElement) {
@@ -37,7 +33,7 @@ const createVideoElement = (() => {
 
     return cachedVideoElement;
   };
-})();
+};
 
 const createAudioNodeChain = (audioContext) => {
   const nodes = {
@@ -49,7 +45,7 @@ const createAudioNodeChain = (audioContext) => {
 
   // setup bass boost
   nodes.bassBoost.type = "lowshelf";
-  nodes.bassBoost.frequency.setValueAtTime(BASS_BOOST_FREQUENCY, audioContext.currentTime);
+  nodes.bassBoost.frequency.setValueAtTime(globals.BASS_BOOST_FREQUENCY, audioContext.currentTime);
 
   // setup panner for surround sound
   nodes.panner.panningModel = "HRTF";
@@ -112,7 +108,8 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     }
     
     // create video element and perform initial configurations
-    const videoElement = createVideoElement(rawStreamData);
+    const generateVideoElement = createVideoElement();
+    const videoElement = generateVideoElement(rawStreamData);
     
     if (!videoElement) {
       console.error("[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.");
@@ -166,13 +163,13 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
 
     // bass boost filter
     audioNodes.bassBoost.gain.setValueAtTime(
-      configObjectTemplate.bassBoost ? BASS_BOST_AMOUNT : 0,
+      configObjectTemplate.bassBoost ? globals.BASS_BOOST_AMOUNT : 0,
       audioContext.currentTime
     );
 
     // hrtf surround filter
     audioNodes.delay.delayTime.setValueAtTime(
-      configObjectTemplate.surroundAudio ? SURROUND_DELAY_TIME : 0.0,
+      configObjectTemplate.surroundAudio ? globals.SURROUND_DELAY_TIME : 0.0,
       audioContext.currentTime
     );
 

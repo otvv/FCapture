@@ -11,7 +11,6 @@ import os from "os";
 import path from "path";
 import { screen } from "electron";
 import { execSync } from "child_process";
-
 export const focusWindow = (targetWindow) => {
   if (!targetWindow || targetWindow.isDestroyed()) {
     return null;

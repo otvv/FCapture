@@ -103,7 +103,7 @@ const initializeEventHandler = async () => {
     });
 
     window.ipcRenderer.on("config-loaded", (configPayload) => {
-      console.log("[fcapture] - settings@initializeEventHandler: config payload received.", configPayload);
+      console.log("[fcapture] - settings@initializeEventHandler: config payload received.");
 
       // update control elements using the data pulled from the config file
       if (configPayload) {

@@ -8,19 +8,18 @@ FCapture
 */
 
 import { execSync } from "child_process";
-const platform = process.platform;
 
 try {
-  if (platform === "win32") {
+  if (process.platform === "win32") {
     console.log("[fcapture] - build@script: building for Windows...");
 
     execSync("powershell -File build/build.ps1", { stdio: "inherit" });
-  } else if (platform === "darwin" || platform === "linux") {
+  } else if (process.platform === "darwin" || process.platform === "linux") {
     console.log("[fcapture] - build@script: building for macOS or Linux..");
 
     execSync("sudo sh build/build.sh", { stdio: "inherit" });
   } else {
-    console.error("[fcapture] - build@script: unsupported platform:", platform);
+    console.error("[fcapture] - build@script: unsupported platform:", process.platform);
     process.exit(1);
   }
 } catch (err) {

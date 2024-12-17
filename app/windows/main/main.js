@@ -38,16 +38,20 @@ const streamState = {
 const updateWindowState = async () => {
   const template = await import("../../configTemplate.mjs");
 
-  // request the current config data
+  // request the current config payload from file
   window.ipcRenderer.send("request-config-info");
 
   // handle window state update when config info is received 
   window.ipcRenderer.on("config-loaded", (configPayload) => {
-    console.log("[fcapture] - main@updateWindowState: config payload received.");
+    if (!configPayload) {
+      return;
+    }
 
     // update original config object template
-    // using the data pulled from the config file
+    // using the payload from the config file
     if (configPayload) {
+      console.log("[fcapture] - main@updateWindowState: config payload received.");
+
       for (const key in configPayload) {
         if (template.configObjectTemplate[key] !== configPayload[key]) {
           template.configObjectTemplate[key] = configPayload[key];

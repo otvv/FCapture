@@ -7,10 +7,8 @@ FCapture
 
 */
 
-// TODO import module instead of individual functions
-import { getTextSize, drawText, drawCapsule } from "../utils/surface.mjs";
-
-const UPDATE_INTERVAL = 1000; // 1 second in ms
+import * as renderer from "../utils/surface.mjs";
+import * as globals from "../../globals.mjs";
 
 // overlay constraints
 const overlaySettings = Object.freeze({
@@ -28,7 +26,7 @@ const overlaySettings = Object.freeze({
 export const setupCapsuleOverlay = () => {
   let calculateMetrics = null;
 
-  const calculateOverlayMetrics = (updateInterval = UPDATE_INTERVAL) => {
+  const calculateOverlayMetrics = (updateInterval = globals.UPDATE_INTERVAL) => {
     let frameCount = 0;
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
@@ -80,7 +78,7 @@ export const setupCapsuleOverlay = () => {
     canvasContext.font = fontFamily;
 
     // draw capsule
-    drawCapsule(
+    renderer.drawCapsule(
       canvasContext,
       capsuleLeft,
       capsuleTop,
@@ -98,8 +96,8 @@ export const setupCapsuleOverlay = () => {
     let totalTextWidth = 0;
     
     metrics.forEach(({ label, value }) => {
-      totalTextWidth += getTextSize(canvasContext, label)[0];
-      totalTextWidth += getTextSize(canvasContext, value)[0];
+      totalTextWidth += renderer.getTextSize(canvasContext, label)[0];
+      totalTextWidth += renderer.getTextSize(canvasContext, value)[0];
     });
 
     const textPadding = 15;
@@ -111,13 +109,13 @@ export const setupCapsuleOverlay = () => {
 
     // draw metrics
     metrics.forEach(({ label, value }) => {
-      const labelSize = getTextSize(canvasContext, label);
-      const valueSize = getTextSize(canvasContext, value);
+      const labelSize = renderer.getTextSize(canvasContext, label);
+      const valueSize = renderer.getTextSize(canvasContext, value);
       const baseline = capsuleTop + capsuleHeight / 2 + labelSize[1] / 2;
 
-      drawText(canvasContext, label, currentX, baseline, fontTitleColor);
+      renderer.drawText(canvasContext, label, currentX, baseline, fontTitleColor);
       currentX += labelSize[0] + 5;
-      drawText(canvasContext, value, currentX, baseline, fontValueColor);
+      renderer.drawText(canvasContext, value, currentX, baseline, fontValueColor);
       currentX += valueSize[0] + textPadding;
     });
   };

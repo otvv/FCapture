@@ -7,18 +7,18 @@ FCapture
 
 */
 
-import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { app } from 'electron';
 import { configObjectTemplate } from '../../configTemplate.mjs';
 
-// set path to config file
+// set path for config file
 const configPath = path.join(app.getPath('userData'), 'fcapture-config.json');
-
 export const saveConfigState = () => {
   try {
     // parse object to file
     fs.writeFileSync(configPath, JSON.stringify(configObjectTemplate));
+    console.log("[fcapture] - config@saveConfigState: config saved.");
   } catch (err) {
     console.error("[fcapture] - config@saveConfigState:", err);
   }
@@ -26,7 +26,7 @@ export const saveConfigState = () => {
 
 export const loadConfigState = () => {
   try {
-    // check if config exists
+    // check if config file exists
     if (fs.existsSync(configPath)) {
       // read file from path
       const configPayload = fs.readFileSync(configPath);
@@ -34,10 +34,10 @@ export const loadConfigState = () => {
       // replace the original config object 
       // with data parsed from the config file
       Object.assign(configObjectTemplate, JSON.parse(configPayload));
+      console.log("[fcapture] - config@loadConfigState: config loaded.");
     } else {
-      console.error("[fcapture] - config@loadConfigState: the config file was not found.");
-
-      // TODO: implement logic to create an empty config in case a file doesnt not exists
+      console.warn("[fcapture] - config@loadConfigState: config file not found.");
+      return;
     }
   } catch (err) {
     console.error("[fcapture] - config@loadConfigState:", err);
