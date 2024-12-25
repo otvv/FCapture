@@ -1,14 +1,16 @@
 # FCapture
 
 FCapture is a previwer (and a eventually a recorder) software for generic (off-brand) USB capture cards. FCapture is made entirely using Electron and a native web APIs.
-This app is meant for the people that doesn't want to use a third-party software such as OBS or VLC just to preview the capture card video output. _(I know that with OBS you can record your gameplay, but some folks just want to play and OBS is a little overkill for that)_
+This app is meant for the people that doesn't want to use a third-party software such as OBS or VLC just to preview the capture card's video output. _(I know that with OBS you can record your gameplay, but some folks just want to play and OBS is a little overkill for that)_
+
+My goal with this app is to make an open-source alternative for anyone to use.
 
 ### Key features
 
 - Preview video from generic USB capture cards _(and possibly PCI-E ones)_
-- An extensive Settings menu with video and audio filters, Different video and audio modes _(change stream output quality/resolution)_
-- Take screenshots of your gameplay/output
-- Since this is an Electron app, multiplaform support is also a thing with FCapture. The app can run on macOS, Linux and Windows
+- An extensive Settings menu with video and audio filters, different video and audio modes _(change stream output quality/resolution)_ and more
+- Take screenshots of your gameplay/output at any time
+- Since this is an Electron app, multiplaform support is also present with FCapture. The app can run on macOS, Linux and Windows
 
 ### Screenshots
 
