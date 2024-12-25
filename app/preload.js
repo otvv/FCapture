@@ -14,5 +14,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
   on: (channel, callback) => ipcRenderer.on(channel, (_event, ..._args) => { 
     callback(..._args);
   }),
+  once: (channel, callback) => ipcRenderer.once(channel, (_event, ..._args) => {
+    callback(..._args);
+  }),
   send: (channel, data) => ipcRenderer.send(channel, data)
 });

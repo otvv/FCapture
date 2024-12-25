@@ -42,22 +42,15 @@ const updateWindowState = async () => {
   window.ipcRenderer.send("request-config-info");
 
   // handle window state update when config info is received 
-  window.ipcRenderer.on("config-loaded", (configPayload) => {
+  window.ipcRenderer.once("config-loaded", (configPayload) => {
     if (!configPayload) {
       return;
     }
 
     // update original config object template
     // using the payload from the config file
-    if (configPayload) {
-      console.log("[fcapture] - main@updateWindowState: config payload received.");
-
-      for (const key in configPayload) {
-        if (template.configObjectTemplate[key] !== configPayload[key]) {
-          template.configObjectTemplate[key] = configPayload[key];
-        }
-      }
-    }
+    console.log("[fcapture] - main@updateWindowState: config payload received.");
+    Object.assign(template.configObjectTemplate, configPayload);
   });
 }
 
@@ -111,9 +104,7 @@ const handleStreamAction = async (action = "start") => {
           colorSpace: "srgb"
         });
 
-        // disable image smoothing for pixel-perfect
-        // image quality and setup audio context
-        streamState.canvasContext.imageSmoothingEnabled = false;
+        // setup audio context
         streamState.audioContext = new window.AudioContext();
 
         // render raw stream frames onto the canvas element
@@ -273,15 +264,12 @@ const handleWindowAction = async (action = "preview") => {
           return;
         }
 
-        // disable image smoothing for pixel-perfect image quality
-        streamState.canvasContext.imageSmoothingEnabled = false;
-
         // send event to electron's main process
         // to save a screenshot at the user's Pictures folder
         const dataUrl = streamState.canvasContext.canvas.toDataURL("image/png");
 
         // send the current frame to the main process to save the screenshot
-        window.ipcRenderer.send('save-screenshot', dataUrl); 
+        window.ipcRenderer.send("save-screenshot", dataUrl);
         break;
     }
   } catch (err) {

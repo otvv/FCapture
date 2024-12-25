@@ -7,8 +7,8 @@ FCapture
 
 */
 
-import { configObjectTemplate } from "../../configTemplate.mjs";
 import * as globals from "../../globals.mjs";
+import { configObjectTemplate } from "../../configTemplate.mjs";
 
 const getAvailableDevices = async () => {
   try {

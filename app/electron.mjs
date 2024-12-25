@@ -7,15 +7,15 @@ FCapture
 
 */
 
+import fs from "fs";
+import path from "path";
+import process from "process";
+import { format } from "date-fns";
+import * as globals from "./globals.mjs";
+import * as utils from "./api/utils/utils.mjs";
+import { configObjectTemplate } from "./configTemplate.mjs";
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
 import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
-import { configObjectTemplate } from "./configTemplate.mjs";
-import * as utils from "./api/utils/utils.mjs";
-import * as globals from "./globals.mjs";
-import { format } from "date-fns";
-import process from "process";
-import path from "path";
-import fs from "fs";
 
 const appState = {
   parentWindow: null,

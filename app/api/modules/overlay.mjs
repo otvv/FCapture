@@ -7,8 +7,8 @@ FCapture
 
 */
 
-import * as renderer from "../utils/surface.mjs";
 import * as globals from "../../globals.mjs";
+import * as renderer from "../utils/surface.mjs";
 
 // overlay constraints
 const overlaySettings = Object.freeze({

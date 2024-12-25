@@ -30,6 +30,8 @@ html, body {
 
 canvas {
   height: 100vh;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* navbar */
@@ -154,8 +156,6 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
-
-  object-fit: cover;
 }
 
 /* mute icon on canvas */
