@@ -1,6 +1,6 @@
 # FCapture
 
-FCapture is a previwer (and a eventually a recorder) software for generic (off-brand) USB capture cards. FCapture is made entirely using Electron and a native web APIs.
+FCapture is a previewer (and a eventually a recorder) software for generic (off-brand) USB capture cards. FCapture is made entirely using Electron and a native web APIs.
 This app is meant for the people that doesn't want to use a third-party software such as OBS or VLC just to preview the capture card's video output. _(I know that with OBS you can record your gameplay, but some folks just want to play and OBS is a little overkill for that)_
 
 My goal with this app is to make an open-source alternative for anyone to use.
