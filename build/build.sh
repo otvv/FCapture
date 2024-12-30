@@ -8,13 +8,13 @@ OS=$(uname) # OS platform/name
 
 spinner() {
     local pid=$1
-    local delay=0.1
+    local delay=0.08
     local spinstr=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
     local index=0
     local length=${#spinstr[@]}
 
     while kill -0 "$pid" 2>/dev/null; do
-        printf "[%s]" "${spinstr[$index]}"
+        printf "\033[32m[%s]\033[0m" "${spinstr[$index]}"
         index=$(((index + 1) % length)) # cycle through the spinner characters
 
         sleep $delay
@@ -45,19 +45,22 @@ if [ ! -f "$PACKAGE_JSON" ]; then
 fi
 
 # get the current version from package.json
-CURRENT_VERSION=$(jq -r '.version' <"$PACKAGE_JSON")
+CURRENT_VERSION=$(jq -r '.version' "$PACKAGE_JSON")
 
 # get the last build version from .last_build_version file
 # to compare with the current version
 if [ -f "$VERSION_FILE" ]; then
     LAST_VERSION=$(cat "$VERSION_FILE")
+    if [ -z "$LAST_VERSION" ]; then
+        LAST_VERSION="N/A"
+    fi
 else
     LAST_VERSION="N/A"
 fi
 
 # compare versions and delete dist folder in case
 # app versions differs
-if [ "$CURRENT_VERSION" != "$LAST_VERSION" ]; then
+if [ "$CURRENT_VERSION" != "$LAST_VERSION" ] || [ "$LAST_VERSION" == "N/A"]; then
     echo "[fbuild] - app version changed from $LAST_VERSION to $CURRENT_VERSION."
     if [ -d "$DIST_PATH" ]; then
         echo "[fbuild] - deleting dist folder.."
@@ -71,7 +74,7 @@ else
 fi
 
 # build the app using electron-builder
-echo "[fbuild] - running electron-builder:"
+echo "[fbuild] - running electron-builder..."
 electron-builder >/dev/null 2>&1 &
 build_pid=$!
 
