@@ -37,9 +37,21 @@ export const loadConfigState = () => {
       console.log("[fcapture] - config@loadConfigState: config loaded.");
     } else {
       console.warn("[fcapture] - config@loadConfigState: config file not found.");
-      return;
+      
+      // create config file in case it doesnt exist
+      console.log("[fcapture] - config@loadConfigState: creating a new config file...");
+      saveConfigState();
     }
   } catch (err) {
     console.error("[fcapture] - config@loadConfigState:", err);
   }
 };
+
+export const resetConfigState = () => {
+  try {
+    fs.unlinkSync(configPath);
+    console.log("[fcapture] - config@resetConfigState: config reset.");
+  } catch (e) {
+    console.error("[fcapture] - config@resetConfigState:", err);
+  }
+}

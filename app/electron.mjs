@@ -15,7 +15,7 @@ import * as globals from "./globals.mjs";
 import * as utils from "./api/utils/utils.mjs";
 import { configObjectTemplate } from "./configTemplate.mjs";
 import { app, BrowserWindow, Menu, dialog, ipcMain } from "electron";
-import { loadConfigState, saveConfigState } from "./api/modules/config.mjs";
+import { loadConfigState, saveConfigState } from "./api/utils/config.mjs";
 
 const appState = {
   parentWindow: null,
@@ -290,6 +290,14 @@ const initializeEventHandler = async () => {
       // and send reply to renderer
       event.reply("config-loaded", configObjectTemplate);
     });
+
+    ipcMain.on("reset-config-info", (event) => {
+        // reset config with original template
+        // data and send reply to renderer
+        resetConfig();
+        event.reply("config-reset", configObjectTemplate);
+    });
+    
   } catch (err) {
     console.error("[fcapture] - electron@initializeEventHandler:", err);
   }
