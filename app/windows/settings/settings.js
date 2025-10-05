@@ -166,7 +166,6 @@ const initializeEventHandler = async () => {
   }
 };
 
-// initialize event handler
 initializeEventHandler()
   .then(() => {
     console.log(

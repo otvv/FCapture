@@ -85,7 +85,6 @@ const handleStreamAction = async (action = "start") => {
       return;
     }
 
-    // update window state before any action can be performed
     await updateWindowState();
 
     switch (action) {
@@ -104,7 +103,6 @@ const handleStreamAction = async (action = "start") => {
           colorSpace: "srgb"
         });
 
-        // setup audio context
         streamState.audioContext = new window.AudioContext();
 
         // render raw stream frames onto the canvas element
@@ -151,8 +149,6 @@ const handleStreamAction = async (action = "start") => {
           streamState.isAudioTrackMuted = false;
         }
 
-        // tell the renderer that theres a stream feed active 
-        // at the moment
         streamState.isStreamActive = true;
         break;
       case "stop":
@@ -202,9 +198,7 @@ const handleStreamAction = async (action = "start") => {
           streamState.canvasContext = null;
           streamState.audioContext = null;
           streamState.audioController = null;
-
-          // tell the renderer that theres no active stream feed
-          // at the moment
+          //
           streamState.isStreamActive = false;
         }
         break;
@@ -231,8 +225,6 @@ const handleStreamAction = async (action = "start") => {
         toggleStreamMute(false);
         break;
       default:
-        // when no argument is passed the default action
-        // will always be to start the stream
         await handleStreamAction("start");
         break;
     }
@@ -279,7 +271,6 @@ const handleWindowAction = async (action = "preview") => {
 
 const initializeEventHandler = async () => {
   try {
-    // start stream
     await handleStreamAction();
 
     // event listeners
@@ -322,7 +313,6 @@ const initializeEventHandler = async () => {
   }
 };
 
-// initialize event handler
 initializeEventHandler()
   .then(() => {
     console.log(

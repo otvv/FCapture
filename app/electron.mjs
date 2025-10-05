@@ -44,7 +44,6 @@ const generateParentWindow = () => {
     throw new Error("[fcapture] - electron@generateParentWindow: failed to generate window.");
   }
 
-  // load parent window HTML structure
   appState.parentWindow.loadFile("app/windows/main/main.html");
 
   // DEBUG PURPOSES ONLY
@@ -53,7 +52,6 @@ const generateParentWindow = () => {
 };
 
 const generateChildWindow = () => {
-  // always focus window when opening
   utils.focusWindow(appState.childWindow);
 
   // setup properties
@@ -83,7 +81,6 @@ const generateChildWindow = () => {
     appState.childWindow = null; // reset ref
   });
 
-  // load child window HTML structure
   appState.childWindow.loadFile("app/windows/settings/settings.html");
 
   // DEBUG PURPOSES ONLY
@@ -166,7 +163,6 @@ const generateTemplateMenu = () => {
     },
   ]);
 
-  // replace app menu bar with our own
   Menu.setApplicationMenu(menuBarTemplate);
 
   // set dock menu (macOS only)
@@ -208,7 +204,6 @@ const initializeEventHandler = async () => {
     // based on platform
     utils.handleHardwareAcceleration(app);
 
-    // initialize app
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
 
     // load config internally after app starts
@@ -246,7 +241,6 @@ const initializeEventHandler = async () => {
       // generate filepath with timestamp
       const filePath = path.join(saveFolder, `screenshot_${timestamp}.png`);
 
-      // write file to specified path
       fs.writeFile(filePath, buffer, (err) => {
         if (err) {
           console.warn("[fcapture] - electron@initializeEventHandler: failed to save screenshot.", err);

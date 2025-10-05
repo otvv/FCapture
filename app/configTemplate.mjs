@@ -7,7 +7,6 @@ FCapture
 
 */
 
-// default config object template
 export let configObjectTemplate = {
   videoMode: "",
   imageRenderingPriority: "auto",

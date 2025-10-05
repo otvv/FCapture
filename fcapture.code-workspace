@@ -6,6 +6,8 @@
 	],
 	"settings": {
 		"hide-files.files": [
+			".vscode",
+			"node_modules",
 			"package-lock.json",
 			"dist/builder-debug.yml",
 			"dist/FCapture-*.dmg.blockmap",

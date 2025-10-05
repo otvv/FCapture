@@ -70,7 +70,7 @@ if ($CURRENT_VERSION -ne $LAST_VERSION -or $LAST_VERSION -eq "N/A") {
         Remove-Item -Recurse -Force -Path $DIST_PATH
         Write-Host "[fbuild] - dist folder has been deleted."
     }
-    # Update the last build version file
+    # update the last build version file
     Set-Content -Path $VERSION_FILE -Value $CURRENT_VERSION
 }
 else {
@@ -83,6 +83,31 @@ $TEMPERRORFILE = [System.IO.Path]::GetTempFileName()
 
 # Build the app using electron-builder
 Write-Host "[fbuild] - running electron-builder..."
+
+# Check if DevMode is active
+if ($env:OS -eq "Windows_NT") {
+    try {
+        $DevMode = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction Stop).AllowDevelopmentWithoutDevLicense
+        if ($DevMode -ne 1) {
+            Write-Host "[fbuild] - windows developer mode is DISABLED." -ForegroundColor Yellow
+            Write-Host "[fbuild] - electron-builder may fail due to missing symlink privileges."
+            Write-Host "[fbuild] - please enable developer mode at:"
+            Write-Host "    settings → Privacy & Security → For Developers → Enable 'Developer Mode'`n"
+            Write-Host "[fbuild] - opening the settings page automatically..."
+            Start-Process "ms-settings:developers"
+            exit 1
+        }
+        else {
+            Write-Host "[fbuild] - developer mode is enabled, proceeding with build."
+        }
+    }
+    catch {
+        Write-Host "[fbuild] - unable to read developer mode registry key."
+        Write-Host "[fbuild] - you may need to run this script as administrator."
+        exit 1
+    }
+}
+
 $PROCESS = Start-Process "node" -ArgumentList $ELECTRON_BUILDER_PATH -NoNewWindow -PassThru -RedirectStandardOutput $TEMPOUTPUTFILE -RedirectStandardError $TEMPERRORFILE
 
 # Start the spinner animation while the build process runs

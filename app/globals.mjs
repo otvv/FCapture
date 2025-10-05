@@ -35,9 +35,16 @@ export const DEVICE_LABELS = Object.freeze({
   OBS_VIRTUAL: "OBS Virtual Camera",
 });
 
+//
+// NOTE: in some devices when using a value that the device can't support
+// might break the stream completely, so if you aren't getting video 
+// or audio this might be it. if your device does this make sure to 
+// always use the supported setting for it, since it doesn't always 
+// fallback to the max supported value (this goes for both video and audio)
+//
+
 // this will be used to store the different video modes
 // available for the app 
-// (some of these might not work on your device)
 export const VIDEO_MODES = Object.freeze({
   "2160p60": { width: 3840, height: 2160, frameRate: 60, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
   "2160p30": { width: 3840, height: 2160, frameRate: 30, aspectRatio: ASPECT_RATIO_TABLE.WIDESCREEN },
@@ -58,4 +65,5 @@ export const AUDIO_MODES = Object.freeze({
   // wacky way to get the highest audio quality
   // possible from the device
   "highQuality": { sampleRate: 99999999, sampleSize: 99999999, channelCount: 99999999 },
+
 });
