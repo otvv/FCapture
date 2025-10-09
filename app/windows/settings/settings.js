@@ -12,6 +12,7 @@ FCapture
 // element querying
 const descriptionTextElement = document.querySelector("#description-text");
 const videoModeSelectElement = document.querySelector("#video-mode-select");
+const renderingMethodSelectElement = document.querySelector("#rendering-method-select");
 const imageRenderingPrioritySelectElement = document.querySelector("#image-rendering-priority-select");
 const imageBrightnessSliderElement = document.querySelector("#image-brightness-slider");
 const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
@@ -109,6 +110,7 @@ const initializeEventHandler = async () => {
       if (configPayload) {
         // TODO: query all checkboxes or any other type of form element
         // and update them all dynamically using a loop
+        renderingMethodSelectElement.value = configPayload.renderingMethod;
         videoModeSelectElement.value = configPayload.videoMode;
         imageRenderingPrioritySelectElement.value = configPayload.imageRenderingPriority;
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
@@ -124,6 +126,10 @@ const initializeEventHandler = async () => {
     
     // update config file according with the settings window
     // control element state
+    renderingMethodSelectElement.addEventListener('change', (event) => {
+      ipcRenderer.send('update-config-info', { renderingMethod: +event.target.value } );
+    });
+
     videoModeSelectElement.addEventListener('change', (event) => {
       ipcRenderer.send('update-config-info', { videoMode: event.target.value } );
     });

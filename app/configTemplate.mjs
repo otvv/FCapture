@@ -8,6 +8,7 @@ FCapture
 */
 
 export let configObjectTemplate = {
+  renderingMethod: 0, // 0 = ImageBitmap, 1 = drawImage (double-draw)
   videoMode: "",
   imageRenderingPriority: "auto",
   imageBrightness: 100, // percentage (ranges from 0% to 200%)

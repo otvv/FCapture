@@ -67,34 +67,32 @@ const generateDrawFrameOnScreenFunction = (
 
   const drawFrameOnScreen = () => {
     if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-      // get an accelerated ImageBitmap from the video and draw it directly to the canvas
-      // using createImageBitmap avoids some synchronous pixel-copy overhead.
-      (async () => {
-        try {
-          // DEBUG PURPOSES ONLY
-          // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
-          
-          const bitmap = await createImageBitmap(videoElement);
-          canvasContext.drawImage(bitmap, 0, 0);
-          bitmap.close();
-        } catch (err) {
-          // fallback to double-draw
-          console.warn(
-            "[fcapture] - renderer@drawFrameOnScreen: ImageBitmap rendering failed, switching to fallback method."
-          );
-          try {
-            // DEBUG PURPOSES ONLY
-            // console.log(
-            //   "[fcapture] - renderer@drawFrameOnScreen: using double-draw rendering (fallback)."
-            // );
+      if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.IMAGEBITMAP) {
+        // DEBUG PURPOSES ONLY
+        // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
 
-            offscreenContext.drawImage(videoElement, 0, 0);
-            canvasContext.drawImage(offscreenCanvasElement, 0, 0);
-          } catch (err2) {
-            console.error("[fcapture] - renderer@drawFrameOnScreen:", err2);
+        // FIXME: currently when using ImageBitmap rendering the debug overlay doesn't work
+        // fix it later.
+        (async () => {
+          try {
+            const bitmap = await createImageBitmap(videoElement);
+            canvasContext.drawImage(bitmap, 0, 0);
+            bitmap.close();
+          } catch (err) {
+            console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
           }
+        })();
+      } else if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DOUBLEDRAW) {
+        // DEBUG PURPOSES ONLY
+        // console.log("[fcapture] - renderer@drawFrameOnScreen: using double-draw rendering.");
+
+        try {
+          offscreenContext.drawImage(videoElement, 0, 0);
+          canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+        } catch (err) {
+          console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
         }
-      })();
+      }
     }
 
     // setup debug overlay

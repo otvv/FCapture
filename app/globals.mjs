@@ -26,6 +26,11 @@ export const ASPECT_RATIO_TABLE = Object.freeze({
   SUPER_ULTRAWIDE: 32 / 9
 });
 
+export const RENDERING_METHOD = Object.freeze({
+  IMAGEBITMAP: 0,
+  DOUBLEDRAW: 1
+})
+
 export const DEVICE_LABELS = Object.freeze({
   USB_VIDEO: "USB Video", // macOS, Linux and Windows
   USB_AUDIO: "USB Digital Audio", // macOS and Windows
