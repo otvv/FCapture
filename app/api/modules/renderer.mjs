@@ -66,11 +66,35 @@ const generateDrawFrameOnScreenFunction = (
   let overlayInstance = null;
 
   const drawFrameOnScreen = () => {
-    // more precise frame rendering
     if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-      // draw new frame off and on screen for better speed
-      offscreenContext.drawImage(videoElement, 0, 0);
-      canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+      // get an accelerated ImageBitmap from the video and draw it directly to the canvas
+      // using createImageBitmap avoids some synchronous pixel-copy overhead.
+      (async () => {
+        try {
+          // DEBUG PURPOSES ONLY
+          // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
+          
+          const bitmap = await createImageBitmap(videoElement);
+          canvasContext.drawImage(bitmap, 0, 0);
+          bitmap.close();
+        } catch (err) {
+          // fallback to double-draw
+          console.warn(
+            "[fcapture] - renderer@drawFrameOnScreen: ImageBitmap rendering failed, switching to fallback method."
+          );
+          try {
+            // DEBUG PURPOSES ONLY
+            // console.log(
+            //   "[fcapture] - renderer@drawFrameOnScreen: using double-draw rendering (fallback)."
+            // );
+
+            offscreenContext.drawImage(videoElement, 0, 0);
+            canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+          } catch (err2) {
+            console.error("[fcapture] - renderer@drawFrameOnScreen:", err2);
+          }
+        }
+      })();
     }
 
     // setup debug overlay
@@ -139,9 +163,10 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     // setup offscreen canvas
     const offscreenCanvasElement = new OffscreenCanvas(canvasElement.width, canvasElement.height);
     const offscreenContext = offscreenCanvasElement.getContext("2d", {
-      willReadFrequently: true,
+      willReadFrequently: false,
       desyncronized: true,
       alpha: false,
+      powerPreference: "high-performance"
     });
 
     // generate a function to draw frames using

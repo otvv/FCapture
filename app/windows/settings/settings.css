@@ -11,6 +11,7 @@ FCapture
   user-select: none;
   overflow: auto;
   -webkit-user-drag: none;
+  font-display: swap;
   font-family: system-ui, sans-serif;
   font-size: 13px;
   margin: 0;

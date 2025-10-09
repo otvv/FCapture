@@ -9,6 +9,11 @@ FCapture
 
 "use strict";
 
+//
+// TODO: when a frame gets frozen/doesn't update for a certain amount of time
+// trigger the no device signal screen
+//
+
 // element querying
 const canvasElement = document.querySelector("#canvas-element");
 const noSignalContainerElement = document.querySelector(
@@ -98,9 +103,10 @@ const handleStreamAction = async (action = "start") => {
 
         // initialize canvas and audio context
         streamState.canvasContext = canvasElement.getContext("2d", {
-          willReadFrequently: true,
           desyncronized: true,
-          colorSpace: "srgb"
+          willReadFrequently: false,
+          alpha: false,
+          powerPreference: "high-performance"
         });
 
         streamState.audioContext = new window.AudioContext();
@@ -113,12 +119,12 @@ const handleStreamAction = async (action = "start") => {
         );
 
         // in case the user starts the app without any device connected
+        // hide canvas and show the "no signal" screen
         if (!streamState.canvas) {
           // clear context from residual frames
           streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
           streamState.isStreamActive = false;
 
-          // hide canvas and show no signal screen
           canvasElement.style.display = "none";
           noSignalContainerElement.style.display = "flex";
 
@@ -136,10 +142,10 @@ const handleStreamAction = async (action = "start") => {
           window.ipcRenderer.send("receive-canvas-info", canvasInfo);
         }
 
-        // display canvas and hide no signal screen
+        // display video canvas and hide the "no signal" screen
         // if device is connected and stream feed is available
         noSignalContainerElement.style.display = "none";
-        canvasElement.style.display = "flex";
+        canvasElement.style.display = "block";
 
         // store gain node for volume control
         streamState.audioController = streamState.canvas.gainNode;
@@ -178,10 +184,10 @@ const handleStreamAction = async (action = "start") => {
         // close audio controller and context
         if (streamState.audioController) {
           streamState.audioController.disconnect();
-        }
 
-        if (streamState.audioContext) {
-          streamState.audioContext.close();
+          if (streamState.audioContext) {
+            streamState.audioContext.close();
+          }
         }
 
         // display the "no signal" screen
@@ -251,7 +257,6 @@ const handleWindowAction = async (action = "preview") => {
         window.ipcRenderer.send("open-settings");
         break;
       case "screenshot":
-        // don't do anything in case we don't have an active stream
         if (!streamState.canvas || !streamState.isStreamActive) {
           return;
         }

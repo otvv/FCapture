@@ -36,6 +36,8 @@ const generateParentWindow = () => {
     autoHideMenuBar: true,
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
     webPreferences: {
+      experimentalFeatures: true,
+      backgroundThrottling: false,
       preload: path.join(globals.__dirname, "preload.js"),
     },
   });

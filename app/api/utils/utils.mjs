@@ -77,27 +77,41 @@ export const handleHardwareAcceleration = (app) => {
   }
 
   const globalSwitches = [
+    "enable-experimental-web-platform-features",
+    "enable-features=CanvasOopRasterization",
+    "enable-zero-copy",
     "ignore-gpu-blacklist",
     "enable-gpu-rasterization",
+    "force-gpu-rasterization",
+    "enable-webgl",
+    "enable-accelerated-2d-canvas",
+    "high-dpi-support=1",
+    "disable-frame-rate-limit",
+    "enable-low-latency",
+    "enable-smooth-scrolling",
+    "enable-hardware-overlays",
+    "enable-accelerated-video-encode",
     "enable-accelerated-video-decode",
     "enable-accelerated-mjpeg-decode",
     "enable-accelerated-vpx-decode",
     "enable-accelerated-av1-decode",
     "enable-accelerated-hevc",
+    "disable-renderer-backgrounding",
     "enable-native-gpu-memory-buffers",
+    "disable-gpu-vsync", // TODO: turn this into a setting later (doesnt work with current ImageBitmap rendering)
   ];
 
   // apply global switches
-  globalSwitches.forEach((the_switch) => {
-    app.commandLine.appendSwitch(the_switch);
+  globalSwitches.forEach((parameter) => {
+    app.commandLine.appendSwitch(parameter);
   });
 
   switch (process.platform) {
     case "darwin": // macOS
+      app.commandLine.appendSwitch("enable-features=CompositingIOSurface2Mac");
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: setting up macOS hardware acceleration."
       );
-      // no additional switches needed
       break;
     case "linux":
       app.commandLine.appendSwitch("use-gl", "desktop");
@@ -110,7 +124,6 @@ export const handleHardwareAcceleration = (app) => {
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: setting up Windows hardware acceleration."
       );
-      // no additional switches needed
       break;
     default:
       console.log(

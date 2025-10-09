@@ -13,6 +13,7 @@ FCapture
   -webkit-user-drag: none;
   -webkit-user-select: none;
   appearance: none;
+  font-display: swap;
   font-family: system-ui, sans-serif;
   font-size: 13px;
   margin: 0;
@@ -50,13 +51,12 @@ canvas {
   z-index: 1000;
   backdrop-filter: blur(10px);
   opacity: 0;
-  box-shadow: 0px 1px 10px transparent;
-  animation: fadeOut 0.5s ease-out;
+  box-shadow: none;
 }
 
 .navbar-container:hover {
   opacity: 1;
-  box-shadow: 0px 1px 10px #282828;
+  box-shadow: 0 1px 10px #282828;
   animation: fadeIn 0.5s ease-in;
 }
 
@@ -68,20 +68,17 @@ canvas {
 /* tab panel */
 .tabs-container {
   display: inline-flex;
-  justify-content: center;
   align-items: center;
   gap: 10px;
-  background-color: transparent;
 }
 
 .tab-button {
   background-color: #282828;
   color: #dedede;
-  border: none;
   padding: 5px 15px;
   border-radius: 5px;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .tab-button:hover {
@@ -107,47 +104,48 @@ canvas {
 /* button wrapper */
 .button-wrapper {
   display: inline-flex;
-  justify-content: center;
   align-items: center;
   margin-right: 5px;
   padding: 5px;
   border-radius: 5px;
   background-color: #282828;
-  text-align: center;
 }
 
 /* icons */
-.mute-icon, .settings-icon, .refresh-icon, .print-icon {
+.mute-icon,
+.settings-icon,
+.refresh-icon,
+.print-icon {
   color: #dedede;
   font-size: 15px;
   filter: drop-shadow(1px 1px 3px #282828);
   transition: color 0.2s ease;
 }
 
+.mute-icon:hover,
+.settings-icon:hover,
+.refresh-icon:hover,
 .print-icon:hover {
   color: #fff;
   cursor: pointer;
 }
 
 .mute-icon:hover {
-  color: #fff;
-  cursor: pointer;
   animation: swing 0.5s ease-in-out;
 }
 
 .settings-icon:hover {
-  color: #fff;
-  cursor: pointer;
   animation: spin-half 0.5s ease-in-out;
 }
 
 .refresh-icon:hover {
-  color: #fff;
-  cursor: pointer;
   animation: spin 0.4s ease-in-out;
 }
 
-.mute-icon:active, .settings-icon:active, .refresh-icon:active, .print-icon:active {
+.mute-icon:active,
+.settings-icon:active,
+.refresh-icon:active,
+.print-icon:active {
   color: #ff5f57 !important;
 }
 
@@ -164,9 +162,8 @@ canvas {
   position: absolute;
   bottom: 0;
   right: 0;
-  margin: 0 25px 10px;
+  margin: 0 25px 10px 0;
   padding: 5px;
-  background-color: transparent;
 }
 
 .muted-icon {
@@ -202,7 +199,7 @@ canvas {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  box-shadow: 0px 0px 1px 1px #28282845;
+  box-shadow: 0 0 1px 1px #28282845;
   background-color: #28282833;
   outline: 1px solid #7575754d;
   animation: pulse 2s ease-in-out infinite;
@@ -218,11 +215,11 @@ canvas {
 /* animations */
 @keyframes pulse {
   0% {
-    box-shadow: 0px 0px 0px 0px #ff5f57;
+    box-shadow: 0 0 0 0 #ff5f57;
     outline: 1px solid #ff5f57;
   }
   100% {
-    box-shadow: 0px 0px 0px 35px transparent;
+    box-shadow: 0 0 0 35px transparent;
     outline: 1px solid transparent;
   }
 }
@@ -260,33 +257,6 @@ canvas {
   }
   100% {
     transform: rotate(65deg);
-  }
-}
-
-@keyframes shake {
-  0% {
-    transform: translateX(0);
-  }
-  15% {
-    transform: translateX(-8px);
-  }
-  30% {
-    transform: translateX(8px);
-  }
-  45% {
-    transform: translateX(-6px);
-  }
-  60% {
-    transform: translateX(6px);
-  }
-  75% {
-    transform: translateX(-4px);
-  }
-  90% {
-    transform: translateX(4px);
-  }
-  100% {
-    transform: translateX(0);
   }
 }
 
