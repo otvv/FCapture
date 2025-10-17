@@ -253,6 +253,14 @@ const initializeEventHandler = async () => {
       });
     });
 
+    ipcMain.on("toggle-fullscreen", (event, isFullscreen) => {
+      if (!appState.parentWindow) {
+        return;
+      } 
+
+      appState.parentWindow.setFullScreen(isFullscreen);
+    });
+
     ipcMain.on("open-settings", (_event) => {
       generateChildWindow();
 

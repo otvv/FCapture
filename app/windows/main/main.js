@@ -9,11 +9,6 @@ FCapture
 
 "use strict";
 
-//
-// TODO: when a frame gets frozen/doesn't update for a certain amount of time
-// trigger the no device signal screen
-//
-
 // element querying
 const canvasElement = document.querySelector("#canvas-element");
 const noSignalContainerElement = document.querySelector(
@@ -25,6 +20,7 @@ const tabsContainerElement = document.querySelector("#tabs-container");
 const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
 const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
 const printButtonElement = document.querySelector("#print-button");
+const fullscreenButtonElement = document.querySelector("#fullscreen-button");
 const settingsButtonElement = document.querySelector("#settings-button");
 const muteButtonElement = document.querySelector("#mute-button");
 const refreshButtonElement = document.querySelector("#refresh-button");
@@ -38,7 +34,18 @@ const streamState = {
   previousVolume: 0,
   isStreamActive: false,
   isAudioTrackMuted: false,
+  isFullScreen: false
 };
+
+const updateFullscreenIcon = (state) => {
+  const icon = fullscreenButtonElement.querySelector(".fullscreen-icon");
+  if (!icon) {
+    return;
+  }
+
+  icon.classList.toggle("fa-expand", !state);
+  icon.classList.toggle("fa-compress", state);
+}
 
 const updateWindowState = async () => {
   const template = await import("../../configTemplate.mjs");
@@ -261,12 +268,39 @@ const handleWindowAction = async (action = "preview") => {
           return;
         }
 
-        // send event to electron's main process
-        // to save a screenshot at the user's Pictures folder
+        // get current frame image data
         const dataUrl = streamState.canvasContext.canvas.toDataURL("image/png");
 
-        // send the current frame to the main process to save the screenshot
+        // send the captured image data to the main process as an event
+        // to be processed
         window.ipcRenderer.send("save-screenshot", dataUrl);
+        break;
+      case "fullscreen":
+        if (!streamState.canvas) {
+          return;
+        }
+
+        const icon = fullscreenButtonElement.querySelector(".fullscreen-icon");
+
+        if (!icon) {
+          return;
+        }
+
+        streamState.isFullScreen = !streamState.isFullScreen;
+
+        // send event to toggle fullscreen
+        window.ipcRenderer.send("toggle-fullscreen", streamState.isFullScreen);
+
+        updateFullscreenIcon(streamState.isFullScreen);
+
+        // DEBUG PURPOSES ONLY
+        // console.log(
+        //   `[fcapture] - main@handleWindowAction: ${
+        //     streamState.isFullScreen
+        //       ? "set main window to fullscreen."
+        //       : "set main window size back to normal."
+        //   }`
+        // );
         break;
     }
   } catch (err) {
@@ -308,6 +342,9 @@ const initializeEventHandler = async () => {
       });
       refreshButtonElement.addEventListener("click", () =>
         handleStreamAction("restart")
+      );
+      fullscreenButtonElement.addEventListener("click", () =>
+        handleWindowAction("fullscreen")
       );
       settingsButtonElement.addEventListener("click", () =>
         handleWindowAction("settings")

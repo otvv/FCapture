@@ -71,13 +71,28 @@ const generateDrawFrameOnScreenFunction = (
         // DEBUG PURPOSES ONLY
         // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
 
-        // FIXME: currently when using ImageBitmap rendering the debug overlay doesn't work
-        // fix it later.
         (async () => {
           try {
             const bitmap = await createImageBitmap(videoElement);
             canvasContext.drawImage(bitmap, 0, 0);
             bitmap.close();
+
+            // TODO: turn this into a function
+            if (configObjectTemplate.debugOverlay) {
+              if (!overlayInstance) {
+                try {
+                  overlayInstance = setupCapsuleOverlay(canvasContext);
+                } catch (err) {
+                  console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
+                  return;
+                }
+              }
+
+              if (overlayInstance) {
+                overlayInstance(canvasContext);
+              }
+            }
+
           } catch (err) {
             console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
           }
@@ -93,21 +108,21 @@ const generateDrawFrameOnScreenFunction = (
           console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
         }
       }
-    }
-
-    // setup debug overlay
-    if (configObjectTemplate.debugOverlay) {
-      if (!overlayInstance) {
-        try {
-          overlayInstance = setupCapsuleOverlay(canvasContext);
-        } catch (err) {
-          console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
-          return;
+      
+      // setup debug overlay
+      if (configObjectTemplate.debugOverlay) {
+        if (!overlayInstance) {
+          try {
+            overlayInstance = setupCapsuleOverlay(canvasContext);
+          } catch (err) {
+            console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
+            return;
+          }
         }
-      }
-
-      if (overlayInstance) {
-        overlayInstance(canvasContext);
+        
+        if (overlayInstance) {
+          overlayInstance(canvasContext);
+        }
       }
     }
 
