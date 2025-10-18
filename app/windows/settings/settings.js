@@ -12,14 +12,27 @@ FCapture
 // element querying
 const descriptionTextElement = document.querySelector("#description-text");
 const videoModeSelectElement = document.querySelector("#video-mode-select");
-const renderingMethodSelectElement = document.querySelector("#rendering-method-select");
-const imageRenderingPrioritySelectElement = document.querySelector("#image-rendering-priority-select");
-const imageBrightnessSliderElement = document.querySelector("#image-brightness-slider");
-const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
-const imageSaturationSliderElement = document.querySelector("#image-saturation-slider");
-const debugOverlayCheckboxElement = document.querySelector("#debug-overlay-checkbox");
+const renderingMethodSelectElement = document.querySelector(
+  "#rendering-method-select",
+);
+const imageRenderingPrioritySelectElement = document.querySelector(
+  "#image-rendering-priority-select",
+);
+const imageBrightnessSliderElement = document.querySelector(
+  "#image-brightness-slider",
+);
+const imageContrastSliderElement = document.querySelector(
+  "#image-contrast-slider",
+);
+const imageSaturationSliderElement = document.querySelector(
+  "#image-saturation-slider",
+);
+const debugOverlayCheckboxElement = document.querySelector(
+  "#debug-overlay-checkbox",
+);
 const audioModeSelectElement = document.querySelector("#audio-mode-select");
-const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
+const surroundAudioCheckboxElement =
+  document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 
 const populateStreamOverview = async (canvasData, deviceData) => {
@@ -30,7 +43,7 @@ const populateStreamOverview = async (canvasData, deviceData) => {
 
     if (descriptionTextElement === null) {
       console.log(
-        "[fcapture] - settings@populateStreamOverview: failed to get the description element."
+        "[fcapture] - settings@populateStreamOverview: failed to get the description element.",
       );
     }
 
@@ -85,13 +98,13 @@ const populateStreamOverview = async (canvasData, deviceData) => {
 const requestConfigData = () => {
   // request the current config when the settings window loads
   window.ipcRenderer.send("request-config-info");
-}
+};
 
 const initializeEventHandler = async () => {
   try {
-    // request window state from config file 
+    // request window state from config file
     // when the settings window is ready
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener("DOMContentLoaded", () => {
       requestConfigData();
     });
 
@@ -104,7 +117,9 @@ const initializeEventHandler = async () => {
     });
 
     window.ipcRenderer.on("config-loaded", (configPayload) => {
-      console.log("[fcapture] - settings@initializeEventHandler: config payload received.");
+      console.log(
+        "[fcapture] - settings@initializeEventHandler: config payload received.",
+      );
 
       // update control elements using the data pulled from the config file
       if (configPayload) {
@@ -112,7 +127,8 @@ const initializeEventHandler = async () => {
         // and update them all dynamically using a loop
         renderingMethodSelectElement.value = configPayload.renderingMethod;
         videoModeSelectElement.value = configPayload.videoMode;
-        imageRenderingPrioritySelectElement.value = configPayload.imageRenderingPriority;
+        imageRenderingPrioritySelectElement.value =
+          configPayload.imageRenderingPriority;
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
         imageContrastSliderElement.value = configPayload.imageContrast;
         imageSaturationSliderElement.value = configPayload.imageSaturation;
@@ -123,50 +139,65 @@ const initializeEventHandler = async () => {
         surroundAudioCheckboxElement.checked = configPayload.surroundAudio;
       }
     });
-    
+
     // update config file according with the settings window
     // control element state
-    renderingMethodSelectElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { renderingMethod: +event.target.value } );
+    renderingMethodSelectElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        renderingMethod: +event.target.value,
+      });
     });
 
-    videoModeSelectElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { videoMode: event.target.value } );
+    videoModeSelectElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", { videoMode: event.target.value });
     });
-    
-    imageRenderingPrioritySelectElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageRenderingPriority: event.target.value } );
+
+    imageRenderingPrioritySelectElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        imageRenderingPriority: event.target.value,
+      });
     });
-    imageBrightnessSliderElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageBrightness: event.target.value } );
+    imageBrightnessSliderElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        imageBrightness: event.target.value,
+      });
     });
-    
-    imageContrastSliderElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageContrast: event.target.value } );
+
+    imageContrastSliderElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        imageContrast: event.target.value,
+      });
     });
-    
-    imageSaturationSliderElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { imageSaturation: event.target.value } );
+
+    imageSaturationSliderElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        imageSaturation: event.target.value,
+      });
     });
-    
+
     debugOverlayCheckboxElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", { debugOverlay: event.target.checked });
+      ipcRenderer.send("update-config-info", {
+        debugOverlay: event.target.checked,
+      });
     });
 
     //
 
-    audioModeSelectElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { audioMode: event.target.value } );
+    audioModeSelectElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", { audioMode: event.target.value });
     });
-    
-    surroundAudioCheckboxElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { surroundAudio: event.target.checked } );
+
+    surroundAudioCheckboxElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        surroundAudio: event.target.checked,
+      });
     });
-    
-    bassBoostCheckboxElement.addEventListener('change', (event) => {
-      ipcRenderer.send('update-config-info', { bassBoost: event.target.checked } );
+
+    bassBoostCheckboxElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        bassBoost: event.target.checked,
+      });
     });
-    
   } catch (err) {
     console.error("[fcapture] - settings@initializeEventHandler:", err);
   }
@@ -175,7 +206,7 @@ const initializeEventHandler = async () => {
 initializeEventHandler()
   .then(() => {
     console.log(
-      "[fcapture] - settings@initializeEventHandlerPromise: event handler initialized."
+      "[fcapture] - settings@initializeEventHandlerPromise: event handler initialized.",
     );
   })
   .catch((err) => {

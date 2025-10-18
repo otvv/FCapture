@@ -1,63 +1,80 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="main.css" />
+    <script src="main.js" defer></script>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-  <link rel="stylesheet" href="main.css">
-  <script src="main.js" defer></script>
+    <!--font awesome icons-->
+    <script src="../../assets/fontawesome/fontawesome.js" defer></script>
+    <script src="../../assets/fontawesome/solid.js" defer></script>
+  </head>
 
-  <!--font awesome icons-->
-  <script src="../../assets/fontawesome/fontawesome.js" defer></script>
-  <script src="../../assets/fontawesome/solid.js" defer></script>
-</head>
-
-<!-- TODOs:
-  1 - a fullscreen toggle button [X] 
+  <!-- TODOs:
+  1 - a fullscreen toggle button [X]
   2 - when a frame is frozen for a certain amount of time, display the "no-signal" screen []
-  3 - a hide mouse when the app is in focus/inside the stream area option [] 
+  3 - a hide mouse when the app is in focus/inside the stream area option []
   4 - a volume slider []
 -->
 
-<body>
-  <div class="navbar-container" id="navbar-container">
-    <div class="tabs-container" id="tabs-container">
-      <button class="tab-button active" id="preview-tab">Preview</button>
-      <button class="tab-button disabled" id="recordings-tab">Recordings</button>
+  <body>
+    <div class="navbar-container" id="navbar-container">
+      <div class="tabs-container" id="tabs-container">
+        <button class="tab-button active" id="preview-tab">Preview</button>
+        <button class="tab-button disabled" id="recordings-tab">
+          Recordings
+        </button>
+      </div>
+      <div class="navbar-buttons-container">
+        <span alt="Take a Screenshot" class="button-wrapper" id="print-button">
+          <i class="fa-solid fa-camera print-icon"></i>
+        </span>
+        <span alt="Mute Stream Audio" class="button-wrapper" id="mute-button">
+          <i class="fa-solid fa-volume-mute mute-icon"></i>
+        </span>
+        <span
+          alt="Refresh Stream Feed"
+          class="button-wrapper"
+          id="refresh-button"
+        >
+          <i class="fa-solid fa-refresh refresh-icon"></i>
+        </span>
+        <span
+          alt="Toggle Fullscreen"
+          class="button-wrapper"
+          id="fullscreen-button"
+        >
+          <i class="fa-solid fa-expand fullscreen-icon"></i>
+        </span>
+        <span
+          alt="Open Settings Menu"
+          class="button-wrapper"
+          id="settings-button"
+        >
+          <i class="fa-solid fa-cog settings-icon"></i>
+        </span>
+      </div>
     </div>
-    <div class="navbar-buttons-container">
-      <span alt="Take a Screenshot" class="button-wrapper" id="print-button">
-        <i class="fa-solid fa-camera print-icon"></i>
-      </span>
-      <span alt="Mute Stream Audio" class="button-wrapper" id="mute-button">
-        <i class="fa-solid fa-volume-mute mute-icon"></i>
-      </span>
-      <span alt="Refresh Stream Feed" class="button-wrapper" id="refresh-button">
-        <i class="fa-solid fa-refresh refresh-icon"></i>
-      </span>
-      <span alt="Toggle Fullscreen" class="button-wrapper" id="fullscreen-button">
-        <i class="fa-solid fa-expand fullscreen-icon"></i>
-      </span>
-      <span alt="Open Settings Menu" class="button-wrapper" id="settings-button">
-        <i class="fa-solid fa-cog settings-icon"></i>
-      </span>
+
+    <div class="stream-container">
+      <canvas id="canvas-element"></canvas>
     </div>
-  </div>
 
-  <div class="stream-container">
-    <canvas id="canvas-element"></canvas>
-  </div>
-  
-  <div class="no-signal-container" id="no-signal-container">
-    <div class="circle"></div>
-    <h2 class="no-device-text">no device signal</h2>
-  </div>
+    <div class="no-signal-container" id="no-signal-container">
+      <div class="circle"></div>
+      <h2 class="no-device-text">no device signal</h2>
+    </div>
 
-  <div class="muted-icon-wrapper" id="muted-icon">
-    <i class="fa-solid fa-volume-mute muted-icon"></i>
-  </div>
-</body>
-
+    <div class="muted-icon-wrapper" id="muted-icon">
+      <i class="fa-solid fa-volume-mute muted-icon"></i>
+    </div>
+  </body>
 </html>

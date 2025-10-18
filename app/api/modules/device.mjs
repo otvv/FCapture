@@ -34,11 +34,14 @@ const getAvailableDevices = async () => {
       }
 
       // filter each usb device capable ofvideo input
-      if (device.kind === "videoinput" && device.label.includes(globals.DEVICE_LABELS.USB_VIDEO)) {
+      if (
+        device.kind === "videoinput" &&
+        device.label.includes(globals.DEVICE_LABELS.USB_VIDEO)
+      ) {
         deviceInfoPayload.video.id = device.deviceId;
         deviceInfoPayload.video.label = device.label;
       }
-      
+
       // filter each device capable of audio input
       if (
         device.kind === "audioinput" &&
@@ -64,13 +67,17 @@ export const setupStreamFromDevice = async () => {
     const device = await getAvailableDevices();
 
     if (!device) {
-      console.error("[fcapture] - device@setupStreamFromDevice: invalid device payload.");
+      console.error(
+        "[fcapture] - device@setupStreamFromDevice: invalid device payload.",
+      );
       return null;
     }
 
     // get video and audio mode constraints
-    const videoConstraints = globals.VIDEO_MODES[configObjectTemplate.videoMode];
-    const audioConstraints = globals.AUDIO_MODES[configObjectTemplate.audioMode];
+    const videoConstraints =
+      globals.VIDEO_MODES[configObjectTemplate.videoMode];
+    const audioConstraints =
+      globals.AUDIO_MODES[configObjectTemplate.audioMode];
 
     // setup raw input video and audio properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
@@ -109,7 +116,7 @@ export const setupStreamFromDevice = async () => {
 
     if (!rawMedia) {
       console.warn(
-        "[fcapture] - device@setupStreamFromDevice: raw stream input not active, is your device initialized?"
+        "[fcapture] - device@setupStreamFromDevice: raw stream input not active, is your device initialized?",
       );
       return null;
     }
@@ -133,7 +140,7 @@ export const setupStreamFromDevice = async () => {
       sampleSize: deviceAudioSettings.sampleSize,
       channelCount: deviceAudioSettings.channelCount,
     };
-    
+
     window.ipcRenderer.send("receive-device-info", deviceInfo);
 
     return rawMedia;

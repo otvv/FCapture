@@ -40,12 +40,15 @@ const createAudioNodeChain = (audioContext) => {
     gain: audioContext.createGain(),
     bassBoost: audioContext.createBiquadFilter(),
     panner: audioContext.createPanner(),
-    delay: audioContext.createDelay()
+    delay: audioContext.createDelay(),
   };
 
   // setup bass boost
   nodes.bassBoost.type = "lowshelf";
-  nodes.bassBoost.frequency.setValueAtTime(globals.BASS_BOOST_FREQUENCY, audioContext.currentTime);
+  nodes.bassBoost.frequency.setValueAtTime(
+    globals.BASS_BOOST_FREQUENCY,
+    audioContext.currentTime,
+  );
 
   // setup panner for surround sound
   nodes.panner.panningModel = "HRTF";
@@ -55,19 +58,22 @@ const createAudioNodeChain = (audioContext) => {
   nodes.panner.positionZ.setValueAtTime(-1, audioContext.currentTime);
 
   return nodes;
-}
+};
 
 const generateDrawFrameOnScreenFunction = (
   videoElement,
   offscreenCanvasElement,
   offscreenContext,
-  canvasContext
+  canvasContext,
 ) => {
   let overlayInstance = null;
 
   const drawFrameOnScreen = () => {
     if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-      if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.IMAGEBITMAP) {
+      if (
+        configObjectTemplate.renderingMethod ===
+        globals.RENDERING_METHOD.IMAGEBITMAP
+      ) {
         // DEBUG PURPOSES ONLY
         // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
 
@@ -83,7 +89,10 @@ const generateDrawFrameOnScreenFunction = (
                 try {
                   overlayInstance = setupCapsuleOverlay(canvasContext);
                 } catch (err) {
-                  console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
+                  console.error(
+                    "[fcapture] - renderer@drawFrameOnScreen:",
+                    err,
+                  );
                   return;
                 }
               }
@@ -92,12 +101,14 @@ const generateDrawFrameOnScreenFunction = (
                 overlayInstance(canvasContext);
               }
             }
-
           } catch (err) {
             console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
           }
         })();
-      } else if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DOUBLEDRAW) {
+      } else if (
+        configObjectTemplate.renderingMethod ===
+        globals.RENDERING_METHOD.DOUBLEDRAW
+      ) {
         // DEBUG PURPOSES ONLY
         // console.log("[fcapture] - renderer@drawFrameOnScreen: using double-draw rendering.");
 
@@ -108,7 +119,7 @@ const generateDrawFrameOnScreenFunction = (
           console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
         }
       }
-      
+
       // setup debug overlay
       if (configObjectTemplate.debugOverlay) {
         if (!overlayInstance) {
@@ -119,7 +130,7 @@ const generateDrawFrameOnScreenFunction = (
             return;
           }
         }
-        
+
         if (overlayInstance) {
           overlayInstance(canvasContext);
         }
@@ -135,30 +146,36 @@ const generateDrawFrameOnScreenFunction = (
   };
 };
 
-export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audioContext) => {
+export const renderRawFrameOnCanvas = async (
+  canvasElement,
+  canvasContext,
+  audioContext,
+) => {
   try {
     // get raw stream data from the device
     const rawStreamData = await setupStreamFromDevice();
-    
+
     if (!rawStreamData) {
       return;
     }
-    
+
     // create video element and perform initial configurations
     const generateVideoElement = createVideoElement();
     const videoElement = generateVideoElement(rawStreamData);
-    
+
     if (!videoElement) {
-      console.error("[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.");
+      console.error(
+        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.",
+      );
       return;
     }
-    
+
     // start video playback
     await videoElement.play().catch((err) => {
       console.error("[fcapture] - renderer@videoElementPromise:", err);
       return;
     });
-    
+
     // change canvas resolution and aspect ratio
     // to match the resolution of the video stream
     canvasElement.width = videoElement.videoWidth;
@@ -171,15 +188,19 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
 
     // image filters setting and rendering quality priority setting
     canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
-    canvasElement.style.imageRendering = configObjectTemplate.imageRenderingPriority;
+    canvasElement.style.imageRendering =
+      configObjectTemplate.imageRenderingPriority;
 
     // setup offscreen canvas
-    const offscreenCanvasElement = new OffscreenCanvas(canvasElement.width, canvasElement.height);
+    const offscreenCanvasElement = new OffscreenCanvas(
+      canvasElement.width,
+      canvasElement.height,
+    );
     const offscreenContext = offscreenCanvasElement.getContext("2d", {
       willReadFrequently: false,
       desyncronized: true,
       alpha: false,
-      powerPreference: "high-performance"
+      powerPreference: "high-performance",
     });
 
     // generate a function to draw frames using
@@ -188,7 +209,7 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
       videoElement,
       offscreenCanvasElement,
       offscreenContext,
-      canvasContext
+      canvasContext,
     );
 
     // start rendering frames
@@ -202,20 +223,22 @@ export const renderRawFrameOnCanvas = async (canvasElement, canvasContext, audio
     // bass boost filter
     audioNodes.bassBoost.gain.setValueAtTime(
       configObjectTemplate.bassBoost ? globals.BASS_BOOST_AMOUNT : 0,
-      audioContext.currentTime
+      audioContext.currentTime,
     );
 
     // hrtf surround filter
     audioNodes.delay.delayTime.setValueAtTime(
       configObjectTemplate.surroundAudio ? globals.SURROUND_DELAY_TIME : 0.0,
-      audioContext.currentTime
+      audioContext.currentTime,
     );
 
     // connect audio source (device) to nodes and nodes
     // to the audio destination (final output)
-    [audioSource, ...Object.values(audioNodes), audioContext.destination].reduce((prev, curr) =>
-      prev.connect(curr)
-    );
+    [
+      audioSource,
+      ...Object.values(audioNodes),
+      audioContext.destination,
+    ].reduce((prev, curr) => prev.connect(curr));
 
     return { rawStreamData, gainNode: audioNodes.gain, videoElement };
   } catch (err) {

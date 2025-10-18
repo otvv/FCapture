@@ -11,14 +11,13 @@ FCapture
 
 // element querying
 const canvasElement = document.querySelector("#canvas-element");
-const noSignalContainerElement = document.querySelector(
-  "#no-signal-container"
-);
+const noSignalContainerElement = document.querySelector("#no-signal-container");
 const mutedIconElement = document.querySelector("#muted-icon");
 const navbarContainerElement = document.querySelector("#navbar-container");
 const tabsContainerElement = document.querySelector("#tabs-container");
 const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
-const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
+const recordingsTabElement =
+  tabsContainerElement.querySelector("#recordings-tab");
 const printButtonElement = document.querySelector("#print-button");
 const fullscreenButtonElement = document.querySelector("#fullscreen-button");
 const settingsButtonElement = document.querySelector("#settings-button");
@@ -34,7 +33,7 @@ const streamState = {
   previousVolume: 0,
   isStreamActive: false,
   isAudioTrackMuted: false,
-  isFullScreen: false
+  isFullScreen: false,
 };
 
 const updateFullscreenIcon = (state) => {
@@ -45,7 +44,7 @@ const updateFullscreenIcon = (state) => {
 
   icon.classList.toggle("fa-expand", !state);
   icon.classList.toggle("fa-compress", state);
-}
+};
 
 const updateWindowState = async () => {
   const template = await import("../../configTemplate.mjs");
@@ -53,7 +52,7 @@ const updateWindowState = async () => {
   // request the current config payload from file
   window.ipcRenderer.send("request-config-info");
 
-  // handle window state update when config info is received 
+  // handle window state update when config info is received
   window.ipcRenderer.once("config-loaded", (configPayload) => {
     if (!configPayload) {
       return;
@@ -61,15 +60,17 @@ const updateWindowState = async () => {
 
     // update original config object template
     // using the payload from the config file
-    console.log("[fcapture] - main@updateWindowState: config payload received.");
+    console.log(
+      "[fcapture] - main@updateWindowState: config payload received.",
+    );
     Object.assign(template.configObjectTemplate, configPayload);
   });
-}
+};
 
 const toggleStreamMute = (state) => {
   if (!streamState.audioController) {
     return;
-  } 
+  }
 
   if (state && !streamState.isAudioTrackMuted) {
     // save current volume and set gain to 0 for muting
@@ -92,7 +93,7 @@ const handleStreamAction = async (action = "start") => {
     if (canvasElement === null) {
       console.error(
         `[fcapture] - main@handleStreamAction: canvas element not found.
-         [fcapture] - main@handleStreamAction: please restart the window.`
+         [fcapture] - main@handleStreamAction: please restart the window.`,
       );
       return;
     }
@@ -104,7 +105,9 @@ const handleStreamAction = async (action = "start") => {
         // dont do anything if the stream data is already pulled
         // in other words: if the stream is active
         if (streamState.canvas || streamState.isStreamActive) {
-          console.warn("[fcapture] - main@handleStreamAction: stream already active, skipping..");
+          console.warn(
+            "[fcapture] - main@handleStreamAction: stream already active, skipping..",
+          );
           return;
         }
 
@@ -113,7 +116,7 @@ const handleStreamAction = async (action = "start") => {
           desyncronized: true,
           willReadFrequently: false,
           alpha: false,
-          powerPreference: "high-performance"
+          powerPreference: "high-performance",
         });
 
         streamState.audioContext = new window.AudioContext();
@@ -122,14 +125,19 @@ const handleStreamAction = async (action = "start") => {
         streamState.canvas = await renderer.renderRawFrameOnCanvas(
           canvasElement,
           streamState.canvasContext,
-          streamState.audioContext
+          streamState.audioContext,
         );
 
         // in case the user starts the app without any device connected
         // hide canvas and show the "no signal" screen
         if (!streamState.canvas) {
           // clear context from residual frames
-          streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
+          streamState.canvasContext.clearRect(
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height,
+          );
           streamState.isStreamActive = false;
 
           canvasElement.style.display = "none";
@@ -175,7 +183,12 @@ const handleStreamAction = async (action = "start") => {
         }
 
         // clear canvas
-        streamState.canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        streamState.canvasContext.clearRect(
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height,
+        );
 
         // get all available tracks from the raw stream data
         const streamTracks = await streamState.canvas.rawStreamData.getTracks();
@@ -205,7 +218,11 @@ const handleStreamAction = async (action = "start") => {
         // clear stream data
         {
           streamState.canvas.videoElement.srcObject = null;
-          streamState.canvas = { rawStreamData: null, gainNode: null, videoElement: null };
+          streamState.canvas = {
+            rawStreamData: null,
+            gainNode: null,
+            videoElement: null,
+          };
           streamState.canvas.videoElement = null; // just in case
           streamState.canvas = null;
           streamState.canvasContext = null;
@@ -234,7 +251,7 @@ const handleStreamAction = async (action = "start") => {
         if (!streamState.isStreamActive) {
           return;
         }
-        
+
         toggleStreamMute(false);
         break;
       default:
@@ -315,39 +332,44 @@ const initializeEventHandler = async () => {
     // event listeners
     window.ipcRenderer.on("start-stream", () => handleStreamAction("start"));
     window.ipcRenderer.on("stop-stream", () => handleStreamAction("stop"));
-    window.ipcRenderer.on("restart-stream", () => handleStreamAction("restart"));
+    window.ipcRenderer.on("restart-stream", () =>
+      handleStreamAction("restart"),
+    );
     window.ipcRenderer.on("mute-stream", () => handleStreamAction("mute"));
     window.ipcRenderer.on("unmute-stream", () => handleStreamAction("unmute"));
 
     // native DOM event listeners
-    navigator.mediaDevices.ondevicechange = (_event) => handleStreamAction("restart");
-    mutedIconElement.addEventListener("click", () => handleStreamAction("unmute"));
+    navigator.mediaDevices.ondevicechange = (_event) =>
+      handleStreamAction("restart");
+    mutedIconElement.addEventListener("click", () =>
+      handleStreamAction("unmute"),
+    );
 
     if (navbarContainerElement) {
       previewTabElement.addEventListener("click", () =>
-        handleWindowAction("preview")
+        handleWindowAction("preview"),
       );
       recordingsTabElement.addEventListener("click", () =>
-        handleWindowAction("recordings")
+        handleWindowAction("recordings"),
       );
       printButtonElement.addEventListener("click", () =>
-        handleWindowAction("screenshot")
+        handleWindowAction("screenshot"),
       );
       muteButtonElement.addEventListener("click", () => {
         if (streamState.isAudioTrackMuted) {
-          handleStreamAction("unmute")
+          handleStreamAction("unmute");
         } else {
-          handleStreamAction("mute")
+          handleStreamAction("mute");
         }
       });
       refreshButtonElement.addEventListener("click", () =>
-        handleStreamAction("restart")
+        handleStreamAction("restart"),
       );
       fullscreenButtonElement.addEventListener("click", () =>
-        handleWindowAction("fullscreen")
+        handleWindowAction("fullscreen"),
       );
       settingsButtonElement.addEventListener("click", () =>
-        handleWindowAction("settings")
+        handleWindowAction("settings"),
       );
     }
   } catch (err) {
@@ -358,7 +380,7 @@ const initializeEventHandler = async () => {
 initializeEventHandler()
   .then(() => {
     console.log(
-      "[fcapture] - main@initializeEventHandlerPromise: event handler initialized."
+      "[fcapture] - main@initializeEventHandlerPromise: event handler initialized.",
     );
   })
   .catch((err) => {

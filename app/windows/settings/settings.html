@@ -1,93 +1,136 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-  <link rel="stylesheet" href="settings.css">
-  <script src="settings.js" defer></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+    />
+    <link rel="stylesheet" href="settings.css" />
+    <script src="settings.js" defer></script>
 
-  <!--font awesome icons-->
-  <script src="../../assets/fontawesome/fontawesome.js" defer></script>
-  <script src="../../assets/fontawesome/solid.js" defer></script>
-</head>
-<body>
-  <div class="title-container">FCapture Settings</div>
-      <fieldset class="container">
-        <legend>Input/Output Info</legend>
-        <p class="description-text" id="description-text"></p>
-      </fieldset>
-      <hr/>
-      <fieldset class="container">
-        <legend>Video</legend>
+    <!--font awesome icons-->
+    <script src="../../assets/fontawesome/fontawesome.js" defer></script>
+    <script src="../../assets/fontawesome/solid.js" defer></script>
+  </head>
+  <body>
+    <div class="title-container">FCapture Settings</div>
+    <fieldset class="container">
+      <legend>Input/Output Info</legend>
+      <p class="description-text" id="description-text"></p>
+    </fieldset>
+    <hr />
+    <fieldset class="container">
+      <legend>Video</legend>
 
-        <form>
-          <div class="input-container">
-            <label for="rendering-method">Rendering method</label>
-            <select id="rendering-method-select">
-              <option value="0">ImageBitmap</option>
-              <option value="1">DrawImage (double-draw)</option>
-            </select>
-          </div>
-          <div class="input-container">
-            <label for="video-mode-select">Video mode</label>
-            <select id="video-mode-select">
-              <option value="2160p30">Ultra HD @ 30 FPS (2160p30)</option>
-              <option value="2160p60">Ultra HD @ 60 FPS (2160p60)</option>
-              <option value="1440p30">Quad HD @ 30 FPS (1440p30)</option>
-              <option value="1440p60">Quad HD @ 60 FPS (1440p60)</option>
-              <option value="1080p30">Full HD @ 30 FPS (1080p30)</option>
-              <option value="1080p60">Full HD @ 60 FPS (1080p60)</option>
-              <option value="720p30">HD @ 30 FPS (720p30)</option>
-              <option value="720p60">HD @ 60 FPS (720p60)</option>
-              <option value="480p30">SD @ 30 FPS (480p30)</option>
-              <option value="480p60">SD @ 60 FPS (480p60)</option>
-            </select>
-          </div>
-          <div class="input-container">
-            <label for="image-rendering-priority-select">Image rendering priority</label>
-            <select id="image-rendering-priority-select">
-              <option value="auto">Auto</option>
-              <option value="crisp-edges">Crisp-edges</option>
-              <option value="pixelated">Pixelated</option>
-              <option value="optimizeQuality">Quality</option>
-              <option value="optimizeSpeed">Speed</option>
-            </select>
-          </div>
-          <div class="input-container">
-            <label for="image-brightness-slider">Image brightness percentage</label>
-            <input min=0 max=200 value=100 type="range" name="Image brightness percentage" id="image-brightness-slider">
-          </div>
-          <div class="input-container">
-            <label for="image-contrast-slider">Image contrast percentage</label>
-            <input min=0 max=200 value=100 type="range" name="Image contrast percentage" id="image-contrast-slider">
-          </div>
-          <div class="input-container">
-            <label for="image-saturation-slider">Image saturation percentage</label>
-            <input min=100 max=200 value=100 type="range" name="Image saturation percentage" id="image-saturation-slider">
-          </div>
-          <input type="checkbox" name="Enable debug overlay" id="debug-overlay-checkbox">
-          <label for="debug-overlay-checkbox">Enable canvas debug overlay</label>
-        </form>
-      </fieldset>
-      <fieldset class="container">
-        <legend>Audio</legend>
-        
-        <form>
-          <div class="input-container">
-            <label for="audio-mode-select">Audio mode</label>
-            <select id="audio-mode-select">
-              <option value="normalQuality">Standard</option>
-              <option value="highQuality">High Quality</option>
-            </select>
-          </div>
-          <input type="checkbox" name="Enable HRTF Surround Audio filter (Experimental)" id="surround-checkbox">
-          <label for="surround-checkbox">Enable HRTF Surround audio filter (Experimental)</label>
-          <br>
-          <input type="checkbox" name="Enable bass-boost audio" id="bassboost-checkbox">
-          <label for="bassboost-checkbox">Enable bass-boost audio filter</label>
-        </form>
-      </fieldset>
-</body>
+      <form>
+        <div class="input-container">
+          <label for="rendering-method">Rendering method</label>
+          <select id="rendering-method-select">
+            <option value="0">ImageBitmap</option>
+            <option value="1">DrawImage (double-draw)</option>
+          </select>
+        </div>
+        <div class="input-container">
+          <label for="video-mode-select">Video mode</label>
+          <select id="video-mode-select">
+            <option value="2160p30">Ultra HD @ 30 FPS (2160p30)</option>
+            <option value="2160p60">Ultra HD @ 60 FPS (2160p60)</option>
+            <option value="1440p30">Quad HD @ 30 FPS (1440p30)</option>
+            <option value="1440p60">Quad HD @ 60 FPS (1440p60)</option>
+            <option value="1080p30">Full HD @ 30 FPS (1080p30)</option>
+            <option value="1080p60">Full HD @ 60 FPS (1080p60)</option>
+            <option value="720p30">HD @ 30 FPS (720p30)</option>
+            <option value="720p60">HD @ 60 FPS (720p60)</option>
+            <option value="480p30">SD @ 30 FPS (480p30)</option>
+            <option value="480p60">SD @ 60 FPS (480p60)</option>
+          </select>
+        </div>
+        <div class="input-container">
+          <label for="image-rendering-priority-select"
+            >Image rendering priority</label
+          >
+          <select id="image-rendering-priority-select">
+            <option value="auto">Auto</option>
+            <option value="crisp-edges">Crisp-edges</option>
+            <option value="pixelated">Pixelated</option>
+            <option value="optimizeQuality">Quality</option>
+            <option value="optimizeSpeed">Speed</option>
+          </select>
+        </div>
+        <div class="input-container">
+          <label for="image-brightness-slider"
+            >Image brightness percentage</label
+          >
+          <input
+            min="0"
+            max="200"
+            value="100"
+            type="range"
+            name="Image brightness percentage"
+            id="image-brightness-slider"
+          />
+        </div>
+        <div class="input-container">
+          <label for="image-contrast-slider">Image contrast percentage</label>
+          <input
+            min="0"
+            max="200"
+            value="100"
+            type="range"
+            name="Image contrast percentage"
+            id="image-contrast-slider"
+          />
+        </div>
+        <div class="input-container">
+          <label for="image-saturation-slider"
+            >Image saturation percentage</label
+          >
+          <input
+            min="100"
+            max="200"
+            value="100"
+            type="range"
+            name="Image saturation percentage"
+            id="image-saturation-slider"
+          />
+        </div>
+        <input
+          type="checkbox"
+          name="Enable debug overlay"
+          id="debug-overlay-checkbox"
+        />
+        <label for="debug-overlay-checkbox">Enable canvas debug overlay</label>
+      </form>
+    </fieldset>
+    <fieldset class="container">
+      <legend>Audio</legend>
+
+      <form>
+        <div class="input-container">
+          <label for="audio-mode-select">Audio mode</label>
+          <select id="audio-mode-select">
+            <option value="normalQuality">Normal Quality</option>
+            <option value="highQuality">High Quality</option>
+          </select>
+        </div>
+        <input
+          type="checkbox"
+          name="Enable HRTF Surround Audio filter (Experimental)"
+          id="surround-checkbox"
+        />
+        <label for="surround-checkbox"
+          >Enable HRTF Surround audio filter (Experimental)</label
+        >
+        <br />
+        <input
+          type="checkbox"
+          name="Enable bass-boost audio"
+          id="bassboost-checkbox"
+        />
+        <label for="bassboost-checkbox">Enable bass-boost audio filter</label>
+      </form>
+    </fieldset>
+  </body>
 </html>

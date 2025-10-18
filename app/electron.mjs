@@ -21,7 +21,7 @@ const appState = {
   parentWindow: null,
   childWindow: null,
   canvasData: {},
-  deviceData: {}
+  deviceData: {},
 };
 
 const generateParentWindow = () => {
@@ -43,7 +43,9 @@ const generateParentWindow = () => {
   });
 
   if (appState.parentWindow === null) {
-    throw new Error("[fcapture] - electron@generateParentWindow: failed to generate window.");
+    throw new Error(
+      "[fcapture] - electron@generateParentWindow: failed to generate window.",
+    );
   }
 
   appState.parentWindow.loadFile("app/windows/main/main.html");
@@ -76,7 +78,9 @@ const generateChildWindow = () => {
   });
 
   if (appState.childWindow === null) {
-    throw new Error("[fcapture] - electron@generateChildWindow: failed to generate child window.");
+    throw new Error(
+      "[fcapture] - electron@generateChildWindow: failed to generate child window.",
+    );
   }
 
   appState.childWindow.on("closed", () => {
@@ -107,7 +111,11 @@ const generateTemplateMenu = () => {
         {
           label: "Settings",
           click: () => {
-            ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
+            ipcMain.emit(
+              "open-settings",
+              appState.canvasData,
+              appState.deviceData,
+            );
           },
         },
       ],
@@ -155,7 +163,7 @@ const generateTemplateMenu = () => {
               title: `About FCapture`,
               type: "info",
               message: `FCapture
-              
+
               A previewer and recorder (eventually) software for generic USB capture cards`,
               detail: `version: ${app.getVersion()}\n copyright © github.com/otvv`,
             });
@@ -191,7 +199,11 @@ const generateTemplateMenu = () => {
       {
         label: "Settings",
         click: () => {
-          ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
+          ipcMain.emit(
+            "open-settings",
+            appState.canvasData,
+            appState.deviceData,
+          );
         },
       },
     ]);
@@ -216,7 +228,7 @@ const initializeEventHandler = async () => {
       if (canvasInfo) {
         appState.canvasData = canvasInfo;
         appState.canvasData.frameRate = utils.getCurrentDisplayOfWindow(
-          appState.parentWindow
+          appState.parentWindow,
         ).displayFrequency;
       }
     });
@@ -245,18 +257,23 @@ const initializeEventHandler = async () => {
 
       fs.writeFile(filePath, buffer, (err) => {
         if (err) {
-          console.warn("[fcapture] - electron@initializeEventHandler: failed to save screenshot.", err);
+          console.warn(
+            "[fcapture] - electron@initializeEventHandler: failed to save screenshot.",
+            err,
+          );
           return;
         }
 
-        console.log(`[fcapture] - electron@initializeEventHandler: screenshot saved @ ${filePath}`);
+        console.log(
+          `[fcapture] - electron@initializeEventHandler: screenshot saved @ ${filePath}`,
+        );
       });
     });
 
     ipcMain.on("toggle-fullscreen", (event, isFullscreen) => {
       if (!appState.parentWindow) {
         return;
-      } 
+      }
 
       appState.parentWindow.setFullScreen(isFullscreen);
     });
@@ -272,7 +289,7 @@ const initializeEventHandler = async () => {
             appState.childWindow.webContents.send(
               "send-canvas-info",
               appState.canvasData,
-              appState.deviceData
+              appState.deviceData,
             );
           });
         }
@@ -296,12 +313,11 @@ const initializeEventHandler = async () => {
     });
 
     ipcMain.on("reset-config-info", (event) => {
-        // reset config with original template
-        // data and send reply to renderer
-        resetConfig();
-        event.reply("config-reset", configObjectTemplate);
+      // reset config with original template
+      // data and send reply to renderer
+      resetConfig();
+      event.reply("config-reset", configObjectTemplate);
     });
-    
   } catch (err) {
     console.error("[fcapture] - electron@initializeEventHandler:", err);
   }
@@ -310,7 +326,9 @@ const initializeEventHandler = async () => {
 // initialize event handler
 initializeEventHandler()
   .then(() => {
-    console.log("[fcapture] - electron@initializeEventHandlerPromise: event handler initialized. ");
+    console.log(
+      "[fcapture] - electron@initializeEventHandlerPromise: event handler initialized. ",
+    );
   })
   .catch((err) => {
     console.error("[fcapture] - electron@initializeEventHandlerPromise:", err);

@@ -24,7 +24,8 @@ FCapture
   outline: none;
 }
 
-html, body {
+html,
+body {
   background-color: #000;
 }
 
@@ -71,7 +72,9 @@ html, body {
   padding: 5px 15px;
   border-radius: 5px;
   cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .tab-button:hover {

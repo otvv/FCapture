@@ -26,7 +26,9 @@ const overlaySettings = Object.freeze({
 export const setupCapsuleOverlay = () => {
   let calculateMetrics = null;
 
-  const calculateOverlayMetrics = (updateInterval = globals.UPDATE_INTERVAL) => {
+  const calculateOverlayMetrics = (
+    updateInterval = globals.UPDATE_INTERVAL,
+  ) => {
     let frameCount = 0;
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
@@ -72,7 +74,8 @@ export const setupCapsuleOverlay = () => {
     const { frameRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
-    const { backgroundColor, fontTitleColor, fontValueColor, fontFamily } = overlaySettings;
+    const { backgroundColor, fontTitleColor, fontValueColor, fontFamily } =
+      overlaySettings;
 
     // set overlay font
     canvasContext.font = fontFamily;
@@ -85,7 +88,7 @@ export const setupCapsuleOverlay = () => {
       capsuleWidth,
       capsuleHeight,
       capsuleRadius,
-      backgroundColor
+      backgroundColor,
     );
 
     const metrics = [
@@ -94,7 +97,7 @@ export const setupCapsuleOverlay = () => {
     ];
 
     let totalTextWidth = 0;
-    
+
     metrics.forEach(({ label, value }) => {
       totalTextWidth += renderer.getTextSize(canvasContext, label)[0];
       totalTextWidth += renderer.getTextSize(canvasContext, value)[0];
@@ -113,9 +116,21 @@ export const setupCapsuleOverlay = () => {
       const valueSize = renderer.getTextSize(canvasContext, value);
       const baseline = capsuleTop + capsuleHeight / 2 + labelSize[1] / 2;
 
-      renderer.drawText(canvasContext, label, currentX, baseline, fontTitleColor);
+      renderer.drawText(
+        canvasContext,
+        label,
+        currentX,
+        baseline,
+        fontTitleColor,
+      );
       currentX += labelSize[0] + 5;
-      renderer.drawText(canvasContext, value, currentX, baseline, fontValueColor);
+      renderer.drawText(
+        canvasContext,
+        value,
+        currentX,
+        baseline,
+        fontValueColor,
+      );
       currentX += valueSize[0] + textPadding;
     });
   };

@@ -11,11 +11,13 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 // expose a few functions to the renderer process
 contextBridge.exposeInMainWorld("ipcRenderer", {
-  on: (channel, callback) => ipcRenderer.on(channel, (_event, ..._args) => { 
-    callback(..._args);
-  }),
-  once: (channel, callback) => ipcRenderer.once(channel, (_event, ..._args) => {
-    callback(..._args);
-  }),
-  send: (channel, data) => ipcRenderer.send(channel, data)
+  on: (channel, callback) =>
+    ipcRenderer.on(channel, (_event, ..._args) => {
+      callback(..._args);
+    }),
+  once: (channel, callback) =>
+    ipcRenderer.once(channel, (_event, ..._args) => {
+      callback(..._args);
+    }),
+  send: (channel, data) => ipcRenderer.send(channel, data),
 });

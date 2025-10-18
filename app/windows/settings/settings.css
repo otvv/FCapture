@@ -23,11 +23,13 @@ FCapture
   outline: none;
 }
 
-html, body {
+html,
+body {
   height: 100vh;
 }
 
-hr, fieldset {
+hr,
+fieldset {
   border-color: #dedede2f;
 }
 
