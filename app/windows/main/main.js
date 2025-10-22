@@ -10,6 +10,7 @@ FCapture
 "use strict";
 
 // element querying
+const streamContainerElement = document.querySelector("#stream-container");
 const canvasElement = document.querySelector("#canvas-element");
 const noSignalContainerElement = document.querySelector("#no-signal-container");
 const mutedIconElement = document.querySelector("#muted-icon");
@@ -34,6 +35,13 @@ const streamState = {
   isStreamActive: false,
   isAudioTrackMuted: false,
   isFullScreen: false,
+};
+
+const cursorState = {
+  lastX: -1,
+  lastY: -1,
+  shouldShow: false,
+  hideThreshold: 3000,
 };
 
 const updateFullscreenIcon = (state) => {
@@ -84,6 +92,42 @@ const toggleStreamMute = (state) => {
     streamState.isAudioTrackMuted = false;
     mutedIconElement.style.display = "none";
   }
+};
+
+const handleCursorOverStream = (event) => {
+  if (canvasElement === null || streamContainerElement === null) {
+    console.error(
+      `[fcapture] - main@handleCursorOverStream: canvas or stream container element not found.
+       [fcapture] - main@handleCursorOverStream: please restart the window.`,
+    );
+  }
+
+  let hideCursorTimer = 0;
+
+  // TODO: turn this into a option later
+  const currentX = +event.clientX;
+  const currentY = +event.clientY;
+
+  if (cursorState.lastX !== -1 && cursorState.lastY !== -1) {
+    if (currentX !== cursorState.lastX || currentY !== cursorState.lastY) {
+      cursorState.shouldShow = true;
+      streamContainerElement.style.cursor = "default";
+    }
+  }
+
+  // handle position update
+  cursorState.lastX = currentX;
+  cursorState.lastY = currentY;
+
+  event.target.addEventListener("mousemove", () => {
+    // reset timer
+    clearTimeout(hideCursorTimer);
+
+    hideCursorTimer = setTimeout(() => {
+      cursorState.shouldShow = false;
+      streamContainerElement.style.cursor = "none";
+    }, cursorState.hideThreshold);
+  });
 };
 
 const handleStreamAction = async (action = "start") => {
@@ -343,6 +387,9 @@ const initializeEventHandler = async () => {
       handleStreamAction("restart");
     mutedIconElement.addEventListener("click", () =>
       handleStreamAction("unmute"),
+    );
+    streamContainerElement.addEventListener("mousemove", (event) =>
+      handleCursorOverStream(event),
     );
 
     if (navbarContainerElement) {

@@ -156,6 +156,8 @@ body {
 
   width: 100vw;
   height: 100vh;
+
+  cursor: none;
 }
 
 .canvas-element {

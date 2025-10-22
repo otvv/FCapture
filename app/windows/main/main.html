@@ -20,8 +20,8 @@
 
   <!-- TODOs:
   1 - a fullscreen toggle button [X]
-  2 - when a frame is frozen for a certain amount of time, display the "no-signal" screen []
-  3 - a hide mouse when the app is in focus/inside the stream area option []
+  2 - hide mouse when the app is in focus/inside the stream area option [X]
+  3 - when a frame is frozen for a certain amount of time, display the "no-signal" screen []
   4 - a volume slider []
 -->
 
@@ -64,7 +64,7 @@
       </div>
     </div>
 
-    <div class="stream-container">
+    <div id="stream-container" class="stream-container">
       <canvas id="canvas-element"></canvas>
     </div>
 

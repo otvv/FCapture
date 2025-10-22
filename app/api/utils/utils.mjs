@@ -102,7 +102,7 @@ export const handleHardwareAcceleration = (app) => {
     "enable-accelerated-hevc",
     "disable-renderer-backgrounding",
     "enable-native-gpu-memory-buffers",
-    "disable-gpu-vsync", // TODO: turn this into a setting later (doesnt work with current ImageBitmap rendering)
+    "disable-gpu-vsync", // TODO: turn this into a setting later (doesnt work with ImageBitmap rendering)
   ];
 
   // apply global switches
@@ -118,8 +118,7 @@ export const handleHardwareAcceleration = (app) => {
       );
       break;
     case "linux":
-      app.commandLine.appendSwitch("use-gl", "desktop");
-      app.commandLine.appendSwitch("enable-features", "VaapiVideoDecoder");
+      app.commandLine.appendSwitch("enable-features=VaapiVideoDecoder");
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: setting up Linux hardware acceleration.",
       );
