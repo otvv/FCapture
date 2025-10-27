@@ -25,6 +25,8 @@ const settingsButtonElement = document.querySelector("#settings-button");
 const muteButtonElement = document.querySelector("#mute-button");
 const refreshButtonElement = document.querySelector("#refresh-button");
 
+const configPayload = {};
+
 const streamState = {
   canvas: null,
   canvasContext: null,
@@ -94,7 +96,9 @@ const toggleStreamMute = (state) => {
   }
 };
 
-const handleCursorOverStream = (event) => {
+const handleCursorOverStream = async (event) => {
+  const template = await import("../../configTemplate.mjs");
+
   if (canvasElement === null || streamContainerElement === null) {
     console.error(
       `[fcapture] - main@handleCursorOverStream: canvas or stream container element not found.
@@ -102,9 +106,18 @@ const handleCursorOverStream = (event) => {
     );
   }
 
+  if (!template) {
+    return;
+  }
+
+  if (!template.configObjectTemplate.autoHideCursor) {
+    cursorState.shouldShow = true;
+    streamContainerElement.style.cursor = "default";
+    return;
+  }
+
   let hideCursorTimer = 0;
 
-  // TODO: turn this into a option later
   const currentX = +event.clientX;
   const currentY = +event.clientY;
 
@@ -388,8 +401,9 @@ const initializeEventHandler = async () => {
     mutedIconElement.addEventListener("click", () =>
       handleStreamAction("unmute"),
     );
-    streamContainerElement.addEventListener("mousemove", (event) =>
-      handleCursorOverStream(event),
+    streamContainerElement.addEventListener(
+      "mousemove",
+      async (event) => await handleCursorOverStream(event),
     );
 
     if (navbarContainerElement) {

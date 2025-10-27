@@ -188,7 +188,7 @@ export const renderRawFrameOnCanvas = async (
 
     // image filters setting and rendering quality priority setting
     canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
-    canvasElement.style.imageRendering =
+    videoElement.style.imageRendering =
       configObjectTemplate.imageRenderingPriority;
 
     // setup offscreen canvas

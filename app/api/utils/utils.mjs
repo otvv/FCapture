@@ -81,28 +81,21 @@ export const handleHardwareAcceleration = (app) => {
   }
 
   const globalSwitches = [
-    "enable-experimental-web-platform-features",
-    "enable-features=CanvasOopRasterization",
-    "enable-zero-copy",
-    "ignore-gpu-blacklist",
-    "enable-gpu-rasterization",
-    "force-gpu-rasterization",
-    "enable-webgl",
-    "enable-accelerated-2d-canvas",
-    "high-dpi-support=1",
+    "disable-http-cache",
+    "disable-gpu-vsync", // doesn't work properly with Double-Draw
     "disable-frame-rate-limit",
-    "enable-low-latency",
-    "enable-smooth-scrolling",
-    "enable-hardware-overlays",
-    "enable-accelerated-video-encode",
-    "enable-accelerated-video-decode",
-    "enable-accelerated-mjpeg-decode",
-    "enable-accelerated-vpx-decode",
-    "enable-accelerated-av1-decode",
-    "enable-accelerated-hevc",
+    "video-capture-use-gpu-memory-buffer",
+    "force_high_performance_gpu",
     "disable-renderer-backgrounding",
+    "enable-accelerated-2d-canvas",
+    "enable-exclusive-audio",
+    "enable-font-antialiasing",
+    "enable-gpu-rasterization",
     "enable-native-gpu-memory-buffers",
-    "disable-gpu-vsync", // TODO: turn this into a setting later (doesnt work with ImageBitmap rendering)
+    "enable-gpu-memory-buffer-video-frames",
+    "enable-new-app-menu-icon",
+    "enable-gpu-memory-buffer-compositor-resources",
+    "enable-zero-copy",
   ];
 
   // apply global switches
@@ -112,13 +105,12 @@ export const handleHardwareAcceleration = (app) => {
 
   switch (process.platform) {
     case "darwin": // macOS
-      app.commandLine.appendSwitch("enable-features=CompositingIOSurface2Mac");
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: setting up macOS hardware acceleration.",
       );
       break;
     case "linux":
-      app.commandLine.appendSwitch("enable-features=VaapiVideoDecoder");
+      app.commandLine.appendSwitch("gamepad-polling-interval", "0");
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: setting up Linux hardware acceleration.",
       );

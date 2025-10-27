@@ -27,6 +27,9 @@ const imageContrastSliderElement = document.querySelector(
 const imageSaturationSliderElement = document.querySelector(
   "#image-saturation-slider",
 );
+const autoHideCursorCheckboxElement = document.querySelector(
+  "#auto-hide-cursor-checkbox",
+);
 const debugOverlayCheckboxElement = document.querySelector(
   "#debug-overlay-checkbox",
 );
@@ -132,6 +135,7 @@ const initializeEventHandler = async () => {
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
         imageContrastSliderElement.value = configPayload.imageContrast;
         imageSaturationSliderElement.value = configPayload.imageSaturation;
+        autoHideCursorCheckboxElement.checked = configPayload.autoHideCursor;
         debugOverlayCheckboxElement.checked = configPayload.debugOverlay;
         //
         audioModeSelectElement.value = configPayload.audioMode;
@@ -172,6 +176,12 @@ const initializeEventHandler = async () => {
     imageSaturationSliderElement.addEventListener("change", (event) => {
       ipcRenderer.send("update-config-info", {
         imageSaturation: event.target.value,
+      });
+    });
+
+    autoHideCursorCheckboxElement.addEventListener("change", (event) => {
+      ipcRenderer.send("update-config-info", {
+        autoHideCursor: event.target.checked,
       });
     });
 
