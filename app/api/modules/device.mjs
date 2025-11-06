@@ -18,7 +18,6 @@ const getAvailableDevices = async () => {
       return null;
     }
 
-    // store device payload info
     const deviceInfoPayload = {
       video: { id: "", label: "" },
       audio: { id: "", label: "" },
@@ -28,12 +27,13 @@ const getAvailableDevices = async () => {
       // DEBUG PURPOSES ONLY
       // console.log(`[fcapture] - device@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
-      // prevent the device enumerator from fallbacking to a virtual device (OBS, webcam software, etc)
+      // prevent the device enumerator from fallbacking to a virtual devices (OBS, webcam softwares, etc)
       if (device.label.includes(globals.DEVICE_LABELS.OBS_VIRTUAL) || !device) {
         continue;
       }
 
-      // filter each usb device capable ofvideo input
+      // filter devices capable of video input
+      // and the ones that match our device dictionary
       if (
         device.kind === "videoinput" &&
         device.label.includes(globals.DEVICE_LABELS.USB_VIDEO)
@@ -42,7 +42,8 @@ const getAvailableDevices = async () => {
         deviceInfoPayload.video.label = device.label;
       }
 
-      // filter each device capable of audio input
+      // filter devices capable of audio input
+      // and the ones that match our device dictionary
       if (
         device.kind === "audioinput" &&
         (device.label.includes(globals.DEVICE_LABELS.USB_AUDIO) ||
@@ -62,8 +63,8 @@ const getAvailableDevices = async () => {
 
 export const setupStreamFromDevice = async () => {
   try {
-    // get filtered device info payload
-    // so the renderer can pull the video stream
+    // get filtered device info payload for the
+    // renderer to pull the video stream data
     const device = await getAvailableDevices();
 
     if (!device) {
@@ -74,15 +75,14 @@ export const setupStreamFromDevice = async () => {
     }
 
     // get video and audio mode constraints
-    const videoConstraints =
-      globals.VIDEO_MODES[configObjectTemplate.videoMode];
-    const audioConstraints =
-      globals.AUDIO_MODES[configObjectTemplate.audioMode];
+    const videoConstraints = globals.VIDEO_MODES[configObjectTemplate.videoMode];
+    const audioConstraints = globals.AUDIO_MODES[configObjectTemplate.audioMode];
 
-    // setup raw input video and audio properties
+    // setup raw video and audio input properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
-      // NOTE: if device doesnt have support for any of these settings
-      // it will use it's respective internal default/ideal value
+      // NOTE: if device doesnt have support for one of the settings
+      // provided in the dictionary it will use it's internal
+      // ideal/max possible value
       video: {
         deviceId: { exact: device.video.id },
 

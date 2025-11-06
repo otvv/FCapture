@@ -15,9 +15,6 @@ const videoModeSelectElement = document.querySelector("#video-mode-select");
 const renderingMethodSelectElement = document.querySelector(
   "#rendering-method-select",
 );
-const imageRenderingPrioritySelectElement = document.querySelector(
-  "#image-rendering-priority-select",
-);
 const imageBrightnessSliderElement = document.querySelector(
   "#image-brightness-slider",
 );
@@ -130,8 +127,6 @@ const initializeEventHandler = async () => {
         // and update them all dynamically using a loop
         renderingMethodSelectElement.value = configPayload.renderingMethod;
         videoModeSelectElement.value = configPayload.videoMode;
-        imageRenderingPrioritySelectElement.value =
-          configPayload.imageRenderingPriority;
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
         imageContrastSliderElement.value = configPayload.imageContrast;
         imageSaturationSliderElement.value = configPayload.imageSaturation;
@@ -156,11 +151,6 @@ const initializeEventHandler = async () => {
       ipcRenderer.send("update-config-info", { videoMode: event.target.value });
     });
 
-    imageRenderingPrioritySelectElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        imageRenderingPriority: event.target.value,
-      });
-    });
     imageBrightnessSliderElement.addEventListener("change", (event) => {
       ipcRenderer.send("update-config-info", {
         imageBrightness: event.target.value,

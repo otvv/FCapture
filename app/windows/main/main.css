@@ -24,6 +24,11 @@ FCapture
   outline: none;
 }
 
+/* testing purposes */
+@view-transition {
+  navigation: auto;
+}
+
 html,
 body {
   background-color: #000;

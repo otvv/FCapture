@@ -19,20 +19,41 @@ const createVideoElement = () => {
     if (!cachedVideoElement) {
       cachedVideoElement = document.createElement("video");
 
-      // perform initial configurations
+      // perform initial configurations and
+      // assign raw stream object/data
       Object.assign(cachedVideoElement, {
         playsInline: true,
         muted: true,
         controls: false,
         disablePictureInPicture: true,
+        srcObject: rawStreamData,
       });
     }
 
-    // assign raw stream object/data to the video element
-    cachedVideoElement.srcObject = rawStreamData;
+    // only update the stram data if necessary
+    // (device changes, or the stream data itself changes)
+    // if (cachedVideoElement.srcObject !== rawStreamData) {
+    //   cachedVideoElement.srcObject = rawStreamData;
+    // }
 
     return cachedVideoElement;
   };
+};
+
+const handleDebugOverlay = (instance, canvasContext) => {
+  if (!instance) {
+    try {
+      instance = setupCapsuleOverlay(canvasContext);
+    } catch (err) {
+      console.error("[fcapture] - renderer@handleDebugOverlay:", err);
+      return;
+    }
+  }
+
+  // draw overlay
+  if (instance) {
+    instance(canvasContext);
+  }
 };
 
 const createAudioNodeChain = (audioContext) => {
@@ -71,8 +92,7 @@ const generateDrawFrameOnScreenFunction = (
   const drawFrameOnScreen = () => {
     if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
       if (
-        configObjectTemplate.renderingMethod ===
-        globals.RENDERING_METHOD.IMAGEBITMAP
+        configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.IMAGEBITMAP
       ) {
         // DEBUG PURPOSES ONLY
         // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
@@ -83,31 +103,16 @@ const generateDrawFrameOnScreenFunction = (
             canvasContext.drawImage(bitmap, 0, 0);
             bitmap.close();
 
-            // TODO: turn this into a function
+            // handle debug overlay
             if (configObjectTemplate.debugOverlay) {
-              if (!overlayInstance) {
-                try {
-                  overlayInstance = setupCapsuleOverlay(canvasContext);
-                } catch (err) {
-                  console.error(
-                    "[fcapture] - renderer@drawFrameOnScreen:",
-                    err,
-                  );
-                  return;
-                }
-              }
-
-              if (overlayInstance) {
-                overlayInstance(canvasContext);
-              }
+              handleDebugOverlay(overlayInstance, canvasContext);
             }
           } catch (err) {
             console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
           }
         })();
       } else if (
-        configObjectTemplate.renderingMethod ===
-        globals.RENDERING_METHOD.DOUBLEDRAW
+        configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DOUBLEDRAW
       ) {
         // DEBUG PURPOSES ONLY
         // console.log("[fcapture] - renderer@drawFrameOnScreen: using double-draw rendering.");
@@ -115,24 +120,13 @@ const generateDrawFrameOnScreenFunction = (
         try {
           offscreenContext.drawImage(videoElement, 0, 0);
           canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+
+          // setup debug overlay
+          if (configObjectTemplate.debugOverlay) {
+            handleDebugOverlay(overlayInstance, canvasContext);
+          }
         } catch (err) {
           console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
-        }
-      }
-
-      // setup debug overlay
-      if (configObjectTemplate.debugOverlay) {
-        if (!overlayInstance) {
-          try {
-            overlayInstance = setupCapsuleOverlay(canvasContext);
-          } catch (err) {
-            console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
-            return;
-          }
-        }
-
-        if (overlayInstance) {
-          overlayInstance(canvasContext);
         }
       }
     }
@@ -186,11 +180,6 @@ export const renderRawFrameOnCanvas = async (
     const imageContrastValue = configObjectTemplate.imageContrast / 100;
     const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
 
-    // image filters setting and rendering quality priority setting
-    canvasElement.style.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
-    videoElement.style.imageRendering =
-      configObjectTemplate.imageRenderingPriority;
-
     // setup offscreen canvas
     const offscreenCanvasElement = new OffscreenCanvas(
       canvasElement.width,
@@ -203,6 +192,22 @@ export const renderRawFrameOnCanvas = async (
       powerPreference: "high-performance",
     });
 
+    // image filters setting
+    if (
+      configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.IMAGEBITMAP
+    ) {
+      canvasContext.filter = `brightness(${imageBrightnessValue})
+        contrast(${imageContrastValue})
+        saturate(${imageSaturationValue})
+        `;
+    } else if (
+      configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DOUBLEDRAW
+    ) {
+      offscreenContext.filter = `brightness(${imageBrightnessValue})
+      contrast(${imageContrastValue})
+      saturate(${imageSaturationValue})
+      `;
+    }
     // generate a function to draw frames using
     // the offscreen canvas
     const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
@@ -234,11 +239,9 @@ export const renderRawFrameOnCanvas = async (
 
     // connect audio source (device) to nodes and nodes
     // to the audio destination (final output)
-    [
-      audioSource,
-      ...Object.values(audioNodes),
-      audioContext.destination,
-    ].reduce((prev, curr) => prev.connect(curr));
+    [audioSource, ...Object.values(audioNodes), audioContext.destination].reduce(
+      (prev, curr) => prev.connect(curr),
+    );
 
     return { rawStreamData, gainNode: audioNodes.gain, videoElement };
   } catch (err) {

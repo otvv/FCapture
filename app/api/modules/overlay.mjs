@@ -26,9 +26,7 @@ const overlaySettings = Object.freeze({
 export const setupCapsuleOverlay = () => {
   let calculateMetrics = null;
 
-  const calculateOverlayMetrics = (
-    updateInterval = globals.UPDATE_INTERVAL,
-  ) => {
+  const calculateOverlayMetrics = (updateInterval = globals.UPDATE_INTERVAL) => {
     let frameCount = 0;
     let lastTime = performance.now();
     let lastFrameTime = performance.now();
@@ -58,7 +56,7 @@ export const setupCapsuleOverlay = () => {
       return;
     }
 
-    // initialize metrics calculator
+    // perform metrics calculations
     if (!calculateMetrics) {
       calculateMetrics = calculateOverlayMetrics();
     }
@@ -70,7 +68,7 @@ export const setupCapsuleOverlay = () => {
     const capsuleLeft = canvasContext.canvas.width / 2 - capsuleWidth / 2;
     const capsuleRadius = overlaySettings.radius;
 
-    // performance metrics
+    // performance metrics constraints
     const { frameRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
@@ -116,21 +114,9 @@ export const setupCapsuleOverlay = () => {
       const valueSize = renderer.getTextSize(canvasContext, value);
       const baseline = capsuleTop + capsuleHeight / 2 + labelSize[1] / 2;
 
-      renderer.drawText(
-        canvasContext,
-        label,
-        currentX,
-        baseline,
-        fontTitleColor,
-      );
+      renderer.drawText(canvasContext, label, currentX, baseline, fontTitleColor);
       currentX += labelSize[0] + 5;
-      renderer.drawText(
-        canvasContext,
-        value,
-        currentX,
-        baseline,
-        fontValueColor,
-      );
+      renderer.drawText(canvasContext, value, currentX, baseline, fontValueColor);
       currentX += valueSize[0] + textPadding;
     });
   };

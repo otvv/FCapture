@@ -44,9 +44,7 @@ export const getCorrectPicturesFolder = () => {
       try {
         // lets try to get the correct folder name
         // using xdg-user-dir on linux
-        const picturesFolder = execSync("xdg-user-dir PICTURES")
-          .toString()
-          .trim();
+        const picturesFolder = execSync("xdg-user-dir PICTURES").toString().trim();
 
         return picturesFolder;
       } catch {
@@ -69,8 +67,11 @@ export const getCurrentDisplayOfWindow = (electronWindow) => {
     return null;
   }
 
-  const bounds = electronWindow.getBounds();
-  const currentDisplay = screen.getDisplayMatching(bounds);
+  const currentDisplay = screen.getPrimaryDisplay();
+
+  if (!currentDisplay) {
+    return null;
+  }
 
   return currentDisplay;
 };
@@ -81,50 +82,69 @@ export const handleHardwareAcceleration = (app) => {
   }
 
   const globalSwitches = [
-    "disable-http-cache",
-    "disable-gpu-vsync", // doesn't work properly with Double-Draw
-    "disable-frame-rate-limit",
+    // "disable-gpu-vsync", // doesn't work properly with Double-Draw
+    // "disable-frame-rate-limit", // this can cause massive frame-dips on Linux (GNOME)
     "video-capture-use-gpu-memory-buffer",
     "force_high_performance_gpu",
     "disable-renderer-backgrounding",
     "enable-accelerated-2d-canvas",
     "enable-exclusive-audio",
-    "enable-font-antialiasing",
     "enable-gpu-rasterization",
     "enable-native-gpu-memory-buffers",
     "enable-gpu-memory-buffer-video-frames",
-    "enable-new-app-menu-icon",
     "enable-gpu-memory-buffer-compositor-resources",
     "enable-zero-copy",
+
+    // testing
+
+    "disable-low-res-tiling",
+    "enable-raw-draw",
+    "enable-hardware-overlays",
+    "enable-threaded-compositing",
+    "ignore-gpu-blocklist",
+    "enable-oop-rasterization",
+    "enable-unsafe-webgpu",
   ];
 
-  // apply global switches
-  globalSwitches.forEach((parameter) => {
-    app.commandLine.appendSwitch(parameter);
-  });
+  // disable hw acceleration if an unsupported OS is detected
+  if (
+    process.platform !== "darwin" &&
+    process.platform !== "linux" &&
+    process.platform !== "win32"
+  ) {
+    app.disableHardwareAcceleration();
+  } else {
+    // apply hardware acceleration related switches
+    console.log(
+      "[fcapture] - utils@handleHardwareAcceleration: setting up hardware acceleration related switches.",
+    );
 
+    globalSwitches.forEach((parameter) => {
+      app.commandLine.appendSwitch(parameter);
+    });
+  }
+
+  // platform specific switches
   switch (process.platform) {
-    case "darwin": // macOS
+    case "darwin":
       console.log(
-        "[fcapture] - utils@handleHardwareAcceleration: setting up macOS hardware acceleration.",
+        "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for macOS.",
       );
       break;
     case "linux":
-      app.commandLine.appendSwitch("gamepad-polling-interval", "0");
       console.log(
-        "[fcapture] - utils@handleHardwareAcceleration: setting up Linux hardware acceleration.",
+        "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for Linux.",
       );
       break;
     case "win32":
       console.log(
-        "[fcapture] - utils@handleHardwareAcceleration: setting up Windows hardware acceleration.",
+        "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for Windows.",
       );
       break;
     default:
       console.log(
-        "[fcapture] - utils@handleHardwareAcceleration: unsuported platform, disabling hardware acceleration.",
+        "[fcapture] - utils@handleHardwareAcceleration: unsuported platform, skipping additional switches.",
       );
-      app.disableHardwareAcceleration(); // disable if an unsupported OS is detected
       break;
   }
 };

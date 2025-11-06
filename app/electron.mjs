@@ -111,11 +111,7 @@ const generateTemplateMenu = () => {
         {
           label: "Settings",
           click: () => {
-            ipcMain.emit(
-              "open-settings",
-              appState.canvasData,
-              appState.deviceData,
-            );
+            ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
           },
         },
       ],
@@ -199,11 +195,7 @@ const generateTemplateMenu = () => {
       {
         label: "Settings",
         click: () => {
-          ipcMain.emit(
-            "open-settings",
-            appState.canvasData,
-            appState.deviceData,
-          );
+          ipcMain.emit("open-settings", appState.canvasData, appState.deviceData);
         },
       },
     ]);
@@ -226,10 +218,15 @@ const initializeEventHandler = async () => {
     // event listeners
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (canvasInfo) {
-        appState.canvasData = canvasInfo;
-        appState.canvasData.frameRate = utils.getCurrentDisplayOfWindow(
+        const refreshRate = utils.getCurrentDisplayOfWindow(
           appState.parentWindow,
         ).displayFrequency;
+        console.log(
+          "[fcapture] - electron@initializeEventHandler: refreshRate pulled: ",
+          refreshRate,
+        );
+        appState.canvasData.frameRate = refreshRate;
+        appState.canvasData = canvasInfo;
       }
     });
 
@@ -265,7 +262,7 @@ const initializeEventHandler = async () => {
         }
 
         console.log(
-          `[fcapture] - electron@initializeEventHandler: screenshot saved @ ${filePath}`,
+          `[fcapture] - electron@initializeEventHandler: screenshot saved at ${filePath}`,
         );
       });
     });

@@ -17,8 +17,7 @@ const mutedIconElement = document.querySelector("#muted-icon");
 const navbarContainerElement = document.querySelector("#navbar-container");
 const tabsContainerElement = document.querySelector("#tabs-container");
 const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
-const recordingsTabElement =
-  tabsContainerElement.querySelector("#recordings-tab");
+const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
 const printButtonElement = document.querySelector("#print-button");
 const fullscreenButtonElement = document.querySelector("#fullscreen-button");
 const settingsButtonElement = document.querySelector("#settings-button");
@@ -70,9 +69,7 @@ const updateWindowState = async () => {
 
     // update original config object template
     // using the payload from the config file
-    console.log(
-      "[fcapture] - main@updateWindowState: config payload received.",
-    );
+    console.log("[fcapture] - main@updateWindowState: config payload received.");
     Object.assign(template.configObjectTemplate, configPayload);
   });
 };
@@ -389,18 +386,14 @@ const initializeEventHandler = async () => {
     // event listeners
     window.ipcRenderer.on("start-stream", () => handleStreamAction("start"));
     window.ipcRenderer.on("stop-stream", () => handleStreamAction("stop"));
-    window.ipcRenderer.on("restart-stream", () =>
-      handleStreamAction("restart"),
-    );
+    window.ipcRenderer.on("restart-stream", () => handleStreamAction("restart"));
     window.ipcRenderer.on("mute-stream", () => handleStreamAction("mute"));
     window.ipcRenderer.on("unmute-stream", () => handleStreamAction("unmute"));
 
     // native DOM event listeners
     navigator.mediaDevices.ondevicechange = (_event) =>
       handleStreamAction("restart");
-    mutedIconElement.addEventListener("click", () =>
-      handleStreamAction("unmute"),
-    );
+    mutedIconElement.addEventListener("click", () => handleStreamAction("unmute"));
     streamContainerElement.addEventListener(
       "mousemove",
       async (event) => await handleCursorOverStream(event),

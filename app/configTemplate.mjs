@@ -10,7 +10,6 @@ FCapture
 export let configObjectTemplate = {
   renderingMethod: 0, // 0 rendering method value (0 = ImageBitmap, 1 = drawImage (double-draw))
   videoMode: "720p30", // video quality (mode) key value
-  imageRenderingPriority: "auto", // image rendering priority
   imageBrightness: 100, // image brightness percentage (ranges from 0-200%)
   imageContrast: 100, // image contrast percentage (ranges from 0-200%)
   imageSaturation: 100, // image saturation percentage (ranges from 100-200%)

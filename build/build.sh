@@ -20,13 +20,13 @@ spinner() {
         sleep $delay
         printf "\b\b\b\b\b\b"
     done
-    printf "\r[fbuild] - app built successfully\n"
+    printf "\r[fbuild] - app built successfully.\n"
 }
 
 # check if electron builder is installed
 if ! command -v electron-builder &>/dev/null; then
     echo "[fbuild] - electron-builder could not be found."
-    echo "[fbuild] - please run 'npm install -g electron-builder' to proceed."
+    echo "[fbuild] - please run 'npm install -g electron-builder' to proceed.\n(you might need to use sudo to run this command.)"
     exit 1
 fi
 
@@ -60,15 +60,15 @@ fi
 
 # compare versions and delete dist folder in case
 # app versions differs
-if [ "$CURRENT_VERSION" != "$LAST_VERSION" ] || [ "$LAST_VERSION" == "N/A"]; then
+if [ "$CURRENT_VERSION" != "$LAST_VERSION" ] || [ "$LAST_VERSION" == "N/A" ]; then
     echo "[fbuild] - app version changed from $LAST_VERSION to $CURRENT_VERSION."
     if [ -d "$DIST_PATH" ]; then
-        echo "[fbuild] - deleting dist folder.."
+        echo "[fbuild] - deleting dist folder..."
         rm -rf "$DIST_PATH"
         echo "[fbuild] - dist folder has been deleted."
     fi
     # update the last build version file
-    echo "$CURRENT_VERSION" >"$VERSION_FILE"
+    echo "$CURRENT_VERSION" > "$VERSION_FILE"
 else
     echo "[fbuild] - app version has not been changed, skipping dist folder deletion."
 fi
