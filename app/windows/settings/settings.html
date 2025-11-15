@@ -28,8 +28,9 @@
         <div class="input-container">
           <label for="rendering-method">Rendering method</label>
           <select id="rendering-method-select">
-            <option value="0">ImageBitmap</option>
-            <option value="1">DrawImage (double-draw)</option>
+            <option value="0">ImageBitmap (Fallback, slower)</option>
+            <option value="1">Double-draw (Better color accuracy, fast)</option>
+            <option value="2">Direct-draw (Low latency, fastest)</option>
           </select>
         </div>
         <div class="input-container">
@@ -48,9 +49,7 @@
           </select>
         </div>
         <div class="input-container">
-          <label for="image-brightness-slider"
-            >Image brightness percentage</label
-          >
+          <label for="image-brightness-slider">Image brightness percentage</label>
           <input
             min="0"
             max="200"
@@ -72,13 +71,11 @@
           />
         </div>
         <div class="input-container">
-          <label for="image-saturation-slider"
-            >Image saturation percentage</label
-          >
+          <label for="image-saturation-slider">Image saturation percentage</label>
           <input
-            min="100"
+            min="0"
             max="200"
-            value="100"
+            value="0"
             type="range"
             name="Image saturation percentage"
             id="image-saturation-slider"

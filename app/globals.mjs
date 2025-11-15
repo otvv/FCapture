@@ -29,6 +29,7 @@ export const ASPECT_RATIO_TABLE = Object.freeze({
 export const RENDERING_METHOD = Object.freeze({
   IMAGEBITMAP: 0,
   DOUBLEDRAW: 1,
+  DIRECTDRAW: 2,
 });
 
 export const DEVICE_LABELS = Object.freeze({

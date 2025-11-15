@@ -91,6 +91,7 @@ export const setupStreamFromDevice = async () => {
         height: { ideal: videoConstraints.height },
         frameRate: { ideal: videoConstraints.frameRate },
         aspectRatio: { exact: videoConstraints.aspectRatio },
+        latency: { ideal: 0 },
       },
       audio: {
         deviceId: { exact: device.audio.id },
@@ -104,6 +105,7 @@ export const setupStreamFromDevice = async () => {
         autoGainControl: false,
         noiseSuppression: false,
         voiceIsolation: false,
+        latency: { ideal: 0 },
       },
     });
 

@@ -11,6 +11,9 @@ import os from "os";
 import path from "path";
 import { screen } from "electron";
 import { execSync } from "child_process";
+
+const IS_WAYLAND = process.env.XDG_SESSION_TYPE === "wayland";
+
 export const focusWindow = (targetWindow) => {
   if (!targetWindow || targetWindow.isDestroyed()) {
     return null;
@@ -82,7 +85,7 @@ export const handleHardwareAcceleration = (app) => {
   }
 
   const globalSwitches = [
-    // "disable-gpu-vsync", // doesn't work properly with Double-Draw
+    "disable-gpu-vsync", // doesn't work properly with Double-Draw
     // "disable-frame-rate-limit", // this can cause massive frame-dips on Linux (GNOME)
     "video-capture-use-gpu-memory-buffer",
     "force_high_performance_gpu",
@@ -94,16 +97,8 @@ export const handleHardwareAcceleration = (app) => {
     "enable-gpu-memory-buffer-video-frames",
     "enable-gpu-memory-buffer-compositor-resources",
     "enable-zero-copy",
-
-    // testing
-
-    "disable-low-res-tiling",
-    "enable-raw-draw",
     "enable-hardware-overlays",
-    "enable-threaded-compositing",
-    "ignore-gpu-blocklist",
     "enable-oop-rasterization",
-    "enable-unsafe-webgpu",
   ];
 
   // disable hw acceleration if an unsupported OS is detected
@@ -130,20 +125,73 @@ export const handleHardwareAcceleration = (app) => {
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for macOS.",
       );
+      app.commandLine.appendSwitch("enable-features", "Metal");
       break;
     case "linux":
+      const linuxSwitches = [
+        [
+          "enable-features",
+          "VaapiVideoDecoder,VaapiVideoEncoder,VaapiVideoDecodeLinuxGL",
+        ],
+        ["disable-features", "UseChromeOSDirectVideoDecoder"],
+      ];
+
+      // enable specific features if the user is using Wayland or X11
+      if (IS_WAYLAND) {
+        console.log(
+          "[fcapture] - utils@handleHardwareAcceleration: wayland detected, enabling OpenGL",
+        );
+
+        // use angle with opengl if the user is on wayland
+        linuxSwitches.push(
+          ["enable-features", "UseOzonePlatform"],
+          ["ozone-platform", "wayland"],
+          ["use-angle", "gl"],
+          ["use-gl", "angle"],
+        );
+      } else {
+        console.log(
+          "[fcapture] - utils@handleHardwareAcceleration: X11 detected, enabling OpenGL.",
+        );
+
+        // use opengl if the user is on x11
+        linuxSwitches.push(["enable-features", "Vulkan"], ["use-gl", "desktop"]);
+      }
+
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for Linux.",
       );
+
+      linuxSwitches.forEach(([flag, value]) => {
+        if (value) {
+          app.commandLine.appendSwitch(flag, value);
+        } else {
+          app.commandLine.appendSwitch(flag);
+        }
+      });
       break;
     case "win32":
+      const windowsSwitches = [
+        ["enable-features", "D3D11VideoDecoder"],
+        ["enable-features", "DirectCompositionVideoOverlays"],
+        ["force_high_performance_gpu"],
+      ];
+
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for Windows.",
       );
+
+      windowsSwitches.forEach(([flag, value]) => {
+        if (value) {
+          app.commandLine.appendSwitch(flag, value);
+        } else {
+          app.commandLine.appendSwitch(flag);
+        }
+      });
       break;
     default:
       console.log(
-        "[fcapture] - utils@handleHardwareAcceleration: unsuported platform, skipping additional switches.",
+        "[fcapture] - utils@handleHardwareAcceleration: unsupported platform, skipping additional switches.",
       );
       break;
   }

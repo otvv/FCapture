@@ -173,7 +173,7 @@ const handleStreamAction = async (action = "start") => {
           powerPreference: "high-performance",
         });
 
-        streamState.audioContext = new window.AudioContext();
+        streamState.audioContext = new AudioContext({ latencyHint: "interactive" });
 
         // render raw stream frames onto the canvas element
         streamState.canvas = await renderer.renderRawFrameOnCanvas(

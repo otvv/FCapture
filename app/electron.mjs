@@ -32,9 +32,10 @@ const generateParentWindow = () => {
     height: 720,
     minWidth: 640,
     minHeight: 480,
-    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
-    autoHideMenuBar: true,
     darkTheme: true, // might break on some GTK themes if it doesnt have a proper dark variation
+    autoHideMenuBar: true,
+    center: true,
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     webPreferences: {
       experimentalFeatures: true,
       backgroundThrottling: false,
@@ -71,6 +72,7 @@ const generateChildWindow = () => {
     minimizable: false,
     fullscreenable: false,
     autoHideMenuBar: true,
+    center: true,
     modal: process.platform === "win32" || process.platform === "linux",
     webPreferences: {
       preload: path.join(globals.__dirname, "preload.js"),

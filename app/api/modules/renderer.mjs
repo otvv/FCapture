@@ -88,55 +88,80 @@ const generateDrawFrameOnScreenFunction = (
   canvasContext,
 ) => {
   let overlayInstance = null;
+  let isProcessing = false;
 
-  const drawFrameOnScreen = () => {
-    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-      if (
-        configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.IMAGEBITMAP
-      ) {
-        // DEBUG PURPOSES ONLY
-        // console.log("[fcapture] - renderer@drawFrameOnScreen: using ImageBitmap rendering.");
+  const drawFrameImageBitmap = () => {
+    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA && !isProcessing) {
+      isProcessing = true;
 
-        (async () => {
-          try {
-            const bitmap = await createImageBitmap(videoElement);
-            canvasContext.drawImage(bitmap, 0, 0);
-            bitmap.close();
+      createImageBitmap(videoElement)
+        .then((result) => {
+          canvasContext.drawImage(result, 0, 0);
+          result.close();
 
-            // handle debug overlay
-            if (configObjectTemplate.debugOverlay) {
-              handleDebugOverlay(overlayInstance, canvasContext);
-            }
-          } catch (err) {
-            console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
-          }
-        })();
-      } else if (
-        configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DOUBLEDRAW
-      ) {
-        // DEBUG PURPOSES ONLY
-        // console.log("[fcapture] - renderer@drawFrameOnScreen: using double-draw rendering.");
-
-        try {
-          offscreenContext.drawImage(videoElement, 0, 0);
-          canvasContext.drawImage(offscreenCanvasElement, 0, 0);
-
-          // setup debug overlay
           if (configObjectTemplate.debugOverlay) {
             handleDebugOverlay(overlayInstance, canvasContext);
           }
-        } catch (err) {
-          console.error("[fcapture] - renderer@drawFrameOnScreen:", err);
-        }
-      }
+          isProcessing = false;
+        })
+        .catch((err) => {
+          console.error("[fcapture] - renderer@drawFrameImageBitmap:", err);
+          isProcessing = false;
+        });
     }
-
-    // schedule next frame
-    requestAnimationFrame(drawFrameOnScreen);
+    requestAnimationFrame(drawFrameImageBitmap);
   };
 
+  const drawFrameDoubleDraw = () => {
+    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
+      try {
+        offscreenContext.drawImage(videoElement, 0, 0);
+        canvasContext.drawImage(offscreenCanvasElement, 0, 0);
+
+        if (configObjectTemplate.debugOverlay) {
+          handleDebugOverlay(overlayInstance, canvasContext);
+        }
+      } catch (err) {
+        console.error("[fcapture] - renderer@drawFrameDoubleDraw:", err);
+      }
+    }
+    requestAnimationFrame(drawFrameDoubleDraw);
+  };
+
+  const drawFrameDirectlyOnScreen = () => {
+    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
+      try {
+        canvasContext.drawImage(videoElement, 0, 0);
+
+        if (configObjectTemplate.debugOverlay) {
+          handleDebugOverlay(overlayInstance, canvasContext);
+        }
+      } catch (err) {
+        console.error("[fcapture] - renderer@drawFrameDirectlyOnScreen:", err);
+      }
+    }
+    requestAnimationFrame(drawFrameDirectlyOnScreen);
+  };
+
+  // rendering method switcher
+  let drawFunction = null;
+  switch (configObjectTemplate.renderingMethod) {
+    case globals.RENDERING_METHOD.IMAGEBITMAP:
+      drawFunction = drawFrameImageBitmap;
+      break;
+    case globals.RENDERING_METHOD.DOUBLEDRAW:
+      drawFunction = drawFrameDoubleDraw;
+      break;
+    case globals.RENDERING_METHOD.DIRECTDRAW:
+      drawFunction = drawFrameDirectlyOnScreen;
+      break;
+    default:
+      drawFunction = drawFrameImageBitmap; // fallback to image bitmap for better image fidelity
+      break;
+  }
+
   return {
-    start: () => requestAnimationFrame(drawFrameOnScreen),
+    start: () => requestAnimationFrame(drawFunction),
   };
 };
 
@@ -156,6 +181,12 @@ export const renderRawFrameOnCanvas = async (
     // create video element and perform initial configurations
     const generateVideoElement = createVideoElement();
     const videoElement = generateVideoElement(rawStreamData);
+
+    // make sure the low latency hint is added
+    // in the video player element
+    if ("latencyHint" in videoElement) {
+      videoElement.latencyHint = "realtime";
+    }
 
     if (!videoElement) {
       console.error(
@@ -187,14 +218,16 @@ export const renderRawFrameOnCanvas = async (
     );
     const offscreenContext = offscreenCanvasElement.getContext("2d", {
       willReadFrequently: false,
-      desyncronized: true,
+      desynchronized: true,
       alpha: false,
       powerPreference: "high-performance",
     });
 
     // image filters setting
     if (
-      configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.IMAGEBITMAP
+      configObjectTemplate.renderingMethod ===
+        globals.RENDERING_METHOD.IMAGEBITMAP ||
+      configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
     ) {
       canvasContext.filter = `brightness(${imageBrightnessValue})
         contrast(${imageContrastValue})
@@ -208,6 +241,7 @@ export const renderRawFrameOnCanvas = async (
       saturate(${imageSaturationValue})
       `;
     }
+
     // generate a function to draw frames using
     // the offscreen canvas
     const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
