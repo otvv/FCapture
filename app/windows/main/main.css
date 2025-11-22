@@ -9,7 +9,7 @@ FCapture
 
 * {
   user-select: none;
-  overflow: hidden;
+  /*overflow: hidden;*/
   -webkit-user-drag: none;
   -webkit-user-select: none;
   appearance: none;
@@ -165,9 +165,16 @@ body {
   cursor: none;
 }
 
-.canvas-element {
+#canvas-element {
+  display: block;
   width: auto;
+  height: auto;
   max-width: 100vw;
+  max-height: 100vh;
+  object-fit: contain;
+  box-shadow: none;
+  image-rendering: auto;
+  will-change: transform;
 }
 
 /* mute icon on canvas */

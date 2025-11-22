@@ -75,6 +75,7 @@ const generateChildWindow = () => {
     center: true,
     modal: process.platform === "win32" || process.platform === "linux",
     webPreferences: {
+      webgl: true,
       preload: path.join(globals.__dirname, "preload.js"),
     },
   });
@@ -209,7 +210,6 @@ const generateTemplateMenu = () => {
 const initializeEventHandler = async () => {
   try {
     // handle hardware acceleration
-    // based on platform
     utils.handleHardwareAcceleration(app);
 
     app.whenReady().then(generateParentWindow).then(generateTemplateMenu);
@@ -223,12 +223,15 @@ const initializeEventHandler = async () => {
         const refreshRate = utils.getCurrentDisplayOfWindow(
           appState.parentWindow,
         ).displayFrequency;
-        console.log(
-          "[fcapture] - electron@initializeEventHandler: refreshRate pulled: ",
-          refreshRate,
-        );
-        appState.canvasData.frameRate = refreshRate;
+
+        // DEBUG PURPOSES ONLY
+        // console.log(
+        //   "[fcapture] - electron@initializeEventHandler: refreshRate pulled:",
+        //   refreshRate,
+        // );
+
         appState.canvasData = canvasInfo;
+        appState.canvasData.frameRate = refreshRate;
       }
     });
 
@@ -244,15 +247,14 @@ const initializeEventHandler = async () => {
 
       const picturesFolder = utils.getCorrectPicturesFolder();
       const timestamp = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
-      const saveFolder = path.join(picturesFolder, "FCapture");
+      const targetSaveFolder = path.join(picturesFolder, "FCapture");
 
       // create a folder for FCapture screenshots if it doesn't exist
-      if (!fs.existsSync(saveFolder)) {
-        fs.mkdirSync(saveFolder, { recursive: true });
+      if (!fs.existsSync(targetSaveFolder)) {
+        fs.mkdirSync(targetSaveFolder, { recursive: true });
       }
 
-      // generate filepath with timestamp
-      const filePath = path.join(saveFolder, `screenshot_${timestamp}.png`);
+      const filePath = path.join(targetSaveFolder, `screenshot_${timestamp}.png`);
 
       fs.writeFile(filePath, buffer, (err) => {
         if (err) {
@@ -303,6 +305,13 @@ const initializeEventHandler = async () => {
       // and send reply to renderer
       saveConfigState();
       event.reply("config-saved", configObjectTemplate);
+    });
+
+    ipcMain.on("force-restart-stream", (_event) => {
+      // force restart video stream
+      if (appState.parentWindow && appState.parentWindow.webContents) {
+        appState.parentWindow.webContents.send("restart-stream");
+      }
     });
 
     ipcMain.on("request-config-info", (event) => {

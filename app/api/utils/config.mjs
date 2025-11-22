@@ -36,9 +36,7 @@ export const loadConfigState = () => {
       Object.assign(configObjectTemplate, JSON.parse(configPayload));
       console.log("[fcapture] - config@loadConfigState: config loaded.");
     } else {
-      console.warn(
-        "[fcapture] - config@loadConfigState: config file not found.",
-      );
+      console.warn("[fcapture] - config@loadConfigState: config file not found.");
 
       // create config file in case it doesnt exist
       console.log(

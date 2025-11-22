@@ -85,6 +85,8 @@ export const handleHardwareAcceleration = (app) => {
   }
 
   const globalSwitches = [
+    "enable-webgl",
+    "ignore-gpu-blacklist",
     "disable-gpu-vsync", // doesn't work properly with Double-Draw
     // "disable-frame-rate-limit", // this can cause massive frame-dips on Linux (GNOME)
     "video-capture-use-gpu-memory-buffer",
@@ -139,7 +141,7 @@ export const handleHardwareAcceleration = (app) => {
       // enable specific features if the user is using Wayland or X11
       if (IS_WAYLAND) {
         console.log(
-          "[fcapture] - utils@handleHardwareAcceleration: wayland detected, enabling OpenGL",
+          "[fcapture] - utils@handleHardwareAcceleration: wayland detected, enabling OpenGL with Angle",
         );
 
         // use angle with opengl if the user is on wayland
@@ -175,6 +177,8 @@ export const handleHardwareAcceleration = (app) => {
         ["enable-features", "D3D11VideoDecoder"],
         ["enable-features", "DirectCompositionVideoOverlays"],
         ["force_high_performance_gpu"],
+        ["use-angle", "gl"],
+        ["use-gl", "angle"],
       ];
 
       console.log(

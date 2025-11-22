@@ -18,9 +18,7 @@ const renderingMethodSelectElement = document.querySelector(
 const imageBrightnessSliderElement = document.querySelector(
   "#image-brightness-slider",
 );
-const imageContrastSliderElement = document.querySelector(
-  "#image-contrast-slider",
-);
+const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
 const imageSaturationSliderElement = document.querySelector(
   "#image-saturation-slider",
 );
@@ -31,20 +29,25 @@ const debugOverlayCheckboxElement = document.querySelector(
   "#debug-overlay-checkbox",
 );
 const audioModeSelectElement = document.querySelector("#audio-mode-select");
-const surroundAudioCheckboxElement =
-  document.querySelector("#surround-checkbox");
+const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
 const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
+const applyButton = document.querySelector("#apply-button");
+const cancelButton = document.querySelector("#cancel-button");
 
 const populateStreamOverview = async (canvasData, deviceData) => {
   try {
-    if (!canvasData) {
-      return;
-    }
-
     if (descriptionTextElement === null) {
       console.log(
         "[fcapture] - settings@populateStreamOverview: failed to get the description element.",
       );
+    }
+
+    if (!canvasData) {
+      descriptionTextElement.innerHTML = `
+        <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
+        <b>Output</b>: Canvas not initialized due to canvasData being unavailable. <i>(Canvas)</i> <br>
+        <b>Audio</b>: ${targetAudioChannelCount} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
+      return;
     }
 
     if (!deviceData) {
@@ -58,7 +61,7 @@ const populateStreamOverview = async (canvasData, deviceData) => {
     // get device info to display
     const targetWidth = deviceData.width || "0";
     const targetHeight = deviceData.height || "0";
-    const targetFps = deviceData.frameRate.toFixed(0) || "0";
+    const targetFps = +deviceData.frameRate.toFixed(0) || "0";
     const targetAudioSampleRate = deviceData.sampleRate || "0";
     const targetAudioSampleSize = deviceData.sampleSize || "0";
     let targetAudioChannelCount = deviceData.channelCount || "1";
@@ -73,18 +76,10 @@ const populateStreamOverview = async (canvasData, deviceData) => {
       targetAudioChannelCount = "Unknown";
     }
 
-    if (!canvasData) {
-      descriptionTextElement.innerHTML = `
-        <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
-        <b>Output</b>: Canvas not initialized due to canvasData being unavailable. <i>(Canvas)</i> <br>
-        <b>Audio</b>: ${targetAudioChannelCount} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
-      return;
-    }
-
     // get canvas info to display
     const outputWidth = canvasData.width || "0";
     const outputHeight = canvasData.height || "0";
-    const outputFps = canvasData.frameRate || "0";
+    const outputFps = +canvasData.frameRate || "0";
 
     descriptionTextElement.innerHTML = `
       <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
@@ -113,16 +108,21 @@ const initializeEventHandler = async () => {
       // populate settings menu description
       if (canvasInfo && deviceInfo) {
         populateStreamOverview(canvasInfo, deviceInfo);
+      } else {
+        console.warn(
+          "[fcapture] - settings@initializeEventHandler: canvas and device info are not ready yet.",
+        );
       }
     });
 
     window.ipcRenderer.on("config-loaded", (configPayload) => {
-      console.log(
-        "[fcapture] - settings@initializeEventHandler: config payload received.",
-      );
-
       // update control elements using the data pulled from the config file
       if (configPayload) {
+        // DEBUG PURPOSES ONLY
+        // console.log(
+        //   "[fcapture] - settings@initializeEventHandler: config payload received.",
+        // );
+        //
         // TODO: query all checkboxes or any other type of form element
         // and update them all dynamically using a loop
         renderingMethodSelectElement.value = configPayload.renderingMethod;
@@ -139,64 +139,30 @@ const initializeEventHandler = async () => {
       }
     });
 
-    // update config file according with the settings window
-    // control element state
-    renderingMethodSelectElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        renderingMethod: +event.target.value,
-      });
+    // handle apply button config update
+    applyButton.addEventListener("click", () => {
+      const updatedConfig = {
+        renderingMethod: +renderingMethodSelectElement.value,
+        videoMode: videoModeSelectElement.value,
+        imageBrightness: +imageBrightnessSliderElement.value,
+        imageContrast: +imageContrastSliderElement.value,
+        imageSaturation: +imageSaturationSliderElement.value,
+        autoHideCursor: !!autoHideCursorCheckboxElement.checked,
+        debugOverlay: !!debugOverlayCheckboxElement.checked,
+        audioMode: audioModeSelectElement.value,
+        surroundAudio: !!surroundAudioCheckboxElement.checked,
+        bassBoost: !!bassBoostCheckboxElement.checked,
+      };
+
+      // send event with the updated config data
+      // and restart video stream
+      window.ipcRenderer.send("update-config-info", updatedConfig);
+      window.ipcRenderer.send("force-restart-stream");
     });
 
-    videoModeSelectElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", { videoMode: event.target.value });
-    });
-
-    imageBrightnessSliderElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        imageBrightness: event.target.value,
-      });
-    });
-
-    imageContrastSliderElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        imageContrast: event.target.value,
-      });
-    });
-
-    imageSaturationSliderElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        imageSaturation: event.target.value,
-      });
-    });
-
-    autoHideCursorCheckboxElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        autoHideCursor: event.target.checked,
-      });
-    });
-
-    debugOverlayCheckboxElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        debugOverlay: event.target.checked,
-      });
-    });
-
-    //
-
-    audioModeSelectElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", { audioMode: event.target.value });
-    });
-
-    surroundAudioCheckboxElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        surroundAudio: event.target.checked,
-      });
-    });
-
-    bassBoostCheckboxElement.addEventListener("change", (event) => {
-      ipcRenderer.send("update-config-info", {
-        bassBoost: event.target.checked,
-      });
+    // handle cancel button
+    cancelButton.addEventListener("click", () => {
+      window.close();
     });
   } catch (err) {
     console.error("[fcapture] - settings@initializeEventHandler:", err);

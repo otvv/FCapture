@@ -58,19 +58,55 @@ const updateFullscreenIcon = (state) => {
 const updateWindowState = async () => {
   const template = await import("../../configTemplate.mjs");
 
-  // request the current config payload from file
-  window.ipcRenderer.send("request-config-info");
+  // Request the current config payload and wait for the reply before resolving.
+  // This ensures callers (like handleStreamAction) observe the saved renderingMethod
+  // and other settings before deciding whether to create a 2D context or a WebGL context.
+  return new Promise((resolve) => {
+    // request the current config payload from file
+    window.ipcRenderer.send("request-config-info");
 
-  // handle window state update when config info is received
-  window.ipcRenderer.once("config-loaded", (configPayload) => {
-    if (!configPayload) {
-      return;
-    }
+    // handle window state update when config info is received
+    const onConfigLoaded = (configPayload) => {
+      try {
+        if (configPayload) {
+          // update original config object template using the payload from the config file
+          Object.assign(template.configObjectTemplate, configPayload);
+        }
+        // DEBUG PURPOSES ONLY
+        // console.log("[fcapture] - main@updateWindowState: config payload received.");
+      } finally {
+        resolve();
+      }
+    };
 
-    // update original config object template
-    // using the payload from the config file
-    console.log("[fcapture] - main@updateWindowState: config payload received.");
-    Object.assign(template.configObjectTemplate, configPayload);
+    window.ipcRenderer.once("config-loaded", onConfigLoaded);
+
+    // safety: resolve after a short timeout to avoid hanging if IPC fails
+    // (keeps the app resilient; the timeout is short so we still prefer the IPC reply)
+    const timeout = setTimeout(() => {
+      // remove listener if still present
+      try {
+        window.ipcRenderer.removeListener("config-loaded", onConfigLoaded);
+      } catch (e) {
+        // ignore
+      }
+      resolve();
+    }, 500);
+
+    // Clear the timeout when config arrives
+    const wrappedResolve = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+
+    // Replace the previous once listener with a wrapped one that clears timeout
+    // window.ipcRenderer.removeAllListeners("config-loaded");
+    window.ipcRenderer.once("config-loaded", (configPayload) => {
+      if (configPayload) {
+        Object.assign(template.configObjectTemplate, configPayload);
+      }
+      wrappedResolve();
+    });
   });
 };
 
@@ -147,7 +183,7 @@ const handleStreamAction = async (action = "start") => {
     if (canvasElement === null) {
       console.error(
         `[fcapture] - main@handleStreamAction: canvas element not found.
-         [fcapture] - main@handleStreamAction: please restart the window.`,
+         [fcapture] - main@handleStreamAction: please restart the app.`,
       );
       return;
     }
@@ -165,17 +201,40 @@ const handleStreamAction = async (action = "start") => {
           return;
         }
 
-        // initialize canvas and audio context
-        streamState.canvasContext = canvasElement.getContext("2d", {
-          desyncronized: true,
-          willReadFrequently: false,
-          alpha: false,
-          powerPreference: "high-performance",
-        });
+        // initialize canvas and audio context based on
+        // the desired rendering method (webgl or direct-draw)
 
+        // TODO: clean this shit up
+        const cfgModule = await import("../../configTemplate.mjs");
+        const globalsModule = await import("../../globals.mjs");
+
+        // fallback to direct-draw if the config is missing or somehow has an invalid value
+        if (typeof cfgModule.configObjectTemplate.renderingMethod !== "number") {
+          cfgModule.configObjectTemplate.renderingMethod =
+            globalsModule.RENDERING_METHOD.DIRECTDRAW;
+        }
+
+        if (
+          cfgModule.configObjectTemplate.renderingMethod ===
+          globalsModule.RENDERING_METHOD.DIRECTDRAW
+        ) {
+          // create optimal 2d canvas for direct-draw
+          streamState.canvasContext = canvasElement.getContext("2d", {
+            desynchronized: true,
+            willReadFrequently: false,
+            alpha: false,
+          });
+        } else if (
+          cfgModule.configObjectTemplate.renderingMethod ===
+          globalsModule.RENDERING_METHOD.WEBGL
+        ) {
+          // remove 2d canvas when using WebGL
+          streamState.canvasContext = null;
+        }
+        //
         streamState.audioContext = new AudioContext({ latencyHint: "interactive" });
 
-        // render raw stream frames onto the canvas element
+        // render raw stream frames onto the canvas html element
         streamState.canvas = await renderer.renderRawFrameOnCanvas(
           canvasElement,
           streamState.canvasContext,
@@ -185,15 +244,20 @@ const handleStreamAction = async (action = "start") => {
         // in case the user starts the app without any device connected
         // hide canvas and show the "no signal" screen
         if (!streamState.canvas) {
-          // clear context from residual frames
-          streamState.canvasContext.clearRect(
-            0,
-            0,
-            canvasElement.width,
-            canvasElement.height,
-          );
-          streamState.isStreamActive = false;
+          if (streamState.canvasContext) {
+            // clear 2d context from residual frames (if appliable)
+            streamState.canvasContext.clearRect(
+              0,
+              0,
+              canvasElement.width,
+              canvasElement.height,
+            );
+          } else {
+            // reset canvas pixel buffer if 2d canvas is unavailable
+            canvasElement.width = canvasElement.width;
+          }
 
+          streamState.isStreamActive = false;
           canvasElement.style.display = "none";
           noSignalContainerElement.style.display = "flex";
 
@@ -207,6 +271,10 @@ const handleStreamAction = async (action = "start") => {
             width: streamState.canvas.videoElement.videoWidth,
             height: streamState.canvas.videoElement.videoHeight,
           };
+
+          // ensure frame draws at native device resolution
+          canvasElement.style.width = `${canvasInfo.width}px`;
+          canvasElement.style.height = `${canvasInfo.height}px`;
 
           window.ipcRenderer.send("receive-canvas-info", canvasInfo);
         }
@@ -237,12 +305,17 @@ const handleStreamAction = async (action = "start") => {
         }
 
         // clear canvas
-        streamState.canvasContext.clearRect(
-          0,
-          0,
-          canvasElement.width,
-          canvasElement.height,
-        );
+        if (streamState.canvasContext) {
+          streamState.canvasContext.clearRect(
+            0,
+            0,
+            canvasElement.width,
+            canvasElement.height,
+          );
+        } else {
+          // reset canvas pixel buffer
+          canvasElement.width = canvasElement.width;
+        }
 
         // get all available tracks from the raw stream data
         const streamTracks = await streamState.canvas.rawStreamData.getTracks();
@@ -251,7 +324,7 @@ const handleStreamAction = async (action = "start") => {
           return;
         }
 
-        // stop all tracks from playing (audio and video)
+        // stop all tracks from playing
         await streamTracks.forEach((track) => track.stop());
         streamState.isAudioTrackMuted = false;
 
@@ -340,6 +413,7 @@ const handleWindowAction = async (action = "preview") => {
         }
 
         // get current frame image data
+        // FIXME: this is broken when using webgl
         const dataUrl = streamState.canvasContext.canvas.toDataURL("image/png");
 
         // send the captured image data to the main process as an event

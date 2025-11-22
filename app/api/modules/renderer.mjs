@@ -11,6 +11,7 @@ import * as globals from "../../globals.mjs";
 import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import { configObjectTemplate } from "../../configTemplate.mjs";
+import WebGLVideoRenderer from "../backend/webglRenderer.mjs";
 
 const createVideoElement = () => {
   let cachedVideoElement = null;
@@ -30,7 +31,7 @@ const createVideoElement = () => {
       });
     }
 
-    // only update the stram data if necessary
+    // only update the stream data if necessary
     // (device changes, or the stream data itself changes)
     // if (cachedVideoElement.srcObject !== rawStreamData) {
     //   cachedVideoElement.srcObject = rawStreamData;
@@ -40,20 +41,12 @@ const createVideoElement = () => {
   };
 };
 
-const handleDebugOverlay = (instance, canvasContext) => {
+const handleDebugOverlayInstance = (instance, canvasContext) => {
   if (!instance) {
-    try {
-      instance = setupCapsuleOverlay(canvasContext);
-    } catch (err) {
-      console.error("[fcapture] - renderer@handleDebugOverlay:", err);
-      return;
-    }
+    instance = setupCapsuleOverlay(canvasContext);
   }
 
-  // draw overlay
-  if (instance) {
-    instance(canvasContext);
-  }
+  instance();
 };
 
 const createAudioNodeChain = (audioContext) => {
@@ -83,85 +76,139 @@ const createAudioNodeChain = (audioContext) => {
 
 const generateDrawFrameOnScreenFunction = (
   videoElement,
-  offscreenCanvasElement,
-  offscreenContext,
+  canvasElement,
   canvasContext,
 ) => {
-  let overlayInstance = null;
+  // let overlayInstance = null;
   let isProcessing = false;
+  let webglRenderer = null;
 
-  const drawFrameImageBitmap = () => {
-    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA && !isProcessing) {
-      isProcessing = true;
-
-      createImageBitmap(videoElement)
-        .then((result) => {
-          canvasContext.drawImage(result, 0, 0);
-          result.close();
-
-          if (configObjectTemplate.debugOverlay) {
-            handleDebugOverlay(overlayInstance, canvasContext);
-          }
-          isProcessing = false;
-        })
-        .catch((err) => {
-          console.error("[fcapture] - renderer@drawFrameImageBitmap:", err);
-          isProcessing = false;
-        });
+  // software 2d drawing (direct-draw)
+  const initDirectDrawRenderer = () => {
+    if (!isProcessing) {
+      return;
     }
-    requestAnimationFrame(drawFrameImageBitmap);
+
+    try {
+      canvasContext.drawImage(videoElement, 0, 0);
+    } catch (err) {
+      console.error("[fcapture] - renderer@initDirectDrawRenderer:", err);
+      isProcessing = false;
+    }
+
+    // if (configObjectTemplate.debugOverlay) {
+    //   handleDebugOverlayInstance(overlayInstance, canvasContext);
+    // }
+
+    videoElement.requestVideoFrameCallback(drawFrame2D);
   };
 
-  const drawFrameDoubleDraw = () => {
-    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-      try {
-        offscreenContext.drawImage(videoElement, 0, 0);
-        canvasContext.drawImage(offscreenCanvasElement, 0, 0);
-
-        if (configObjectTemplate.debugOverlay) {
-          handleDebugOverlay(overlayInstance, canvasContext);
-        }
-      } catch (err) {
-        console.error("[fcapture] - renderer@drawFrameDoubleDraw:", err);
+  // hardware 2d drawing (webgl)
+  const initWebGlRenderer = () => {
+    try {
+      if (!WebGLVideoRenderer || !WebGLVideoRenderer.isSupported()) {
+        // not supported, fallback to software rendering (direct-draw)
+        webglRenderer = null;
+        return false;
       }
-    }
-    requestAnimationFrame(drawFrameDoubleDraw);
-  };
 
-  const drawFrameDirectlyOnScreen = () => {
-    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-      try {
-        canvasContext.drawImage(videoElement, 0, 0);
-
-        if (configObjectTemplate.debugOverlay) {
-          handleDebugOverlay(overlayInstance, canvasContext);
-        }
-      } catch (err) {
-        console.error("[fcapture] - renderer@drawFrameDirectlyOnScreen:", err);
+      // initialize webgl renderer
+      if (!webglRenderer) {
+        webglRenderer = new WebGLVideoRenderer(canvasElement, videoElement);
       }
-    }
-    requestAnimationFrame(drawFrameDirectlyOnScreen);
-  };
 
-  // rendering method switcher
-  let drawFunction = null;
-  switch (configObjectTemplate.renderingMethod) {
-    case globals.RENDERING_METHOD.IMAGEBITMAP:
-      drawFunction = drawFrameImageBitmap;
-      break;
-    case globals.RENDERING_METHOD.DOUBLEDRAW:
-      drawFunction = drawFrameDoubleDraw;
-      break;
-    case globals.RENDERING_METHOD.DIRECTDRAW:
-      drawFunction = drawFrameDirectlyOnScreen;
-      break;
-    default:
-      drawFunction = drawFrameImageBitmap; // fallback to image bitmap for better image fidelity
-      break;
-  }
+      // map config percentages to shader uniform ranges
+      // and apply filters at renderer initialization
+      const brightness = configObjectTemplate.imageBrightness / 100 - 1.0;
+      const contrast = configObjectTemplate.imageContrast / 100;
+      const saturation = configObjectTemplate.imageSaturation / 100;
+
+      webglRenderer.setParams({
+        brightness,
+        contrast,
+        saturation,
+      });
+
+      webglRenderer.start();
+      return true;
+    } catch (err) {
+      console.error("[fcapture] - renderer@initWebGlRenderer:", err);
+
+      // stop webgl renderer in case something
+      //  goes wrong along the way
+      if (webglRenderer) {
+        webglRenderer.destroy();
+        webglRenderer = null;
+      }
+      return false;
+    }
+  };
 
   return {
-    start: () => requestAnimationFrame(drawFunction),
+    start: () => {
+      if (isProcessing) {
+        return;
+      }
+
+      // this will stop the app from attempting to create
+      // a new renderer in case another renderer is already initialized
+      isProcessing = true;
+
+      // pick the right renderer to initialize based on
+      // what the user selected as a rendering method
+      if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.WEBGL) {
+        const initialized = initWebGlRenderer();
+
+        if (initialized) {
+          console.log(
+            "[fcapture] - renderer@generateDrawFrameOnScreenFunction.start: webgl renderer initialized.",
+          );
+          return;
+        }
+      } else if (
+        configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
+      ) {
+        console.log(
+          "[fcapture] - renderer@generateDrawFrameOnScreenFunction.start: directdraw renderer initialized.",
+        );
+
+        videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
+      }
+    },
+    update: () => {
+      // map config percentages at runtime
+      const imageBrightnessValue = configObjectTemplate.imageBrightness / 100;
+      const imageContrastValue = configObjectTemplate.imageContrast / 100;
+      const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
+
+      // clean context filters if webgl is in use
+      if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.WEBGL) {
+        if (webglRenderer) {
+          if (canvasContext) {
+            canvasContext.filter = "none";
+          }
+
+          // convert image filter settings values
+          // to shader uniforms and apply them at runtime
+          const brightness = imageBrightnessValue - 1.0; // 100% -> 0.0
+          const contrast = imageContrastValue;
+          const saturation = imageSaturationValue;
+
+          webglRenderer.setParams({
+            brightness,
+            contrast,
+            saturation,
+          });
+        }
+      } else if (
+        configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
+      ) {
+        // handle filters for the direct-draw rendering method
+        if (canvasContext) {
+          canvasContext.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
+        }
+      }
+    },
   };
 };
 
@@ -206,53 +253,17 @@ export const renderRawFrameOnCanvas = async (
     canvasElement.width = videoElement.videoWidth;
     canvasElement.height = videoElement.videoHeight;
 
-    // get image brightness, contrast and saturation percentages
-    const imageBrightnessValue = configObjectTemplate.imageBrightness / 100;
-    const imageContrastValue = configObjectTemplate.imageContrast / 100;
-    const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
-
-    // setup offscreen canvas
-    const offscreenCanvasElement = new OffscreenCanvas(
-      canvasElement.width,
-      canvasElement.height,
-    );
-    const offscreenContext = offscreenCanvasElement.getContext("2d", {
-      willReadFrequently: false,
-      desynchronized: true,
-      alpha: false,
-      powerPreference: "high-performance",
-    });
-
-    // image filters setting
-    if (
-      configObjectTemplate.renderingMethod ===
-        globals.RENDERING_METHOD.IMAGEBITMAP ||
-      configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
-    ) {
-      canvasContext.filter = `brightness(${imageBrightnessValue})
-        contrast(${imageContrastValue})
-        saturate(${imageSaturationValue})
-        `;
-    } else if (
-      configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DOUBLEDRAW
-    ) {
-      offscreenContext.filter = `brightness(${imageBrightnessValue})
-      contrast(${imageContrastValue})
-      saturate(${imageSaturationValue})
-      `;
-    }
-
-    // generate a function to draw frames using
-    // the offscreen canvas
+    // generate a function to draw frames (choose backend inside generator)
     const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
       videoElement,
-      offscreenCanvasElement,
-      offscreenContext,
+      canvasElement,
       canvasContext,
     );
 
-    // start rendering frames
+    // start rendering frames and
+    // handle renderer runtime updates
     renderFrameOnScreen.start();
+    renderFrameOnScreen.update();
 
     // create audio source from raw stream
     // and setup filter nodes chain

@@ -28,9 +28,8 @@
         <div class="input-container">
           <label for="rendering-method">Rendering method</label>
           <select id="rendering-method-select">
-            <option value="0">ImageBitmap (Fallback, slower)</option>
-            <option value="1">Double-draw (Better color accuracy, fast)</option>
-            <option value="2">Direct-draw (Low latency, fastest)</option>
+            <option value="0">Direct-draw (Software)</option>
+            <option value="1">WebGL (Hardware)</option>
           </select>
         </div>
         <div class="input-container">
@@ -75,7 +74,7 @@
           <input
             min="0"
             max="200"
-            value="0"
+            value="100"
             type="range"
             name="Image saturation percentage"
             id="image-saturation-slider"
@@ -124,5 +123,10 @@
         <label for="bassboost-checkbox">Enable bass-boost audio filter</label>
       </form>
     </fieldset>
+
+    <div class="buttons-container">
+      <button id="apply-button">Apply</button>
+      <button id="cancel-button">Cancel</button>
+    </div>
   </body>
 </html>

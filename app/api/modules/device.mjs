@@ -80,9 +80,13 @@ export const setupStreamFromDevice = async () => {
 
     // setup raw video and audio input properties
     const rawMedia = await navigator.mediaDevices.getUserMedia({
-      // NOTE: if device doesnt have support for one of the settings
+      // if device doesnt have support for one of the settings
       // provided in the dictionary it will use it's internal
       // ideal/max possible value
+      //
+      // NOTE: on Windows the device might fail to initialize
+      // the stream if an unsupported setting is choosen
+      // so make sure to know what your device can and can't do
       video: {
         deviceId: { exact: device.video.id },
 

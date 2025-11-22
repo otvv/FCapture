@@ -7,8 +7,7 @@ FCapture
 
 */
 
-import * as globals from "../../globals.mjs";
-import * as renderer from "../utils/surface.mjs";
+import * as renderer from "../backend/2dsurface.mjs";
 
 // overlay constraints
 const overlaySettings = Object.freeze({
@@ -23,42 +22,10 @@ const overlaySettings = Object.freeze({
   fontFamily: "bold 17px system-ui",
 });
 
-export const setupCapsuleOverlay = () => {
-  let calculateMetrics = null;
-
-  const calculateOverlayMetrics = (updateInterval = globals.UPDATE_INTERVAL) => {
-    let frameCount = 0;
-    let lastTime = performance.now();
-    let lastFrameTime = performance.now();
-    let frameRate = 0;
-    let frameTime = 0;
-
-    return () => {
-      const currentTime = performance.now();
-      frameTime = currentTime - lastFrameTime; // calculate frame time
-      lastFrameTime = currentTime;
-
-      frameCount++;
-      const deltaTime = currentTime - lastTime;
-
-      if (deltaTime >= updateInterval) {
-        frameRate = (frameCount / deltaTime) * 1000; // calculate FPS
-        frameCount = 0; // reset frame count
-        lastTime = currentTime; // reset time
-      }
-
-      return { frameRate, frameTime };
-    };
-  };
-
-  return (canvasContext) => {
+export const setupCapsuleOverlay = (canvasContext) => {
+  return () => {
     if (!canvasContext) {
       return;
-    }
-
-    // perform metrics calculations
-    if (!calculateMetrics) {
-      calculateMetrics = calculateOverlayMetrics();
     }
 
     // capsule properties
@@ -67,9 +34,6 @@ export const setupCapsuleOverlay = () => {
     const capsuleTop = 10;
     const capsuleLeft = canvasContext.canvas.width / 2 - capsuleWidth / 2;
     const capsuleRadius = overlaySettings.radius;
-
-    // performance metrics constraints
-    const { frameRate, frameTime } = calculateMetrics();
 
     // overlay settings constraints
     const { backgroundColor, fontTitleColor, fontValueColor, fontFamily } =
@@ -90,8 +54,8 @@ export const setupCapsuleOverlay = () => {
     );
 
     const metrics = [
-      { label: "FPS:", value: frameRate.toFixed(0) },
-      { label: "FRAMETIME:", value: `${frameTime.toFixed(2)}ms` },
+      { label: "FPS:", value: fps.toFixed(0) },
+      { label: "FRAMETIME:", value: `${frametime.toFixed(2)}ms` },
     ];
 
     let totalTextWidth = 0;
