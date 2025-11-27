@@ -17,6 +17,9 @@ FCapture
 
   color: #dedede;
   background-color: #282828;
+
+  /* experimental */
+  text-autospace: ideograph-alpha ideograph-numeric punctuation;
 }
 
 *:focus {
@@ -60,4 +63,19 @@ fieldset {
   display: flex;
   flex-direction: column;
   align-items: start;
+}
+
+.button-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 25px;
+  margin-right: 25px;
+}
+
+.button {
+  margin-left: 5px;
+  margin-right: 5px;
+  border-radius: 3px;
 }

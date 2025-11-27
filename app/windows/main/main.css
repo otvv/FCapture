@@ -18,15 +18,17 @@ FCapture
   margin: 0;
   padding: 0;
   border: 0;
+
+  /* experimental */
+  text-autospace: ideograph-alpha ideograph-numeric punctuation;
+}
+
+@view-transition {
+  navigation: auto;
 }
 
 *:focus {
   outline: none;
-}
-
-/* testing purposes */
-@view-transition {
-  navigation: auto;
 }
 
 html,
@@ -231,6 +233,7 @@ body {
   color: #727272;
   text-shadow: 1px 1px 3px #282828;
   text-align: center;
+  margin-top: 25px;
 }
 
 /* animations */

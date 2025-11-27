@@ -15,7 +15,7 @@ const getAvailableDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     if (!devices) {
-      return null;
+      return {};
     }
 
     const deviceInfoPayload = {
@@ -57,7 +57,7 @@ const getAvailableDevices = async () => {
     return deviceInfoPayload;
   } catch (err) {
     console.error("[fcapture] - device@getAvailableDevices:", err);
-    return null;
+    return {};
   }
 };
 
@@ -71,7 +71,7 @@ export const setupStreamFromDevice = async () => {
       console.error(
         "[fcapture] - device@setupStreamFromDevice: invalid device payload.",
       );
-      return null;
+      return;
     }
 
     // get video and audio mode constraints
@@ -124,34 +124,32 @@ export const setupStreamFromDevice = async () => {
       console.warn(
         "[fcapture] - device@setupStreamFromDevice: raw stream input not active, is your device initialized?",
       );
-      return null;
+      return;
     }
 
     const deviceVideoSettings = rawMedia.getVideoTracks()[0].getSettings();
     const deviceAudioSettings = rawMedia.getAudioTracks()[0].getSettings();
 
-    if (!deviceVideoSettings || !deviceAudioSettings) {
-      return null;
+    if (deviceVideoSettings && deviceAudioSettings) {
+      // generate a simple object containing the necessary device
+      // info to populate the settings window description
+      const deviceInfo = {
+        width: deviceVideoSettings.width || 0,
+        height: deviceVideoSettings.height || 0,
+        frameRate: deviceVideoSettings.frameRate || 0,
+        aspectRatio: deviceVideoSettings.aspectRatio || 0,
+        //
+        sampleRate: deviceAudioSettings.sampleRate || 0,
+        sampleSize: deviceAudioSettings.sampleSize || 0,
+        channelCount: deviceAudioSettings.channelCount || 0,
+      };
+
+      window.ipcRenderer.send("receive-device-info", deviceInfo);
     }
-
-    // generate a simple object containing the necessary device
-    // info to populate the settings window description
-    const deviceInfo = {
-      width: deviceVideoSettings.width,
-      height: deviceVideoSettings.height,
-      frameRate: deviceVideoSettings.frameRate,
-      aspectRatio: deviceVideoSettings.aspectRatio,
-      //
-      sampleRate: deviceAudioSettings.sampleRate,
-      sampleSize: deviceAudioSettings.sampleSize,
-      channelCount: deviceAudioSettings.channelCount,
-    };
-
-    window.ipcRenderer.send("receive-device-info", deviceInfo);
 
     return rawMedia;
   } catch (err) {
     console.error("[fcapture] - device@setupStreamFromDevice:", err);
-    return null;
+    return;
   }
 };

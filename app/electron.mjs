@@ -20,6 +20,7 @@ import { loadConfigState, saveConfigState } from "./api/utils/config.mjs";
 const appState = {
   parentWindow: null,
   childWindow: null,
+
   canvasData: {},
   deviceData: {},
 };
@@ -63,8 +64,8 @@ const generateChildWindow = () => {
   appState.childWindow = new BrowserWindow({
     title: "Settings",
     parent: appState.parentWindow,
-    width: 640,
-    height: 480,
+    width: 660,
+    height: 535,
     show: true,
     darkTheme: true,
     resizable: false,
@@ -219,16 +220,15 @@ const initializeEventHandler = async () => {
 
     // event listeners
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
-      if (canvasInfo) {
+      if (Object.keys(canvasInfo).length !== 0) {
+        console.log(
+          "[electron@on-receive-canvas-info] - pass sanity check.",
+          canvasInfo,
+        );
+
         const refreshRate = utils.getCurrentDisplayOfWindow(
           appState.parentWindow,
         ).displayFrequency;
-
-        // DEBUG PURPOSES ONLY
-        // console.log(
-        //   "[fcapture] - electron@initializeEventHandler: refreshRate pulled:",
-        //   refreshRate,
-        // );
 
         appState.canvasData = canvasInfo;
         appState.canvasData.frameRate = refreshRate;
@@ -236,7 +236,12 @@ const initializeEventHandler = async () => {
     });
 
     ipcMain.on("receive-device-info", (_event, deviceInfo) => {
-      if (deviceInfo) {
+      if (Object.keys(deviceInfo).length !== 0) {
+        console.log(
+          "[electron@on-receive-device-info] - pass sanity check.",
+          deviceInfo,
+        );
+
         appState.deviceData = deviceInfo;
       }
     });
@@ -271,7 +276,7 @@ const initializeEventHandler = async () => {
       });
     });
 
-    ipcMain.on("toggle-fullscreen", (event, isFullscreen) => {
+    ipcMain.on("toggle-fullscreen", (_event, isFullscreen) => {
       if (!appState.parentWindow) {
         return;
       }
@@ -287,11 +292,18 @@ const initializeEventHandler = async () => {
           appState.childWindow.webContents.once("did-finish-load", () => {
             // send canvas and device info payload
             // back to the settings window
-            appState.childWindow.webContents.send(
-              "send-canvas-info",
-              appState.canvasData,
-              appState.deviceData,
-            );
+            if (
+              Object.keys(appState.canvasData).length !== 0 &&
+              Object.keys(appState.deviceData).length !== 0
+            ) {
+              console.log("[on-did-finish-load] - pass sanity check.");
+
+              appState.childWindow.webContents.send(
+                "send-canvas-info",
+                appState.canvasData,
+                appState.deviceData,
+              );
+            }
           });
         }
       }

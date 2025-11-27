@@ -100,14 +100,14 @@ const generateDrawFrameOnScreenFunction = (
     //   handleDebugOverlayInstance(overlayInstance, canvasContext);
     // }
 
-    videoElement.requestVideoFrameCallback(drawFrame2D);
+    videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
   };
 
   // hardware 2d drawing (webgl)
   const initWebGlRenderer = () => {
     try {
-      if (!WebGLVideoRenderer || !WebGLVideoRenderer.isSupported()) {
-        // not supported, fallback to software rendering (direct-draw)
+      // check if webgl is supported by the browser
+      if (!WebGLVideoRenderer.isSupported()) {
         webglRenderer = null;
         return false;
       }
@@ -182,27 +182,35 @@ const generateDrawFrameOnScreenFunction = (
       const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
 
       // clean context filters if webgl is in use
+      // just in case the user applied them before
+      // while using direct draw
       if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.WEBGL) {
-        if (webglRenderer) {
-          if (canvasContext) {
-            canvasContext.filter = "none";
-          }
-
-          // convert image filter settings values
-          // to shader uniforms and apply them at runtime
-          const brightness = imageBrightnessValue - 1.0; // 100% -> 0.0
-          const contrast = imageContrastValue;
-          const saturation = imageSaturationValue;
-
-          webglRenderer.setParams({
-            brightness,
-            contrast,
-            saturation,
-          });
+        if (!webglRenderer) {
+          return;
         }
+
+        if (canvasContext) {
+          canvasContext.filter = "none";
+        }
+
+        // convert image filter settings values
+        // to shader uniforms and apply them at runtime
+        const brightness = imageBrightnessValue - 1.0; // 100% -> 0.0 (neutral)
+        const contrast = imageContrastValue;
+        const saturation = imageSaturationValue;
+
+        webglRenderer.setParams({
+          brightness,
+          contrast,
+          saturation,
+        });
       } else if (
         configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
       ) {
+        if (webglRenderer) {
+          webglRenderer = null;
+        }
+
         // handle filters for the direct-draw rendering method
         if (canvasContext) {
           canvasContext.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
@@ -222,12 +230,22 @@ export const renderRawFrameOnCanvas = async (
     const rawStreamData = await setupStreamFromDevice();
 
     if (!rawStreamData) {
+      console.error(
+        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to get raw stream data from device.",
+      );
       return;
     }
 
     // create video element and perform initial configurations
-    const generateVideoElement = createVideoElement();
-    const videoElement = generateVideoElement(rawStreamData);
+    const generateVideoElementInstance = createVideoElement();
+    const videoElement = generateVideoElementInstance(rawStreamData);
+
+    if (!videoElement) {
+      console.error(
+        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.",
+      );
+      return { rawStreamData };
+    }
 
     // make sure the low latency hint is added
     // in the video player element
@@ -235,23 +253,16 @@ export const renderRawFrameOnCanvas = async (
       videoElement.latencyHint = "realtime";
     }
 
-    if (!videoElement) {
-      console.error(
-        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.",
-      );
-      return;
-    }
-
     // start video playback
     await videoElement.play().catch((err) => {
       console.error("[fcapture] - renderer@videoElementPromise:", err);
-      return;
+      return { rawStreamData };
     });
 
     // change canvas resolution and aspect ratio
     // to match the resolution of the video stream
-    canvasElement.width = videoElement.videoWidth;
-    canvasElement.height = videoElement.videoHeight;
+    // canvasElement.width = videoElement.videoWidth;
+    // canvasElement.height = videoElement.videoHeight;
 
     // generate a function to draw frames (choose backend inside generator)
     const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
@@ -290,7 +301,7 @@ export const renderRawFrameOnCanvas = async (
 
     return { rawStreamData, gainNode: audioNodes.gain, videoElement };
   } catch (err) {
-    console.log("[fcapture] - renderer@renderRawFrameOnCanvas:", err);
-    return;
+    console.error("[fcapture] - renderer@renderRawFrameOnCanvas:", err);
+    return {};
   }
 };

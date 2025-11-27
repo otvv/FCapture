@@ -17,11 +17,12 @@ export class WebGLVideoRenderer {
    * @param {HTMLCanvasElement} canvas - the canvas element to render into (pixel buffer size should be set externally to match video resolution)
    * @param {HTMLVideoElement} video - the source video element (srcObject assigned)
    * @param {Object} [opts] - optional settings
+   * @desc - class constructor
    */
-  constructor(canvas, video, opts = {}) {
+  constructor(canvas, video, _opts = {}) {
     this.canvas = canvas;
     this.video = video;
-    this.opts = opts;
+    this.opts = _opts;
 
     this.gl = null;
     this.program = null;
@@ -30,14 +31,15 @@ export class WebGLVideoRenderer {
     this.locations = {};
     this.running = false;
     this._boundFrameCb = null;
-    // Texture state for efficient updates (avoid reallocations)
+
+    // texture state for efficient updates (avoid reallocations)
     this._textureInitialized = false;
     this._texWidth = 0;
     this._texHeight = 0;
 
-    // Default filter params (neutral)
+    // default filter params
     this.params = {
-      brightness: 0.0, // add
+      brightness: 0.0,
       contrast: 1.0,
       saturation: 1.0,
     };
@@ -48,45 +50,64 @@ export class WebGLVideoRenderer {
       this._initGL();
       this._initSuccess = true;
     } catch (err) {
-      console.error("[fcapture] - webglRenderer@constructor:", err);
       this._initSuccess = false;
+      console.error("[fcapture] - webglRenderer@constructor:", err);
     }
   }
 
+  /**
+   * @desc - check if the necessary webgl context is supported and enabled by the browser (electron)
+   */
   static isSupported() {
     try {
       const canvas = document.createElement("canvas");
-      // Prefer WebGL2 if available, fall back to WebGL/experimental-webgl
+
+      // check if WebGL2 context is supported
       const gl2 = (() => {
         try {
           return canvas.getContext("webgl2");
-        } catch (e) {
+        } catch (err) {
+          console.warn("[fcapture] - webglRenderer@isSupported:", err);
           return null;
         }
       })();
+
+      // probe a common extension to finally check if webgl2
+      // is enabled and working as intended
       if (gl2) {
-        gl2.getExtension && gl2.getExtension("OES_texture_float"); // probe a common ext
+        gl2.getExtension && gl2.getExtension("OES_texture_float");
         return true;
       }
 
+      // WebGL/experimental-WebGL fallback (in case WebGL2 is not supported)
       const gl = (() => {
         try {
           return (
             canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
           );
-        } catch (e) {
+        } catch (err) {
+          console.warn("[fcapture] - webglRenderer@isSupported:", err);
           return null;
         }
       })();
 
-      if (!gl) return false;
-      // optional: test for basic required features
-      return true;
-    } catch (e) {
+      // probe a common extension to finally check if webgl/experimental-webgl
+      // is enabled and working as intended
+      if (gl) {
+        // TODO: actually check for the extensions xD
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error("[fcapture] - webglRenderer@isSupported:", err);
       return false;
     }
   }
 
+  /**
+   * @desc - initialize the WebGL renderer and setup the context texture to pass onto the canvasElement/videoElement
+   */
   _initGL() {
     const canvas = this.canvas;
     // Helper to try context creation safely
@@ -98,27 +119,23 @@ export class WebGLVideoRenderer {
       }
     };
 
-    // Candidate context names and attribute sets (ordered by preference)
-    // We'll try plain getContext(name) first (some builds only return a context without attributes),
-    // then fall back to attempts with attribute sets.
-    const contextNames = ["webgl2", "webgl", "experimental-webgl"];
+    const contextNamesCandidates = ["webgl2", "webgl", "experimental-webgl"];
 
-    // First attempt: try plain getContext without attributes for each candidate
+    // try to get webgl context with getContext without attributes first
     let gl = null;
     let used = null;
-    for (const name of contextNames) {
-      try {
-        gl = tryGetContext(name);
-        if (gl) {
-          used = { name, attrs: null };
-          break;
-        }
-      } catch (e) {
-        // ignore and try next
+
+    for (const name of contextNamesCandidates) {
+      gl = tryGetContext(name);
+
+      if (gl) {
+        used = { name, attrs: null };
+        break;
       }
     }
 
-    // If plain creation failed, try with attribute sets (more strict)
+    // in case plain creation fails
+    // try with attribute sets (more strict)
     if (!gl) {
       const attributeSets = [
         {
@@ -134,22 +151,23 @@ export class WebGLVideoRenderer {
       ];
 
       for (const attrs of attributeSets) {
-        for (const name of contextNames) {
-          try {
-            gl = tryGetContext(name, attrs);
-            if (gl) {
-              used = { name, attrs };
-              break;
-            }
-          } catch (err) {
-            // ignore and try next
+        for (const name of contextNamesCandidates) {
+          gl = tryGetContext(name, attrs);
+
+          if (gl) {
+            used = { name, attrs };
+            break;
           }
         }
-        if (gl) break;
+
+        // stop searching if a valid context has been found
+        if (gl) {
+          break;
+        }
       }
     }
 
-    // Final fallback: single plain webgl attempt as a last resort
+    // fallback: single plain webgl context
     if (!gl) {
       try {
         gl =
@@ -165,17 +183,19 @@ export class WebGLVideoRenderer {
             attrs: null,
           };
         }
-      } catch (e) {
+      } catch (err) {
         gl = null;
       }
     }
 
     if (!gl) {
-      // Provide a helpful diagnostic string for logs so the caller can see what we tried
-      const triedDetails = contextNames.map((n) => `${n}`).join(", ");
-      const errMsg = `WebGL not available. Tried contexts: ${triedDetails}`;
+      // TODO: turn this into a function
+      //
+      // provide a helpful diagnostic string for logs so the caller can see what we tried
+      const triedDetails = contextNamesCandidates.map((n) => `${n}`).join(", ");
+      const errMsg = `WebGL is not available, tried contexts: ${triedDetails}`;
       console.error("[fcapture] - webglRenderer@_initGL:", errMsg);
-      throw new Error("WebGL not available");
+      throw new Error("[fcapture] - WebGL is not available.");
     }
 
     // store context and a simple identifier for debugging
@@ -194,7 +214,7 @@ export class WebGLVideoRenderer {
       );
     }
 
-    // compile shaders and create program (use WebGL2 shaders when available)
+    // compile shaders and create program (prioritize WebGL2 shaders when available)
     const isWebGL2 =
       typeof WebGL2RenderingContext !== "undefined" &&
       gl instanceof WebGL2RenderingContext;
@@ -284,7 +304,7 @@ export class WebGLVideoRenderer {
     // full-screen quad positions (clip space)
     const positions = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
-    // texcoords
+    // texture coords
     const texcoords = new Float32Array([0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0]);
 
     // create buffers
@@ -313,7 +333,6 @@ export class WebGLVideoRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-    // get uniform locations
     this.locations.u_texture = gl.getUniformLocation(program, "u_texture");
     this.locations.u_brightness = gl.getUniformLocation(program, "u_brightness");
     this.locations.u_contrast = gl.getUniformLocation(program, "u_contrast");
@@ -326,108 +345,133 @@ export class WebGLVideoRenderer {
     this.buffers.position = positionBuffer;
     this.buffers.texcoord = texcoordBuffer;
 
-    // initial uniforms
     this._applyUniforms();
   }
 
+  /**
+   * @desc - compile shader to be attached with the renderer program
+   */
   _compileShader(type, source) {
     const gl = this.gl;
     const shader = gl.createShader(type);
+
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
+
     const ok = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+
     if (!ok) {
       const info = gl.getShaderInfoLog(shader);
       gl.deleteShader(shader);
-      throw new Error("Shader compile failed: " + info);
+
+      throw new Error("[fcapture] - shader compilation failed: " + info);
     }
     return shader;
   }
 
+  /**
+   * @desc - compile and link renderer program
+   */
   _createProgram(vs, fs) {
     const gl = this.gl;
     const program = gl.createProgram();
+
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
+
     const ok = gl.getProgramParameter(program, gl.LINK_STATUS);
+
     if (!ok) {
       const info = gl.getProgramInfoLog(program);
       gl.deleteProgram(program);
-      throw new Error("Program link failed: " + info);
+
+      throw new Error("[fcapture] - program link failed: " + info);
     }
     return program;
   }
 
+  /**
+   * @desc - handle uniform texture change requests (filter updates)
+   */
   _applyUniforms() {
-    if (!this.gl || !this.program) return;
+    if (!this.gl || !this.program) {
+      return;
+    }
+
     const gl = this.gl;
     gl.useProgram(this.program);
 
-    // clamp reasonable values to avoid extreme math
-    const b = Math.max(-2.0, Math.min(2.0, this.params.brightness));
-    const c = Math.max(0.0, Math.min(10.0, this.params.contrast));
-    const s = Math.max(0.0, Math.min(10.0, this.params.saturation));
+    // clamp reasonable values to avoid filter value overflow
+    const brightnessClampVal = Math.max(-2.0, Math.min(2.0, this.params.brightness));
+    const contrastClampVal = Math.max(0.0, Math.min(10.0, this.params.contrast));
+    const saturationClampVal = Math.max(0.0, Math.min(10.0, this.params.saturation));
 
-    gl.uniform1f(this.locations.u_brightness, b);
-    gl.uniform1f(this.locations.u_contrast, c);
-    gl.uniform1f(this.locations.u_saturation, s);
+    gl.uniform1f(this.locations.u_brightness, brightnessClampVal);
+    gl.uniform1f(this.locations.u_contrast, contrastClampVal);
+    gl.uniform1f(this.locations.u_saturation, saturationClampVal);
   }
 
   /**
-   * Update/overwrite filter params.
    * @param {{brightness?:number, contrast?:number, saturation?:number}} param0
+   * @desc - updates/overwrite texture parameters (in this case, filters)
    */
   setParams({ brightness, contrast, saturation } = {}) {
+    // make sure the values are numbers
     if (typeof brightness === "number") this.params.brightness = brightness;
     if (typeof contrast === "number") this.params.contrast = contrast;
     if (typeof saturation === "number") this.params.saturation = saturation;
+
     this._applyUniforms();
   }
 
+  /**
+   * @desc - updates texture buffer with video frame data
+   */
   _updateTextureFromVideo() {
     const gl = this.gl;
     const video = this.video;
 
-    if (!gl || !this.texture) return;
+    if (!gl || !this.texture) {
+      return;
+    }
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
 
-    // Ensure we do NOT flip the Y during texture upload (we handle orientation via texcoords).
+    // ensure we do NOT flip the Y during texture upload (we handle orientation via texcoords).
     try {
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
-    } catch (e) {
+    } catch (err) {
       // ignore if not supported
     }
 
     // prefer texSubImage2D when texture already matches video size to avoid reallocations
-    const vidW =
+    const vidWidth =
       video && video.videoWidth ? video.videoWidth : this.canvas.width || 0;
-    const vidH =
+    const vidHeight =
       video && video.videoHeight ? video.videoHeight : this.canvas.height || 0;
 
+    // if texture already allocated with matching size, just update it.
     try {
-      // If texture already allocated with matching size, just update it.
       if (
         this._textureInitialized &&
-        vidW === this._texWidth &&
-        vidH === this._texHeight
+        vidWidth === this._texWidth &&
+        vidHeight === this._texHeight
       ) {
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
       } else {
-        // Need to (re)allocate texture storage to video dimensions.
-        if (vidW > 0 && vidH > 0) {
-          // If WebGL2 and we can use texStorage2D, prefer immutable storage and then texSubImage2D.
+        // (re)allocate texture storage to video dimensions
+        if (vidWidth > 0 && vidHeight > 0) {
           if (this.isWebGL2 && typeof gl.texStorage2D === "function") {
             try {
-              // If previously allocated and immutable but size changed, recreate texture storage.
+              // if previously allocated and immutable but size changed, recreate texture storage.
               if (
                 this._textureInitialized &&
                 this._texImmutable &&
-                (this._texWidth !== vidW || this._texHeight !== vidH)
+                (this._texWidth !== vidWidth || this._texHeight !== vidHeight)
               ) {
-                // Recreate texture to change immutable storage size.
+                // recreate texture to change immutable storage size.
                 gl.deleteTexture(this.texture);
                 this.texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -436,9 +480,8 @@ export class WebGLVideoRenderer {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
               }
-              // Allocate immutable storage for new size.
-              gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, vidW, vidH);
-              // Upload current frame into the storage.
+              // allocate immutable storage for new size and attach frame into storage
+              gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, vidWidth, vidHeight);
               gl.texSubImage2D(
                 gl.TEXTURE_2D,
                 0,
@@ -448,19 +491,20 @@ export class WebGLVideoRenderer {
                 gl.UNSIGNED_BYTE,
                 video,
               );
+
               this._textureInitialized = true;
-              this._texWidth = vidW;
-              this._texHeight = vidH;
+              this._texWidth = vidWidth;
+              this._texHeight = vidHeight;
               this._texImmutable = true;
-            } catch (e) {
-              // Fall back to mutable allocation if anything fails.
+            } catch (err) {
+              // fallback to mutable allocation if anything fails.
               try {
                 gl.texImage2D(
                   gl.TEXTURE_2D,
                   0,
                   gl.RGBA,
-                  vidW,
-                  vidH,
+                  vidWidth,
+                  vidHeight,
                   0,
                   gl.RGBA,
                   gl.UNSIGNED_BYTE,
@@ -475,19 +519,21 @@ export class WebGLVideoRenderer {
                   gl.UNSIGNED_BYTE,
                   video,
                 );
+
                 this._textureInitialized = true;
-                this._texWidth = vidW;
-                this._texHeight = vidH;
+                this._texWidth = vidWidth;
+                this._texHeight = vidHeight;
                 this._texImmutable = false;
               } catch (err2) {
                 console.warn(
-                  "[fcapture] - webglRenderer@_updateTextureFromVideo: fallback texture upload failed.",
+                  "[fcapture] - webglRenderer@_updateTextureFromVideo: fallback mutable texture upload failed.",
                   err2,
                 );
               }
             }
           } else {
-            // WebGL1 or no texStorage2D: allocate/update via texImage2D and texSubImage2D
+            // if WebGL1 is being used or no texStorage2D support,
+            // allocate/update via texImage2D and texSubImage2D
             try {
               gl.texImage2D(
                 gl.TEXTURE_2D,
@@ -509,9 +555,10 @@ export class WebGLVideoRenderer {
                 gl.UNSIGNED_BYTE,
                 video,
               );
+
               this._textureInitialized = true;
-              this._texWidth = vidW;
-              this._texHeight = vidH;
+              this._texWidth = vidWidth;
+              this._texHeight = vidHeight;
               this._texImmutable = false;
             } catch (err) {
               console.warn(
@@ -521,7 +568,7 @@ export class WebGLVideoRenderer {
             }
           }
         } else {
-          // Fallback: when video size isn't available yet, attempt direct upload (may allocate)
+          // fallback when video size isn't available yet, attempt direct upload
           try {
             gl.texImage2D(
               gl.TEXTURE_2D,
@@ -531,9 +578,10 @@ export class WebGLVideoRenderer {
               gl.UNSIGNED_BYTE,
               video,
             );
+
             this._textureInitialized = true;
-            this._texWidth = vidW;
-            this._texHeight = vidH;
+            this._texWidth = vidWidth;
+            this._texHeight = vidHeight;
           } catch (err) {
             console.warn(
               "[fcapture] - webglRenderer@_updateTextureFromVideo: direct texture upload failed.",
@@ -543,23 +591,30 @@ export class WebGLVideoRenderer {
         }
       }
     } catch (err) {
-      // Last resort: try texImage2D with the video element again, and log failure if it fails.
+      // try texImage2D with the video element again as a last resort in case
+      // everything fails
       try {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+
         this._textureInitialized = true;
-        this._texWidth = vidW;
-        this._texHeight = vidH;
+        this._texWidth = vidWidth;
+        this._texHeight = vidHeight;
       } catch (err2) {
         console.warn(
-          "[fcapture] - webglRenderer@_updateTextureFromVideo: texture upload failed.",
+          "[fcapture] - webglRenderer@_updateTextureFromVideo: texture upload failed after multiple attempts.",
           err2,
         );
       }
     }
   }
 
+  /**
+   * @desc - render a frame once (it will be called recursively inside '_frameCallback')
+   */
   _renderOnce() {
-    if (!this.gl || !this.program) return;
+    if (!this.gl || !this.program) {
+      return;
+    }
 
     const gl = this.gl;
 
@@ -568,14 +623,16 @@ export class WebGLVideoRenderer {
       this.canvas.width !== gl.drawingBufferWidth ||
       this.canvas.height !== gl.drawingBufferHeight
     ) {
-      // Note: drawingBufferWidth/Height already reflect the backing store; we still set viewport each frame
+      // NOTE: drawingBufferWidth/Height already reflect the backing store;
+      // we still set viewport each frame
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     }
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
-    // update texture with the current video frame
     this._updateTextureFromVideo();
 
-    // draw
+    // make sure to clean opengl canvas so that we
+    // can draw the texture in a totally "cleaned"
+    // canvas
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -583,20 +640,19 @@ export class WebGLVideoRenderer {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
-  _frameCallback = (now, metadata) => {
-    if (!this.running) return;
-    // render current frame
-    try {
-      this._renderOnce();
-    } catch (err) {
-      console.error("[fcapture] - webglRenderer@_frameCallback:", err);
+  /**
+   * @desc - texture rendering callback
+   */
+  _frameCallback = () => {
+    if (!this.running) {
+      return;
     }
+
+    this._renderOnce();
+
     // schedule next frame synchronized to video frames
-    if (this.video && typeof this.video.requestVideoFrameCallback === "function") {
+    if (this.video) {
       this.video.requestVideoFrameCallback(this._boundFrameCb);
-    } else {
-      // fallback: use requestAnimationFrame if rVFC not available
-      requestAnimationFrame(() => this._frameCallback(performance.now(), {}));
     }
   };
 
@@ -606,35 +662,35 @@ export class WebGLVideoRenderer {
         "WebGLVideoRenderer: initialization failed or WebGL is not supported.",
       );
     }
-    if (this.running) return;
+
+    // dont continue if the renderer is already running
+    if (this.running) {
+      return;
+    }
+
     this.running = true;
 
     // bind the callback so we can reschedule
     this._boundFrameCb = this._frameCallback.bind(this);
 
-    if (this.video && typeof this.video.requestVideoFrameCallback === "function") {
+    if (this.video) {
       this.video.requestVideoFrameCallback(this._boundFrameCb);
-    } else {
-      // fallback to rAF loop
-      this._boundRAF = () => {
-        if (!this.running) return;
-        this._frameCallback(performance.now(), {});
-        requestAnimationFrame(this._boundRAF);
-      };
-      requestAnimationFrame(this._boundRAF);
     }
   }
 
   stop() {
     this.running = false;
-    // nothing to cancel explicitly with rVFC; flag protects subsequent calls
   }
 
   destroy() {
     try {
       this.stop();
+
       const gl = this.gl;
-      if (!gl) return;
+
+      if (!gl) {
+        return;
+      }
 
       if (this.texture) {
         gl.deleteTexture(this.texture);
@@ -650,7 +706,7 @@ export class WebGLVideoRenderer {
         gl.deleteProgram(this.program);
         this.program = null;
       }
-      // optionally lose the context - not necessary
+
       this.gl = null;
     } catch (err) {
       console.warn("[fcapture] - webglRenderer@destroy:", err);

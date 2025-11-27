@@ -34,65 +34,67 @@ const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
 const applyButton = document.querySelector("#apply-button");
 const cancelButton = document.querySelector("#cancel-button");
 
-const populateStreamOverview = async (canvasData, deviceData) => {
+const requestConfigData = () => {
+  // request the current config when the settings window loads
+  window.ipcRenderer.send("request-config-info");
+};
+
+const populateStreamOverview = async (canvasInfo, deviceInfo) => {
   try {
     if (descriptionTextElement === null) {
-      console.log(
+      console.error(
         "[fcapture] - settings@populateStreamOverview: failed to get the description element.",
       );
-    }
-
-    if (!canvasData) {
-      descriptionTextElement.innerHTML = `
-        <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
-        <b>Output</b>: Canvas not initialized due to canvasData being unavailable. <i>(Canvas)</i> <br>
-        <b>Audio</b>: ${targetAudioChannelCount} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
       return;
     }
 
-    if (!deviceData) {
+    if (Object.keys(deviceInfo).length === 0) {
       descriptionTextElement.innerHTML = `
-      <b>Input</b>: Invalid video or audio device constraints applied. <i>(Device)</i><br>
-      <b>Output</b>: Canvas not initialized due to rawStreamData being unavailable. <i>(Canvas)</i> <br>
-      <b>Audio</b>: Invalid video or audio device constraints applied. <i>(Device)</i>`;
+        <b>Input</b>: Invalid video or audio device constraints applied. <i>(Device)</i><br>
+        <b>Output</b>: Canvas not initialized due to rawStreamData being unavailable. <i>(Canvas)</i> <br>
+        <b>Audio</b>: Invalid video or audio device constraints applied. <i>(Device)</i>`;
       return;
     }
 
     // get device info to display
-    const targetWidth = deviceData.width || "0";
-    const targetHeight = deviceData.height || "0";
-    const targetFps = +deviceData.frameRate.toFixed(0) || "0";
-    const targetAudioSampleRate = deviceData.sampleRate || "0";
-    const targetAudioSampleSize = deviceData.sampleSize || "0";
-    let targetAudioChannelCount = deviceData.channelCount || "1";
+    const targetWidth = deviceInfo.width || 0;
+    const targetHeight = deviceInfo.height || 0;
+    const targetFps = deviceInfo.frameRate || 0;
+    const targetAudioSampleRate = deviceInfo.sampleRate || 0;
+    const targetAudioSampleSize = deviceInfo.sampleSize || 0;
+    const targetAudioChannelCount = deviceInfo.channelCount || 0;
+    let targetAudioChannel = "Unknown";
 
     if (targetAudioChannelCount === 1) {
-      targetAudioChannelCount = "Mono";
+      targetAudioChannel = "Mono";
     } else if (targetAudioChannelCount === 2) {
-      targetAudioChannelCount = "Stereo";
+      targetAudioChannel = "Stereo";
     } else if (targetAudioChannelCount > 2) {
-      targetAudioChannelCount = "Surround";
+      targetAudioChannel = "Surround";
     } else {
-      targetAudioChannelCount = "Unknown";
+      targetAudioChannel = "Unknown";
+    }
+
+    if (Object.keys(canvasInfo).length === 0) {
+      descriptionTextElement.innerHTML = `
+        <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
+        <b>Output</b>: Canvas not initialized due to canvasInfo being unavailable. <i>(Canvas)</i> <br>
+        <b>Audio</b>: ${targetAudioChannel} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
+      return;
     }
 
     // get canvas info to display
-    const outputWidth = canvasData.width || "0";
-    const outputHeight = canvasData.height || "0";
-    const outputFps = +canvasData.frameRate || "0";
+    const outputWidth = canvasInfo.width || 0;
+    const outputHeight = canvasInfo.height || 0;
+    const outputFps = canvasInfo.frameRate || 0;
 
     descriptionTextElement.innerHTML = `
       <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
       <b>Output</b>: ${outputWidth}x${outputHeight} @ ${outputFps} FPS <i>(Canvas)</i><br>
-      <b>Audio</b>: ${targetAudioChannelCount} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
+      <b>Audio</b>: ${targetAudioChannel} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
   } catch (err) {
     console.error("[fcapture] - settings@populateStreamOverview:", err);
   }
-};
-
-const requestConfigData = () => {
-  // request the current config when the settings window loads
-  window.ipcRenderer.send("request-config-info");
 };
 
 const initializeEventHandler = async () => {
@@ -106,7 +108,12 @@ const initializeEventHandler = async () => {
     // event listeners
     window.ipcRenderer.on("send-canvas-info", (canvasInfo, deviceInfo) => {
       // populate settings menu description
-      if (canvasInfo && deviceInfo) {
+      if (
+        Object.keys(canvasInfo).length !== 0 &&
+        Object.keys(deviceInfo).length !== 0
+      ) {
+        console.log("[settings@on-send-canvas-info] - pass sanity check.");
+
         populateStreamOverview(canvasInfo, deviceInfo);
       } else {
         console.warn(
@@ -125,6 +132,9 @@ const initializeEventHandler = async () => {
         //
         // TODO: query all checkboxes or any other type of form element
         // and update them all dynamically using a loop
+        //
+        // TODO: disable all widgets if the device
+        // or canvas is unavailable
         renderingMethodSelectElement.value = configPayload.renderingMethod;
         videoModeSelectElement.value = configPayload.videoMode;
         imageBrightnessSliderElement.value = configPayload.imageBrightness;
@@ -140,8 +150,10 @@ const initializeEventHandler = async () => {
     });
 
     // handle apply button config update
+    // TODO: only enable/allow clicking if a element value has been changed
+    // and if the canvas/device is available
     applyButton.addEventListener("click", () => {
-      const updatedConfig = {
+      const updatedConfigPayload = {
         renderingMethod: +renderingMethodSelectElement.value,
         videoMode: videoModeSelectElement.value,
         imageBrightness: +imageBrightnessSliderElement.value,
@@ -156,11 +168,10 @@ const initializeEventHandler = async () => {
 
       // send event with the updated config data
       // and restart video stream
-      window.ipcRenderer.send("update-config-info", updatedConfig);
+      window.ipcRenderer.send("update-config-info", updatedConfigPayload);
       window.ipcRenderer.send("force-restart-stream");
     });
 
-    // handle cancel button
     cancelButton.addEventListener("click", () => {
       window.close();
     });

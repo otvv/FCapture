@@ -1,5 +1,6 @@
 
 # folders
+.zed/
 .vscode/
 node_modules/
 dist/

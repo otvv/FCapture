@@ -268,8 +268,8 @@ const handleStreamAction = async (action = "start") => {
         // info to populate the settings window description
         if (streamState.canvas.videoElement) {
           const canvasInfo = {
-            width: streamState.canvas.videoElement.videoWidth,
-            height: streamState.canvas.videoElement.videoHeight,
+            width: streamState.canvas.videoElement.videoWidth || 0,
+            height: streamState.canvas.videoElement.videoHeight || 0,
           };
 
           // ensure frame draws at native device resolution
@@ -277,6 +277,8 @@ const handleStreamAction = async (action = "start") => {
           canvasElement.style.height = `${canvasInfo.height}px`;
 
           window.ipcRenderer.send("receive-canvas-info", canvasInfo);
+        } else {
+          window.ipcRenderer.send("receive-canvas-info", {});
         }
 
         // display video canvas and hide the "no signal" screen
@@ -355,6 +357,7 @@ const handleStreamAction = async (action = "start") => {
           streamState.canvasContext = null;
           streamState.audioContext = null;
           streamState.audioController = null;
+
           //
           streamState.isStreamActive = false;
         }
