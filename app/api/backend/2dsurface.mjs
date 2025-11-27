@@ -7,6 +7,8 @@ FCapture
 
 */
 
+// TODO: turn this into a class
+
 export const getTextSize = (canvasContext, textString) => {
   const textMetrics = canvasContext.measureText(textString);
   const textWidth =
@@ -27,41 +29,19 @@ export const drawRect = (canvasContext, x, y, width, height, color) => {
   canvasContext.fillRect(x, y, width, height);
 };
 
-export const drawRoundRect = (
-  canvasContext,
-  x,
-  y,
-  width,
-  height,
-  radius,
-  color,
-) => {
+export const drawRoundRect = (canvasContext, x, y, width, height, radius, color) => {
   canvasContext.fillStyle = color;
   canvasContext.roundRect(x, y, width, height, radius, color);
 };
 
-export const drawCapsule = (
-  canvasContext,
-  x,
-  y,
-  width,
-  height,
-  radius,
-  color,
-) => {
+export const drawCapsule = (canvasContext, x, y, width, height, radius, color) => {
   canvasContext.fillStyle = color;
   canvasContext.beginPath();
   canvasContext.moveTo(x + radius, y);
   canvasContext.lineTo(x + width - radius, y);
   canvasContext.arcTo(x + width, y, x + width, y + radius, radius);
   canvasContext.lineTo(x + width, y + height - radius);
-  canvasContext.arcTo(
-    x + width,
-    y + height,
-    x + width - radius,
-    y + height,
-    radius,
-  );
+  canvasContext.arcTo(x + width, y + height, x + width - radius, y + height, radius);
   canvasContext.lineTo(x + radius, y + height);
   canvasContext.arcTo(x, y + height, x, y + height - radius, radius);
   canvasContext.lineTo(x, y + radius);

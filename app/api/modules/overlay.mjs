@@ -7,7 +7,7 @@ FCapture
 
 */
 
-import * as renderer from "../backend/2dsurface.mjs";
+import * as renderer from "../backend/2DSurface.mjs";
 
 // overlay constraints
 const overlaySettings = Object.freeze({

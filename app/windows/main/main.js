@@ -390,6 +390,7 @@ const handleStreamAction = async (action = "start") => {
     }
   } catch (err) {
     console.error("[fcapture] - main@handleStreamAction:", err);
+    return;
   }
 };
 
