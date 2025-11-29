@@ -65,7 +65,7 @@ const generateChildWindow = () => {
     title: "Settings",
     parent: appState.parentWindow,
     width: 660,
-    height: 535,
+    height: 565,
     show: true,
     darkTheme: true,
     resizable: false,
@@ -221,10 +221,8 @@ const initializeEventHandler = async () => {
     // event listeners
     ipcMain.on("receive-canvas-info", (_event, canvasInfo) => {
       if (Object.keys(canvasInfo).length !== 0) {
-        console.log(
-          "[electron@on-receive-canvas-info] - pass sanity check.",
-          canvasInfo,
-        );
+        // DEBUR PURPOSES ONLY
+        // console.log("[electron@on-receive-canvas-info] -", canvasInfo);
 
         const refreshRate = utils.getCurrentDisplayOfWindow(
           appState.parentWindow,
@@ -237,10 +235,8 @@ const initializeEventHandler = async () => {
 
     ipcMain.on("receive-device-info", (_event, deviceInfo) => {
       if (Object.keys(deviceInfo).length !== 0) {
-        console.log(
-          "[electron@on-receive-device-info] - pass sanity check.",
-          deviceInfo,
-        );
+        // DEBUG PURPOSES ONLY
+        // console.log("[electron@on-receive-device-info] -", deviceInfo);
 
         appState.deviceData = deviceInfo;
       }
@@ -296,8 +292,6 @@ const initializeEventHandler = async () => {
               Object.keys(appState.canvasData).length !== 0 &&
               Object.keys(appState.deviceData).length !== 0
             ) {
-              console.log("[on-did-finish-load] - pass sanity check.");
-
               appState.childWindow.webContents.send(
                 "send-canvas-info",
                 appState.canvasData,

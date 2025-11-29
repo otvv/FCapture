@@ -10,8 +10,8 @@ FCapture
 import * as globals from "../../globals.mjs";
 import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
-import { configObjectTemplate } from "../../configTemplate.mjs";
 import WebGLVideoRenderer from "../backend/webglRenderer.mjs";
+import { configObjectTemplate } from "../../configTemplate.mjs";
 
 const createVideoElement = () => {
   let cachedVideoElement = null;
@@ -261,8 +261,8 @@ export const renderRawFrameOnCanvas = async (
 
     // change canvas resolution and aspect ratio
     // to match the resolution of the video stream
-    // canvasElement.width = videoElement.videoWidth;
-    // canvasElement.height = videoElement.videoHeight;
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
 
     // generate a function to draw frames (choose backend inside generator)
     const renderFrameOnScreen = generateDrawFrameOnScreenFunction(

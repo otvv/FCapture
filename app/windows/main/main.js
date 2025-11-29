@@ -255,6 +255,7 @@ const handleStreamAction = async (action = "start") => {
           } else {
             // reset canvas pixel buffer if 2d canvas is unavailable
             canvasElement.width = canvasElement.width;
+            canvasElement.height = canvasElement.height;
           }
 
           streamState.isStreamActive = false;
@@ -317,6 +318,7 @@ const handleStreamAction = async (action = "start") => {
         } else {
           // reset canvas pixel buffer
           canvasElement.width = canvasElement.width;
+          canvasElement.height = canvasElement.height;
         }
 
         // get all available tracks from the raw stream data

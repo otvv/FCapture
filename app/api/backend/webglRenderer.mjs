@@ -16,7 +16,7 @@ export class WebGLVideoRenderer {
   /**
    * @param {HTMLCanvasElement} canvas - the canvas element to render into (pixel buffer size should be set externally to match video resolution)
    * @param {HTMLVideoElement} video - the source video element (srcObject assigned)
-   * @param {Object} [opts] - optional settings
+   * @param {Object} [_opts] - optional settings
    * @desc - class constructor
    */
   constructor(canvas, video, _opts = {}) {
@@ -539,8 +539,8 @@ export class WebGLVideoRenderer {
                 gl.TEXTURE_2D,
                 0,
                 gl.RGBA,
-                vidW,
-                vidH,
+                vidWidth,
+                vidHeight,
                 0,
                 gl.RGBA,
                 gl.UNSIGNED_BYTE,
