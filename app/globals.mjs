@@ -15,7 +15,7 @@ export const __filename = import.meta.filename;
 export const UPDATE_INTERVAL = 1000; // 1 second in ms
 export const BASS_BOOST_AMOUNT = 9;
 export const BASS_BOOST_FREQUENCY = 100;
-export const SURROUND_DELAY_TIME = 0.05;
+export const SURROUND_DELAY_TIME = 0.03;
 
 // global objects/enums
 export const ASPECT_RATIO_TABLE = Object.freeze({

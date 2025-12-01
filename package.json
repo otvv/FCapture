@@ -1,14 +1,18 @@
 {
   "name": "fcapture",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "A previewer and recorder (eventually) software for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {
     "productName": "FCapture",
     "appId": "com.github.otvv.fcapture",
+    "nsis": {
+      "artifactName": "${productName} Setup.${ext}",
+      "uninstallDisplayName": "${productName}"
+    },
     "mac": {
       "target": "dir",
-      "executableName": "FCapture",
+      "executableName": "${productName}",
       "icon": "app/assets/icons/fcapture-icon.icns",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
@@ -17,14 +21,14 @@
     },
     "win": {
       "target": "nsis",
-      "executableName": "FCapture",
+      "executableName": "${productName}",
       "icon": "app/assets/icons/fcapture-icon.ico"
     },
     "linux": {
       "target": "AppImage",
-      "executableName": "FCapture",
+      "executableName": "${productName}",
       "icon": "app/assets/icons/fcapture-icon-512x512.png",
-      "category": "Multimedia"
+      "category": "AudioVideo"
     }
   },
   "scripts": {

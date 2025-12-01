@@ -39,6 +39,21 @@ const requestConfigData = () => {
   window.ipcRenderer.send("request-config-info");
 };
 
+const handleAudioChannelDescription = (channelCount = "Unknown") => {
+  // based on channel count, set
+  // the audio channel type (Mono, Stereo, Surround)
+  switch (channelCount) {
+    case 1:
+      return "Mono";
+    case 2:
+      return "Stereo";
+    case channelCount > 2:
+      return "Surround";
+    default:
+      return "Unknown";
+  }
+};
+
 const populateStreamOverview = async (canvasInfo, deviceInfo) => {
   try {
     if (descriptionTextElement === null) {
@@ -62,24 +77,15 @@ const populateStreamOverview = async (canvasInfo, deviceInfo) => {
     const targetFps = deviceInfo.frameRate || 0;
     const targetAudioSampleRate = deviceInfo.sampleRate || 0;
     const targetAudioSampleSize = deviceInfo.sampleSize || 0;
-    const targetAudioChannelCount = deviceInfo.channelCount || 0;
-    let targetAudioChannel = "Unknown";
-
-    if (targetAudioChannelCount === 1) {
-      targetAudioChannel = "Mono";
-    } else if (targetAudioChannelCount === 2) {
-      targetAudioChannel = "Stereo";
-    } else if (targetAudioChannelCount > 2) {
-      targetAudioChannel = "Surround";
-    } else {
-      targetAudioChannel = "Unknown";
-    }
+    const targetAudioChannelType = handleAudioChannelDescription(
+      deviceInfo.channelCount,
+    );
 
     if (Object.keys(canvasInfo).length === 0) {
       descriptionTextElement.innerHTML = `
         <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
         <b>Output</b>: Canvas not initialized due to canvasInfo being unavailable. <i>(Canvas)</i> <br>
-        <b>Audio</b>: ${targetAudioChannel} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
+        <b>Audio</b>: ${targetAudioChannelType} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
       return;
     }
 
@@ -91,7 +97,7 @@ const populateStreamOverview = async (canvasInfo, deviceInfo) => {
     descriptionTextElement.innerHTML = `
       <b>Input</b>: ${targetWidth}x${targetHeight} @ ${targetFps} FPS <i>(Device)</i><br>
       <b>Output</b>: ${outputWidth}x${outputHeight} @ ${outputFps} FPS <i>(Canvas)</i><br>
-      <b>Audio</b>: ${targetAudioChannel} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
+      <b>Audio</b>: ${targetAudioChannelType} @ ${targetAudioSampleRate} kHz - ${targetAudioSampleSize} bits <i>(Device)</i>`;
   } catch (err) {
     console.error("[fcapture] - settings@populateStreamOverview:", err);
   }
@@ -112,8 +118,6 @@ const initializeEventHandler = async () => {
         Object.keys(canvasInfo).length !== 0 &&
         Object.keys(deviceInfo).length !== 0
       ) {
-        console.log("[settings@on-send-canvas-info] - pass sanity check.");
-
         populateStreamOverview(canvasInfo, deviceInfo);
       } else {
         console.warn(

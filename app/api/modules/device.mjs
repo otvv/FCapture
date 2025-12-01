@@ -27,7 +27,9 @@ const getAvailableDevices = async () => {
       // DEBUG PURPOSES ONLY
       // console.log(`[fcapture] - device@getAvailableDevices: ${device.kind}\nlabel: ${device.label}\ndeviceId: ${device.deviceId}`);
 
-      // prevent the device enumerator from fallbacking to a virtual devices (OBS, webcam softwares, etc)
+      // prevent the device enumerator from
+      // fallbacking to a virtual devices
+      // (OBS, webcam softwares, etc)
       if (device.label.includes(globals.DEVICE_LABELS.OBS_VIRTUAL) || !device) {
         continue;
       }

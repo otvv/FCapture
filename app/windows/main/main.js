@@ -58,55 +58,64 @@ const updateFullscreenIcon = (state) => {
 const updateWindowState = async () => {
   const template = await import("../../configTemplate.mjs");
 
-  // Request the current config payload and wait for the reply before resolving.
-  // This ensures callers (like handleStreamAction) observe the saved renderingMethod
-  // and other settings before deciding whether to create a 2D context or a WebGL context.
+  // request the current config payload and wait
+  // for the reply before resolving
+  // this ensures that the app fetch the saved
+  // rendering method in the config file and other
+  // settings before deciding whether to create a
+  // 2D context or a WebGL context
+  //
+  // TLDR: read the config file first for the
+  // current rendering method selected before
+  // creating the rendering context.
   return new Promise((resolve) => {
-    // request the current config payload from file
-    window.ipcRenderer.send("request-config-info");
+    const timeoutMs = 500; // can be adjusted
+    let cleaned = false;
+    let timeout = null;
 
-    // handle window state update when config info is received
-    const onConfigLoaded = (configPayload) => {
-      try {
-        if (configPayload) {
-          // update original config object template using the payload from the config file
-          Object.assign(template.configObjectTemplate, configPayload);
-        }
-        // DEBUG PURPOSES ONLY
-        // console.log("[fcapture] - main@updateWindowState: config payload received.");
-      } finally {
-        resolve();
+    const cleanup = () => {
+      if (cleaned) {
+        return;
       }
-    };
 
-    window.ipcRenderer.once("config-loaded", onConfigLoaded);
+      if (timeout !== null) {
+        clearTimeout(timeout);
+      }
 
-    // safety: resolve after a short timeout to avoid hanging if IPC fails
-    // (keeps the app resilient; the timeout is short so we still prefer the IPC reply)
-    const timeout = setTimeout(() => {
-      // remove listener if still present
       try {
         window.ipcRenderer.removeListener("config-loaded", onConfigLoaded);
-      } catch (e) {
-        // ignore
+      } catch (err) {
+        // ignore removal errors
       }
-      resolve();
-    }, 500);
 
-    // Clear the timeout when config arrives
-    const wrappedResolve = () => {
-      clearTimeout(timeout);
       resolve();
+
+      cleaned = true;
     };
 
-    // Replace the previous once listener with a wrapped one that clears timeout
-    // window.ipcRenderer.removeAllListeners("config-loaded");
-    window.ipcRenderer.once("config-loaded", (configPayload) => {
-      if (configPayload) {
-        Object.assign(template.configObjectTemplate, configPayload);
+    // flexible listener that accepts either (configPayload) or (event, configPayload)
+    const onConfigLoaded = (...args) => {
+      const configPayloadArg = args.length === 1 ? args[0] : args[1];
+      try {
+        if (configPayloadArg) {
+          Object.assign(template.configObjectTemplate, configPayloadArg);
+        }
+      } catch (err) {
+        // ignore for now
+      } finally {
+        cleanup();
       }
-      wrappedResolve();
-    });
+    };
+
+    // install listener before sending the request
+    // for the config payload
+    window.ipcRenderer.once("config-loaded", onConfigLoaded);
+    window.ipcRenderer.send("request-config-info");
+
+    // finish even if IPC reply never arrives
+    timeout = setTimeout(() => {
+      cleanup();
+    }, timeoutMs);
   });
 };
 
@@ -115,6 +124,9 @@ const toggleStreamMute = (state) => {
     return;
   }
 
+  // TODO: save muted state into config file
+  // and restore the stream muted state after
+  // opening the app
   if (state && !streamState.isAudioTrackMuted) {
     // save current volume and set gain to 0 for muting
     streamState.previousVolume = streamState.audioController.gain.value;
@@ -234,6 +246,27 @@ const handleStreamAction = async (action = "start") => {
         //
         streamState.audioContext = new AudioContext({ latencyHint: "interactive" });
 
+        // resume AudioContext proactively to avoid suspended state caused by autoplay policies
+        if (
+          streamState.audioContext &&
+          typeof streamState.audioContext.resume === "function" &&
+          streamState.audioContext.state === "suspended"
+        ) {
+          streamState.audioContext
+            .resume()
+            .then(() => {
+              console.log(
+                "[fcapture] - main@handleStreamAction: audio context resumed.",
+              );
+            })
+            .catch((err) => {
+              console.warn(
+                "[fcapture] - main@handleStreamAction: audio context resume failed.",
+                err,
+              );
+            });
+        }
+
         // render raw stream frames onto the canvas html element
         streamState.canvas = await renderer.renderRawFrameOnCanvas(
           canvasElement,
@@ -348,13 +381,12 @@ const handleStreamAction = async (action = "start") => {
 
         // clear stream data
         {
-          streamState.canvas.videoElement.srcObject = null;
           streamState.canvas = {
             rawStreamData: null,
             gainNode: null,
+            videoElement: { srcObject: null },
             videoElement: null,
           };
-          streamState.canvas.videoElement = null; // just in case
           streamState.canvas = null;
           streamState.canvasContext = null;
           streamState.audioContext = null;

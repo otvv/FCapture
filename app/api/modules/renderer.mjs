@@ -8,48 +8,41 @@ FCapture
 */
 
 import * as globals from "../../globals.mjs";
-import { setupCapsuleOverlay } from "./overlay.mjs";
 import { setupStreamFromDevice } from "./device.mjs";
 import WebGLVideoRenderer from "../backend/webglRenderer.mjs";
 import { configObjectTemplate } from "../../configTemplate.mjs";
 
-const createVideoElement = () => {
-  let cachedVideoElement = null;
-  return (rawStreamData) => {
-    // initialize temporary video player element
-    if (!cachedVideoElement) {
-      cachedVideoElement = document.createElement("video");
+const createVideoElement = (() => {
+  let cached = null;
 
-      // perform initial configurations and
-      // assign raw stream object/data
-      Object.assign(cachedVideoElement, {
+  return (rawStream) => {
+    // cache video player element to be used
+    // later in case it needs to be reused
+    if (!cached) {
+      cached = document.createElement("video");
+
+      Object.assign(cached, {
         playsInline: true,
         muted: true,
         controls: false,
         disablePictureInPicture: true,
-        srcObject: rawStreamData,
+        srcObject: rawStream,
       });
+    } else {
+      // re-assign stream data in case it
+      // differs from the one currently
+      // being used in the video element
+      if (cached.srcObject !== rawStream) {
+        cached.srcObject = rawStream;
+      }
     }
 
-    // only update the stream data if necessary
-    // (device changes, or the stream data itself changes)
-    // if (cachedVideoElement.srcObject !== rawStreamData) {
-    //   cachedVideoElement.srcObject = rawStreamData;
-    // }
-
-    return cachedVideoElement;
+    return cached;
   };
-};
-
-const handleDebugOverlayInstance = (instance, canvasContext) => {
-  if (!instance) {
-    instance = setupCapsuleOverlay(canvasContext);
-  }
-
-  instance();
-};
+})();
 
 const createAudioNodeChain = (audioContext) => {
+  // setup audio nodes
   const nodes = {
     gain: audioContext.createGain(),
     bassBoost: audioContext.createBiquadFilter(),
@@ -57,16 +50,16 @@ const createAudioNodeChain = (audioContext) => {
     delay: audioContext.createDelay(),
   };
 
-  // setup bass boost
+  // setup bass booster filter
   nodes.bassBoost.type = "lowshelf";
   nodes.bassBoost.frequency.setValueAtTime(
     globals.BASS_BOOST_FREQUENCY,
     audioContext.currentTime,
   );
 
-  // setup panner for surround sound
+  // setup HRTF panning filter
+  // (fake surround filter)
   nodes.panner.panningModel = "HRTF";
-  nodes.panner.distanceModel = "linear";
   nodes.panner.positionX.setValueAtTime(0, audioContext.currentTime);
   nodes.panner.positionY.setValueAtTime(0, audioContext.currentTime);
   nodes.panner.positionZ.setValueAtTime(-1, audioContext.currentTime);
@@ -79,69 +72,48 @@ const generateDrawFrameOnScreenFunction = (
   canvasElement,
   canvasContext,
 ) => {
-  // let overlayInstance = null;
   let isProcessing = false;
   let webglRenderer = null;
 
-  // software 2d drawing (direct-draw)
   const initDirectDrawRenderer = () => {
     if (!isProcessing) {
       return;
     }
 
-    try {
-      canvasContext.drawImage(videoElement, 0, 0);
-    } catch (err) {
-      console.error("[fcapture] - renderer@initDirectDrawRenderer:", err);
-      isProcessing = false;
+    // draw current video frame onto 2D canvas
+    canvasContext.drawImage(videoElement, 0, 0);
+
+    // TODO: handle debug overlay
+
+    // schedule next frame
+    if (typeof videoElement.requestVideoFrameCallback === "function") {
+      videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
+    } else {
+      requestAnimationFrame(initDirectDrawRenderer);
     }
-
-    // if (configObjectTemplate.debugOverlay) {
-    //   handleDebugOverlayInstance(overlayInstance, canvasContext);
-    // }
-
-    videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
   };
 
-  // hardware 2d drawing (webgl)
   const initWebGlRenderer = () => {
-    try {
-      // check if webgl is supported by the browser
-      if (!WebGLVideoRenderer.isSupported()) {
-        webglRenderer = null;
-        return false;
-      }
-
-      // initialize webgl renderer
-      if (!webglRenderer) {
-        webglRenderer = new WebGLVideoRenderer(canvasElement, videoElement);
-      }
-
-      // map config percentages to shader uniform ranges
-      // and apply filters at renderer initialization
-      const brightness = configObjectTemplate.imageBrightness / 100 - 1.0;
-      const contrast = configObjectTemplate.imageContrast / 100;
-      const saturation = configObjectTemplate.imageSaturation / 100;
-
-      webglRenderer.setParams({
-        brightness,
-        contrast,
-        saturation,
-      });
-
-      webglRenderer.start();
-      return true;
-    } catch (err) {
-      console.error("[fcapture] - renderer@initWebGlRenderer:", err);
-
-      // stop webgl renderer in case something
-      //  goes wrong along the way
-      if (webglRenderer) {
-        webglRenderer.destroy();
-        webglRenderer = null;
-      }
+    if (!WebGLVideoRenderer.isSupported()) {
       return false;
     }
+
+    // initialize webgl renderer if it's not initialized already
+    if (!webglRenderer) {
+      webglRenderer = new WebGLVideoRenderer(canvasElement, videoElement);
+    }
+
+    // TODO: handle debug overlay
+
+    const brightness = configObjectTemplate.imageBrightness / 100 - 1.0;
+    const contrast = configObjectTemplate.imageContrast / 100;
+    const saturation = configObjectTemplate.imageSaturation / 100;
+
+    // set default filter values and start renderer
+    webglRenderer.setParams({ brightness, contrast, saturation });
+    webglRenderer.start();
+
+    return true;
   };
 
   return {
@@ -150,18 +122,15 @@ const generateDrawFrameOnScreenFunction = (
         return;
       }
 
-      // this will stop the app from attempting to create
-      // a new renderer in case another renderer is already initialized
       isProcessing = true;
 
-      // pick the right renderer to initialize based on
-      // what the user selected as a rendering method
+      // handle different rendering methods
       if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.WEBGL) {
         const initialized = initWebGlRenderer();
 
         if (initialized) {
           console.log(
-            "[fcapture] - renderer@generateDrawFrameOnScreenFunction.start: webgl renderer initialized.",
+            "[fcapture] - renderer@generateDrawFrameOnScreenFunction: webgl renderer initialized.",
           );
           return;
         }
@@ -169,53 +138,78 @@ const generateDrawFrameOnScreenFunction = (
         configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
       ) {
         console.log(
-          "[fcapture] - renderer@generateDrawFrameOnScreenFunction.start: directdraw renderer initialized.",
+          "[fcapture] - renderer@generateDrawFrameOnScreenFunction: direct-draw renderer initialized.",
         );
 
-        videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
+        if (typeof videoElement.requestVideoFrameCallback === "function") {
+          videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
+        } else {
+          requestAnimationFrame(initDirectDrawRenderer);
+        }
       }
     },
+
     update: () => {
-      // map config percentages at runtime
       const imageBrightnessValue = configObjectTemplate.imageBrightness / 100;
       const imageContrastValue = configObjectTemplate.imageContrast / 100;
       const imageSaturationValue = configObjectTemplate.imageSaturation / 100;
 
-      // clean context filters if webgl is in use
-      // just in case the user applied them before
-      // while using direct draw
       if (configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.WEBGL) {
         if (!webglRenderer) {
           return;
         }
 
+        // reset css canvas filters before applying
+        // webgl texture filters
         if (canvasContext) {
           canvasContext.filter = "none";
         }
 
-        // convert image filter settings values
-        // to shader uniforms and apply them at runtime
-        const brightness = imageBrightnessValue - 1.0; // 100% -> 0.0 (neutral)
-        const contrast = imageContrastValue;
-        const saturation = imageSaturationValue;
-
         webglRenderer.setParams({
-          brightness,
-          contrast,
-          saturation,
+          brightness: imageBrightnessValue - 1.0,
+          contrast: imageContrastValue,
+          saturation: imageSaturationValue,
         });
       } else if (
         configObjectTemplate.renderingMethod === globals.RENDERING_METHOD.DIRECTDRAW
       ) {
+        if (!canvasContext) {
+          return;
+        }
+
+        // reset webgl renderer before applying
+        // css canvas filters
         if (webglRenderer) {
+          webglRenderer.destroy();
           webglRenderer = null;
         }
 
-        // handle filters for the direct-draw rendering method
         if (canvasContext) {
           canvasContext.filter = `brightness(${imageBrightnessValue}) contrast(${imageContrastValue}) saturate(${imageSaturationValue})`;
         }
       }
+    },
+
+    // TODO: expose this method so it can be used
+    // to close video/audio stream data in the
+    // main window events
+    stop: () => {
+      // stop renderers
+      if (webglRenderer) {
+        webglRenderer.stop();
+        webglRenderer.destroy();
+        webglRenderer = null;
+      } else {
+        // assume we're using direct-draw in case
+        // webglRenderer is not available
+        if (canvasContext) {
+          canvasContext = null;
+          canvasElement = null;
+          videoElement = null;
+        }
+      }
+
+      isProcessing = false;
     },
   };
 };
@@ -225,83 +219,95 @@ export const renderRawFrameOnCanvas = async (
   canvasContext,
   audioContext,
 ) => {
-  try {
-    // get raw stream data from the device
-    const rawStreamData = await setupStreamFromDevice();
+  const rawStreamData = await setupStreamFromDevice();
 
-    if (!rawStreamData) {
-      console.error(
-        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to get raw stream data from device.",
-      );
-      return;
-    }
-
-    // create video element and perform initial configurations
-    const generateVideoElementInstance = createVideoElement();
-    const videoElement = generateVideoElementInstance(rawStreamData);
-
-    if (!videoElement) {
-      console.error(
-        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to initialize temporary video element.",
-      );
-      return { rawStreamData };
-    }
-
-    // make sure the low latency hint is added
-    // in the video player element
-    if ("latencyHint" in videoElement) {
-      videoElement.latencyHint = "realtime";
-    }
-
-    // start video playback
-    await videoElement.play().catch((err) => {
-      console.error("[fcapture] - renderer@videoElementPromise:", err);
-      return { rawStreamData };
-    });
-
-    // change canvas resolution and aspect ratio
-    // to match the resolution of the video stream
-    canvasElement.width = videoElement.videoWidth;
-    canvasElement.height = videoElement.videoHeight;
-
-    // generate a function to draw frames (choose backend inside generator)
-    const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
-      videoElement,
-      canvasElement,
-      canvasContext,
+  if (!rawStreamData) {
+    console.error(
+      "[fcapture] - renderer@renderRawFrameOnCanvas: failed to obtain raw stream from device.",
     );
+    return {};
+  }
 
-    // start rendering frames and
-    // handle renderer runtime updates
-    renderFrameOnScreen.start();
-    renderFrameOnScreen.update();
+  // initialize temporary video element
+  const createVideoElementInstance = createVideoElement;
+  const videoElement = createVideoElementInstance(rawStreamData);
 
-    // create audio source from raw stream
-    // and setup filter nodes chain
-    const audioNodes = createAudioNodeChain(audioContext);
+  if (!videoElement) {
+    console.error(
+      "[fcapture] - renderer@renderRawFrameOnCanvas: failed to create video element.",
+    );
+    return { rawStreamData };
+  }
+
+  // setup optimal settings for the video element
+  if ("latencyHint" in videoElement) {
+    videoElement.latencyHint = "realtime";
+  }
+
+  await videoElement.play().catch((err) => {
+    console.error(
+      "[fcapture] - renderer@renderRawFrameOnCanvas: failed to play video.",
+      err,
+    );
+    return { rawStreamData };
+  });
+
+  // set canvas size to match incoming video
+  canvasElement.width = videoElement.videoWidth || canvasElement.width;
+  canvasElement.height = videoElement.videoHeight || canvasElement.height;
+
+  const renderFrameOnScreen = generateDrawFrameOnScreenFunction(
+    videoElement,
+    canvasElement,
+    canvasContext,
+  );
+
+  // start renderer (webgl and direct-draw)
+  renderFrameOnScreen.start();
+  renderFrameOnScreen.update();
+
+  // audio setup
+  let audioNodes = null;
+  let gainNode = null;
+
+  if (audioContext) {
+    audioNodes = createAudioNodeChain(audioContext);
+    gainNode = audioNodes.gain;
     const audioSource = audioContext.createMediaStreamSource(rawStreamData);
 
-    // bass boost filter
+    if (
+      typeof audioContext.resume === "function" &&
+      audioContext.state === "suspended"
+    ) {
+      audioContext.resume().catch(() => {});
+    }
+
+    // apply initial audio settings and filters
     audioNodes.bassBoost.gain.setValueAtTime(
       configObjectTemplate.bassBoost ? globals.BASS_BOOST_AMOUNT : 0,
       audioContext.currentTime,
     );
-
-    // hrtf surround filter
     audioNodes.delay.delayTime.setValueAtTime(
       configObjectTemplate.surroundAudio ? globals.SURROUND_DELAY_TIME : 0.0,
       audioContext.currentTime,
     );
 
-    // connect audio source (device) to nodes and nodes
-    // to the audio destination (final output)
-    [audioSource, ...Object.values(audioNodes), audioContext.destination].reduce(
-      (prev, curr) => prev.connect(curr),
-    );
-
-    return { rawStreamData, gainNode: audioNodes.gain, videoElement };
-  } catch (err) {
-    console.error("[fcapture] - renderer@renderRawFrameOnCanvas:", err);
-    return {};
+    // audio node connect chain
+    try {
+      audioSource.connect(audioNodes.gain);
+      audioNodes.gain.connect(audioNodes.bassBoost);
+      audioNodes.bassBoost.connect(audioNodes.panner);
+      audioNodes.panner.connect(audioNodes.delay);
+      audioNodes.delay.connect(audioContext.destination);
+    } catch (err) {
+      console.warn(
+        "[fcapture] - renderer@renderRawFrameOnCanvas: failed to connect audio nodes:",
+        err,
+      );
+    }
   }
+
+  return { rawStreamData, gainNode, videoElement, stop: renderFrameOnScreen.stop };
 };
+
+export default renderRawFrameOnCanvas;
