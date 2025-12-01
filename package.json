@@ -12,7 +12,6 @@
     },
     "mac": {
       "target": "dir",
-      "executableName": "${productName}",
       "icon": "app/assets/icons/fcapture-icon.icns",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
@@ -21,12 +20,10 @@
     },
     "win": {
       "target": "nsis",
-      "executableName": "${productName}",
       "icon": "app/assets/icons/fcapture-icon.ico"
     },
     "linux": {
       "target": "AppImage",
-      "executableName": "${productName}",
       "icon": "app/assets/icons/fcapture-icon-512x512.png",
       "category": "AudioVideo"
     }
