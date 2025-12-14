@@ -7,6 +7,7 @@ FCapture
 
 */
 
+import "v8-compile-cache";
 import fs from "fs";
 import path from "path";
 import process from "process";

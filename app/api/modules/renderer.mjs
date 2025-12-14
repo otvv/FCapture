@@ -225,7 +225,7 @@ export const renderRawFrameOnCanvas = async (
     console.error(
       "[fcapture] - renderer@renderRawFrameOnCanvas: failed to obtain raw stream from device.",
     );
-    return {};
+    return null;
   }
 
   // initialize temporary video element
@@ -275,10 +275,7 @@ export const renderRawFrameOnCanvas = async (
     gainNode = audioNodes.gain;
     const audioSource = audioContext.createMediaStreamSource(rawStreamData);
 
-    if (
-      typeof audioContext.resume === "function" &&
-      audioContext.state === "suspended"
-    ) {
+    if (typeof audioContext.resume === "function" && audioContext.state === "suspended") {
       audioContext.resume().catch(() => {});
     }
 

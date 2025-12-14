@@ -18,8 +18,12 @@ FCapture
   color: #dedede;
   background-color: #282828;
 
-  /* experimental */
-  text-autospace: ideograph-alpha ideograph-numeric punctuation;
+  font-display: swap;
+  text-autospace: ideograph-alpha ideograph-numeric punctuation; /* experimental */
+}
+
+@view-transition {
+  navigation: auto;
 }
 
 *:focus {

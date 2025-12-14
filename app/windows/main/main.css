@@ -19,8 +19,12 @@ FCapture
   padding: 0;
   border: 0;
 
-  /* experimental */
-  text-autospace: ideograph-alpha ideograph-numeric punctuation;
+  /* these doesnt really do much now since
+  we're using a local font and a static page,
+  they are going to be useful in the future
+  after the new UI gets implemented */
+  font-display: swap;
+  text-autospace: ideograph-alpha ideograph-numeric punctuation; /* experimental */
 }
 
 @view-transition {

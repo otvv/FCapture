@@ -10,29 +10,21 @@ FCapture
 "use strict";
 
 // element querying
-const descriptionTextElement = document.querySelector("#description-text");
-const videoModeSelectElement = document.querySelector("#video-mode-select");
-const renderingMethodSelectElement = document.querySelector(
-  "#rendering-method-select",
+const descriptionTextElement = document.getElementById("description-text");
+const videoModeSelectElement = document.getElementById("video-mode-select");
+const renderingMethodSelectElement = document.getElementById("rendering-method-select");
+const imageBrightnessSliderElement = document.getElementById("image-brightness-slider");
+const imageContrastSliderElement = document.getElementById("image-contrast-slider");
+const imageSaturationSliderElement = document.getElementById("image-saturation-slider");
+const autoHideCursorCheckboxElement = document.getElementById(
+  "#uto-hide-cursor-checkbox",
 );
-const imageBrightnessSliderElement = document.querySelector(
-  "#image-brightness-slider",
-);
-const imageContrastSliderElement = document.querySelector("#image-contrast-slider");
-const imageSaturationSliderElement = document.querySelector(
-  "#image-saturation-slider",
-);
-const autoHideCursorCheckboxElement = document.querySelector(
-  "#auto-hide-cursor-checkbox",
-);
-const debugOverlayCheckboxElement = document.querySelector(
-  "#debug-overlay-checkbox",
-);
-const audioModeSelectElement = document.querySelector("#audio-mode-select");
-const surroundAudioCheckboxElement = document.querySelector("#surround-checkbox");
-const bassBoostCheckboxElement = document.querySelector("#bassboost-checkbox");
-const applyButton = document.querySelector("#apply-button");
-const cancelButton = document.querySelector("#cancel-button");
+const debugOverlayCheckboxElement = document.getElementById("debug-overlay-checkbox");
+const audioModeSelectElement = document.getElementById("audio-mode-select");
+const surroundAudioCheckboxElement = document.getElementById("surround-checkbox");
+const bassBoostCheckboxElement = document.getElementById("bassboost-checkbox");
+const applyButton = document.getElementById("apply-button");
+const cancelButton = document.getElementById("cancel-button");
 
 const requestConfigData = () => {
   // request the current config when the settings window loads
@@ -77,9 +69,7 @@ const populateStreamOverview = async (canvasInfo, deviceInfo) => {
     const targetFps = deviceInfo.frameRate || 0;
     const targetAudioSampleRate = deviceInfo.sampleRate || 0;
     const targetAudioSampleSize = deviceInfo.sampleSize || 0;
-    const targetAudioChannelType = handleAudioChannelDescription(
-      deviceInfo.channelCount,
-    );
+    const targetAudioChannelType = handleAudioChannelDescription(deviceInfo.channelCount);
 
     if (Object.keys(canvasInfo).length === 0) {
       descriptionTextElement.innerHTML = `
@@ -114,10 +104,7 @@ const initializeEventHandler = async () => {
     // event listeners
     window.ipcRenderer.on("send-canvas-info", (canvasInfo, deviceInfo) => {
       // populate settings menu description
-      if (
-        Object.keys(canvasInfo).length !== 0 &&
-        Object.keys(deviceInfo).length !== 0
-      ) {
+      if (Object.keys(canvasInfo).length !== 0 && Object.keys(deviceInfo).length !== 0) {
         populateStreamOverview(canvasInfo, deviceInfo);
       } else {
         console.warn(

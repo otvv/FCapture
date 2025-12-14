@@ -88,7 +88,6 @@ export const handleHardwareAcceleration = (app) => {
     "enable-webgl",
     "ignore-gpu-blacklist",
     "disable-gpu-vsync", // doesn't work properly with Double-Draw
-    // "disable-frame-rate-limit", // this can cause massive frame-dips on Linux (GNOME)
     "video-capture-use-gpu-memory-buffer",
     "force_high_performance_gpu",
     "disable-renderer-backgrounding",
@@ -101,6 +100,7 @@ export const handleHardwareAcceleration = (app) => {
     "enable-zero-copy",
     "enable-hardware-overlays",
     "enable-oop-rasterization",
+    "disable-software-rasterizer",
   ];
 
   // disable hw acceleration if an unsupported OS is detected
@@ -121,22 +121,32 @@ export const handleHardwareAcceleration = (app) => {
     });
   }
 
-  // platform specific switches
+  // platform specific extra switches
   switch (process.platform) {
     case "darwin":
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for macOS.",
       );
+
+      app.commandLine.appendSwitch("disable-frame-rate-limit");
+      app.commandLine.appendSwitch("enable-unsafe-webgpu");
       app.commandLine.appendSwitch("enable-features", "Metal");
+
       break;
     case "linux":
-      const linuxSwitches = [
-        [
-          "enable-features",
-          "VaapiVideoDecoder,VaapiVideoEncoder,VaapiVideoDecodeLinuxGL",
-        ],
-        ["disable-features", "UseChromeOSDirectVideoDecoder"],
+      const linuxSwitches = [];
+
+      // specific features based on display environment
+      const waylandFeatures = [
+        "AcceleratedVideoDecodeLinuxGL",
+        "AcceleratedVideoDecodeLinuxZeroCopyGL",
+        "AcceleratedVideoEncoder",
+        "WaylandSessionManagement",
+        "WaylandTextInputV3",
+        "WaylandUiScale",
+        "WaylandWindowDecorations",
       ];
+      const x11Features = ["Vulkan"];
 
       // enable specific features if the user is using Wayland or X11
       if (IS_WAYLAND) {
@@ -146,10 +156,8 @@ export const handleHardwareAcceleration = (app) => {
 
         // use angle with opengl if the user is on wayland
         linuxSwitches.push(
-          ["enable-features", "UseOzonePlatform"],
+          ["enable-features", [...waylandFeatures, "OpenGLWithAngle"]],
           ["ozone-platform", "wayland"],
-          ["use-angle", "gl"],
-          ["use-gl", "angle"],
         );
       } else {
         console.log(
@@ -157,19 +165,26 @@ export const handleHardwareAcceleration = (app) => {
         );
 
         // use opengl if the user is on x11
-        linuxSwitches.push(["enable-features", "Vulkan"], ["use-gl", "desktop"]);
+        linuxSwitches.push(["enable-features", x11Features], ["use-gl", "desktop"]);
       }
+
+      // common video decoding switches
+      linuxSwitches.push(
+        [
+          "enable-features",
+          "VaapiVideoDecoder,VaapiVideoEncoder,VaapiVideoDecodeLinuxGL",
+        ],
+        ["disable-features", "UseChromeOSDirectVideoDecoder"],
+      );
 
       console.log(
         "[fcapture] - utils@handleHardwareAcceleration: applying additional switches for Linux.",
       );
 
       linuxSwitches.forEach(([flag, value]) => {
-        if (value) {
-          app.commandLine.appendSwitch(flag, value);
-        } else {
-          app.commandLine.appendSwitch(flag);
-        }
+        value
+          ? app.commandLine.appendSwitch(flag, value)
+          : app.commandLine.appendSwitch(flag);
       });
       break;
     case "win32":
@@ -177,6 +192,7 @@ export const handleHardwareAcceleration = (app) => {
         ["enable-features", "D3D11VideoDecoder"],
         ["enable-features", "DirectCompositionVideoOverlays"],
         ["force_high_performance_gpu"],
+        ["disable-frame-rate-limit"],
         ["use-angle", "gl"],
         ["use-gl", "angle"],
       ];
@@ -186,11 +202,9 @@ export const handleHardwareAcceleration = (app) => {
       );
 
       windowsSwitches.forEach(([flag, value]) => {
-        if (value) {
-          app.commandLine.appendSwitch(flag, value);
-        } else {
-          app.commandLine.appendSwitch(flag);
-        }
+        value
+          ? app.commandLine.appendSwitch(flag, value)
+          : app.commandLine.appendSwitch(flag);
       });
       break;
     default:

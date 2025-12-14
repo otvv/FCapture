@@ -10,19 +10,19 @@ FCapture
 "use strict";
 
 // element querying
-const streamContainerElement = document.querySelector("#stream-container");
-const canvasElement = document.querySelector("#canvas-element");
-const noSignalContainerElement = document.querySelector("#no-signal-container");
-const mutedIconElement = document.querySelector("#muted-icon");
-const navbarContainerElement = document.querySelector("#navbar-container");
-const tabsContainerElement = document.querySelector("#tabs-container");
-const previewTabElement = tabsContainerElement.querySelector("#preview-tab");
-const recordingsTabElement = tabsContainerElement.querySelector("#recordings-tab");
-const printButtonElement = document.querySelector("#print-button");
-const fullscreenButtonElement = document.querySelector("#fullscreen-button");
-const settingsButtonElement = document.querySelector("#settings-button");
-const muteButtonElement = document.querySelector("#mute-button");
-const refreshButtonElement = document.querySelector("#refresh-button");
+const streamContainerElement = document.getElementById("stream-container");
+const canvasElement = document.getElementById("canvas-element");
+const noSignalContainerElement = document.getElementById("no-signal-container");
+const mutedIconElement = document.getElementById("muted-icon");
+const navbarContainerElement = document.getElementById("navbar-container");
+const tabsContainerElement = document.getElementById("tabs-container");
+const previewTabElement = document.getElementById("preview-tab");
+const recordingsTabElement = document.getElementById("recordings-tab");
+const printButtonElement = document.getElementById("print-button");
+const fullscreenButtonElement = document.getElementById("fullscreen-button");
+const settingsButtonElement = document.getElementById("settings-button");
+const muteButtonElement = document.getElementById("mute-button");
+const refreshButtonElement = document.getElementById("refresh-button");
 
 const configPayload = {};
 
@@ -46,7 +46,7 @@ const cursorState = {
 };
 
 const updateFullscreenIcon = (state) => {
-  const icon = fullscreenButtonElement.querySelector(".fullscreen-icon");
+  const icon = fullscreenButtonElement.getElementsByClassName("fullscreen-icon");
   if (!icon) {
     return;
   }
@@ -255,9 +255,7 @@ const handleStreamAction = async (action = "start") => {
           streamState.audioContext
             .resume()
             .then(() => {
-              console.log(
-                "[fcapture] - main@handleStreamAction: audio context resumed.",
-              );
+              console.log("[fcapture] - main@handleStreamAction: audio context resumed.");
             })
             .catch((err) => {
               console.warn(
@@ -463,7 +461,7 @@ const handleWindowAction = async (action = "preview") => {
           return;
         }
 
-        const icon = fullscreenButtonElement.querySelector(".fullscreen-icon");
+        const icon = fullscreenButtonElement.getElementsByClassName("fullscreen-icon");
 
         if (!icon) {
           return;
@@ -503,8 +501,7 @@ const initializeEventHandler = async () => {
     window.ipcRenderer.on("unmute-stream", () => handleStreamAction("unmute"));
 
     // native DOM event listeners
-    navigator.mediaDevices.ondevicechange = (_event) =>
-      handleStreamAction("restart");
+    navigator.mediaDevices.ondevicechange = (_event) => handleStreamAction("restart");
     mutedIconElement.addEventListener("click", () => handleStreamAction("unmute"));
     streamContainerElement.addEventListener(
       "mousemove",
@@ -512,9 +509,7 @@ const initializeEventHandler = async () => {
     );
 
     if (navbarContainerElement) {
-      previewTabElement.addEventListener("click", () =>
-        handleWindowAction("preview"),
-      );
+      previewTabElement.addEventListener("click", () => handleWindowAction("preview"));
       recordingsTabElement.addEventListener("click", () =>
         handleWindowAction("recordings"),
       );
@@ -528,9 +523,7 @@ const initializeEventHandler = async () => {
           handleStreamAction("mute");
         }
       });
-      refreshButtonElement.addEventListener("click", () =>
-        handleStreamAction("restart"),
-      );
+      refreshButtonElement.addEventListener("click", () => handleStreamAction("restart"));
       fullscreenButtonElement.addEventListener("click", () =>
         handleWindowAction("fullscreen"),
       );
