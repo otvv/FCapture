@@ -1,16 +1,16 @@
 # FCapture
 
-FCapture is a previewer (and a eventually a recorder) software for generic (off-brand) USB capture cards. FCapture is made entirely using Electron and a native web APIs.
-This app is meant for the people that doesn't want to use a third-party software such as OBS or VLC just to preview the capture card's video output. _(I know that with OBS you can record your gameplay, but some folks just want to play and OBS is a little overkill for that)_
+FCapture is a previewer _(and a eventually a recorder)_ software for generic (off-brand) USB capture cards. FCapture is made entirely using Electron and native web APIs _(webgl, canvas2d and mediadevices)_.
+This app is meant for the people that doesn't want to use a third-party software such as OBS or VLC just to preview the capture card's video output. _(I know that with OBS you can record your gameplay, but I feel like some people might want a dedicated app just for their capture card.)_
 
 My goal with this app is to make an open-source alternative for anyone to use.
 
 ### Key features
 
-- Preview video from generic USB capture cards _(and possibly PCI-E ones)_
-- An extensive Settings menu with video and audio filters, different video and audio modes _(change stream output quality/resolution)_ and more
-- Take screenshots of your gameplay/output at any time
-- Since this is an Electron app, multiplaform support is also present with FCapture. The app can run on macOS, Linux and Windows
+- Preview video output from generic USB capture cards _(and possibly PCI-E ones)_
+- The ability to change stream/video mode (webgl or canvas2d) change video and audio quality _(based on device capabilities)_ and more
+- Take screenshots of your gameplay/output at any time _(NOTE: recording will be implemented at a later date)_
+- Since this is an Electron based app, FCapture also works on multiple platforms, the app can run on macOS, Linux and Windows
 
 ### Screenshots
 
@@ -28,7 +28,7 @@ My goal with this app is to make an open-source alternative for anyone to use.
 ***
 
 
-## Installation (for Developers or Contributors)
+## Installation (for Contributors)
 
 This app is under heavily development and its subject to change. So if you want to contribute or report any bugs, feel free to make a pull-request!
 
