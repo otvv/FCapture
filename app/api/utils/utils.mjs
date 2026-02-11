@@ -8,11 +8,15 @@ FCapture
 */
 
 import os from "os";
+import fs from "fs";
 import path from "path";
-import { screen } from "electron";
-import { execSync } from "child_process";
+import pkg from "electron";
+const { screen } = pkg;
+import { execSync, spawn } from "child_process";
+import { __dirname, __filename } from "../../globals.mjs";
 
-const IS_WAYLAND = process.env.XDG_SESSION_TYPE === "wayland";
+export const IS_WAYLAND = process.env.XDG_SESSION_TYPE === "wayland";
+export const ROOT_FOLDER_PATH = path.resolve(__dirname, "..");
 
 export const focusWindow = (targetWindow) => {
   if (!targetWindow || targetWindow.isDestroyed()) {
@@ -63,6 +67,79 @@ export const getCorrectPicturesFolder = () => {
     default:
       return fallbackFolder;
   }
+};
+
+export const pathExists = (path) => {
+  try {
+    fs.accessSync(path, fs.constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const readText = (filePath) => {
+  return fs.readFileSync(filePath, "utf8");
+};
+
+export const writeText = (filePath, stringToWrite) => {
+  fs.writeFileSync(filePath, stringToWrite, "utf8");
+};
+
+export const readJson = (filePath) => {
+  const raw = readText(filePath);
+  return JSON.parse(raw);
+};
+
+export const commandExists = (cmd) => {
+  // spawn will resolve .cmd/.exe via PATH
+  return new Promise((resolve) => {
+    const child = spawn(cmd, ["--version"], {
+      cwd: ROOT_FOLDER_PATH,
+      stdio: "ignore",
+      shell: true,
+    });
+    child.on("error", () => resolve(false));
+    child.on("exit", (code) => resolve(code === 0));
+  });
+};
+
+export const rmrf = (path) => {
+  fs.rmSync(path, { recursive: true, force: true });
+};
+
+export const runCmd = async (cmd, args, { silent = false } = {}) => {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, {
+      cwd: ROOT_FOLDER_PATH,
+      shell: true,
+      stdio: silent ? "ignore" : "inherit",
+    });
+
+    child.on("error", reject);
+    child.on("exit", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`${cmd} exited with code ${code}`));
+      }
+    });
+  });
+};
+
+export const spinner = (label = "") => {
+  const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+  let i = 0;
+
+  const timer = setInterval(() => {
+    const frame = frames[i++ % frames.length];
+    process.stdout.write(`\r\x1b[32m[${frame}]\x1b[0m${label}`);
+  }, 80);
+  return () => {
+    clearInterval(timer);
+    process.stdout.write("\r");
+  };
 };
 
 export const getCurrentDisplayOfWindow = (electronWindow) => {

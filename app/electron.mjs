@@ -7,9 +7,9 @@ FCapture
 
 */
 
-import "v8-compile-cache";
 import fs from "fs";
 import path from "path";
+import "v8-compile-cache";
 import process from "process";
 import { format } from "date-fns";
 import * as globals from "./globals.mjs";

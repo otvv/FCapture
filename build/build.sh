@@ -2,45 +2,28 @@
 
 DIST_PATH="./dist"
 PACKAGE_JSON="./package.json"
-APP_PATH="./dist/mac/FCapture.app" # adjust path if needed
+APP_PATH="./dist/mac/FCapture.app"
 VERSION_FILE=".last_build_version"
 OS=$(uname) # OS platform/name
 
-spinner() {
-    local pid=$1
-    local delay=0.08
-    local spinstr=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
-    local index=0
-    local length=${#spinstr[@]}
+# ensure package.json exists
+if [ ! -f "$PACKAGE_JSON" ]; then
+    echo "[fbuild] - package.json not found. please check the project files."
+    exit 1
+fi
 
-    while kill -0 "$pid" 2>/dev/null; do
-        printf "\033[32m[%s]\033[0m" "${spinstr[$index]}"
-        index=$(((index + 1) % length)) # cycle through the spinner characters
-
-        sleep $delay
-        printf "\b\b\b\b\b\b"
-    done
-    printf "\r[fbuild] - app built successfully.\n"
-}
-
-# check if electron builder is installed
+# check if dependencies are installed
 if ! command -v electron-builder &>/dev/null; then
     echo "[fbuild] - electron-builder could not be found."
     echo "[fbuild] - please run 'npm install -g electron-builder' to proceed.\n(you might need to use sudo to run this command.)"
     exit 1
 fi
 
-
-# check if jq is installed
 if ! command -v jq &>/dev/null; then
     echo "[fbuild] - jq command could not be found."
-    echo "[fbuild] - please run 'brew install jq' for macOS or the Linux equivalent package to proceed."
-    exit 1
-fi
-
-# ensure package.json exists
-if [ ! -f "$PACKAGE_JSON" ]; then
-    echo "[fbuild] - package.json not found. please check the project files."
+    echo "[fbuild] - please run 'brew install jq' for macOS"
+    echo "[fbuild] - or the equivalent command from your Linux distro package manager"
+    echo "[fbuild] - (alternatively you can run: 'npm i -g node-jq')"
     exit 1
 fi
 
@@ -78,6 +61,23 @@ echo "[fbuild] - running electron-builder..."
 electron-builder >/dev/null 2>&1 &
 build_pid=$!
 
+spinner() {
+    local pid=$1
+    local delay=0.08
+    local spinstr=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+    local index=0
+    local length=${#spinstr[@]}
+
+    while kill -0 "$pid" 2>/dev/null; do
+        printf "\033[32m[%s]\033[0m" "${spinstr[$index]}"
+        index=$(((index + 1) % length)) # cycle through the spinner characters
+
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "\r[fbuild] - app built successfully.\n"
+}
+
 # start the spinner animation while the build process runs
 # and wait for it to finish
 spinner "$build_pid"
@@ -99,7 +99,6 @@ if [ "$OS" == "Darwin" ]; then
         echo "[fbuild] - ad-hoc signing the app..."
         codesign --deep --force --verify --verbose --sign - "$APP_PATH"
 
-        # check if signing was successful
         if [ $? -eq 0 ]; then
             echo "[fbuild] - app signed successfully."
         else
