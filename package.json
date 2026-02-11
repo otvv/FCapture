@@ -31,8 +31,6 @@
   "scripts": {
     "start": "npx electron .",
     "build": "node app/build.mjs",
-    "buildAltUnix": "sudo sh build/build.sh",
-    "buildAltWin": "powershell -File build/build.ps1",
     "signAppMac": "codesign --deep --force --sign - dist/mac/*.app"
   },
   "repository": {
