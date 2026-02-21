@@ -17,7 +17,7 @@ const imageBrightnessSliderElement = document.getElementById("image-brightness-s
 const imageContrastSliderElement = document.getElementById("image-contrast-slider");
 const imageSaturationSliderElement = document.getElementById("image-saturation-slider");
 const autoHideCursorCheckboxElement = document.getElementById(
-  "#uto-hide-cursor-checkbox",
+  "auto-hide-cursor-checkbox",
 );
 const debugOverlayCheckboxElement = document.getElementById("debug-overlay-checkbox");
 const audioModeSelectElement = document.getElementById("audio-mode-select");

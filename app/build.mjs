@@ -84,11 +84,11 @@ const APP_PATH_MAC = path.join(utils.ROOT_FOLDER_PATH, "dist", "mac", "FCapture.
       console.log(`[fbuild] - app found @ ${APP_PATH_MAC}`);
       console.log("[fbuild] - ad-hoc signing the app...");
       try {
-        await runCmd(
+        await utils.runCmd(
           "codesign",
           ["--deep", "--force", "--verify", "--verbose", "--sign", "-", APP_PATH_MAC],
           {
-            silent: false,
+            silent: true,
           },
         );
         console.log("[fbuild] - app signed successfully.");

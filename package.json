@@ -1,6 +1,6 @@
 {
   "name": "fcapture",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "A previewer and recorder (eventually) software for generic USB capture cards",
   "main": "app/electron.mjs",
   "build": {
@@ -11,12 +11,17 @@
       "uninstallDisplayName": "${productName}"
     },
     "mac": {
-      "target": "dir",
+      "target": "dmg",
       "icon": "app/assets/icons/fcapture-icon.icns",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSCameraUsageDescription": "Camera access is required.",
+        "NSMicrophoneUsageDescription": "Microphone access is required.",
+        "NSCameraUseContinuityCameraDeviceType": true
+      }
     },
     "win": {
       "target": "nsis",
@@ -31,7 +36,7 @@
   "scripts": {
     "start": "npx electron .",
     "build": "node app/build.mjs",
-    "signAppMac": "codesign --deep --force --sign - dist/mac/*.app"
+    "signAppMac": "codesign --deep --force --verify --verbose --sign - dist/mac/*.app"
   },
   "repository": {
     "type": "git",
