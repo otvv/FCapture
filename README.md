@@ -52,10 +52,6 @@ npm start
 # build the app using the appropriate script based on your platform (OS)
 npm run build
 
-# there's also alternative build scripts in case the normal method doesn't work.
-npm run buildAltUnix # (macOS and Linux using bash)
-npm run buildAltWin # (Windows using PowerShell)
-
 # if you need to sign the app on macOS separately run:
 npm run signAppMac # this will use the "adhoc" signing method.
 
