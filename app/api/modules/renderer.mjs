@@ -88,8 +88,6 @@ const generateDrawFrameOnScreenFunction = (
     // schedule next frame
     if (typeof videoElement.requestVideoFrameCallback === "function") {
       videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
-    } else {
-      requestAnimationFrame(initDirectDrawRenderer);
     }
   };
 
@@ -143,8 +141,6 @@ const generateDrawFrameOnScreenFunction = (
 
         if (typeof videoElement.requestVideoFrameCallback === "function") {
           videoElement.requestVideoFrameCallback(initDirectDrawRenderer);
-        } else {
-          requestAnimationFrame(initDirectDrawRenderer);
         }
       }
     },

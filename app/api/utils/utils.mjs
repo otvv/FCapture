@@ -207,6 +207,7 @@ export const handleHardwareAcceleration = (app) => {
 
       app.commandLine.appendSwitch("disable-frame-rate-limit");
       app.commandLine.appendSwitch("enable-unsafe-webgpu");
+      app.commandLine.appendSwitch("use-angle", "metal");
       app.commandLine.appendSwitch("enable-features", "Metal");
 
       break;

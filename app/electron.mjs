@@ -39,6 +39,7 @@ const generateParentWindow = () => {
     center: true,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     webPreferences: {
+      offscreen: false,
       experimentalFeatures: true,
       backgroundThrottling: false,
       preload: path.join(globals.__dirname, "preload.js"),

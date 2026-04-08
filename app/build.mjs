@@ -16,6 +16,9 @@ const PACKAGE_JSON_FILE = path.join(utils.ROOT_FOLDER_PATH, "package.json");
 const VERSION_CONTROL_FILE = path.join(utils.ROOT_FOLDER_PATH, ".last_build_version");
 const APP_PATH_MAC = path.join(utils.ROOT_FOLDER_PATH, "dist", "mac", "FCapture.app");
 
+// TODO: re-implement Windows developer mode check.
+// improve Windows and Linux icon rendering
+
 (async () => {
   // ensure package.json exists and its dependencies are present
   if (!utils.pathExists(PACKAGE_JSON_FILE)) {
@@ -39,7 +42,7 @@ const APP_PATH_MAC = path.join(utils.ROOT_FOLDER_PATH, "dist", "mac", "FCapture.
     console.error("[fbuild] - package.json has no valid version field.");
   }
 
-  let LAST_VERSION = "N/A"; // if no version is defined in file
+  let LAST_VERSION = "N/A";
 
   // handle app versioning control
   if (utils.pathExists(VERSION_CONTROL_FILE)) {

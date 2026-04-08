@@ -10,7 +10,7 @@
  * - GPU-accelerated video rendering + filters (brightness / contrast / saturation)
  * - Uses WebGL to sample an HTMLVideoElement as a texture and apply a fragment shader.
  * - If WebGL is unavailable or fails, users should fallback to a 2D canvas renderer (the app already handles this).
- * - Synchronizes rendering with `videoPlayerElement.requestVideoFrameCallback`, otherwise uses RAF (`requestAnimationFrame`) as a fallback.
+ * - Synchronizes rendering with `videoPlayerElement.requestVideoFrameCallback`.
  *
  *
  * NOTES:
@@ -32,6 +32,7 @@ export class WebGLVideoRenderer {
       antialias: false,
       alpha: false,
       preserveDrawingBuffer: false,
+      failIfMajorPerformanceCaveat: false,
       powerPreference: "high-performance",
     });
 
@@ -303,7 +304,7 @@ export class WebGLVideoRenderer {
         null,
       );
 
-      // If a real video frame is available,
+      // if a real video frame is available,
       // upload it into the allocated storage
       if (vidW > 0 && vidH > 0) {
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, video);
@@ -360,19 +361,6 @@ export class WebGLVideoRenderer {
 
     if (this.video && typeof this.video.requestVideoFrameCallback === "function") {
       this.video.requestVideoFrameCallback(this._boundFrameCb);
-    } else {
-      // use RAF if requestVideoFrameCallback is not available
-      const loop = () => {
-        if (!this.running) {
-          return;
-        }
-
-        this._renderOnce();
-
-        requestAnimationFrame(loop);
-      };
-
-      requestAnimationFrame(loop);
     }
   }
 
