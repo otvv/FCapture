@@ -16,23 +16,23 @@ const PACKAGE_JSON_FILE = path.join(utils.ROOT_FOLDER_PATH, "package.json");
 const VERSION_CONTROL_FILE = path.join(utils.ROOT_FOLDER_PATH, ".last_build_version");
 const APP_PATH_MAC = path.join(utils.ROOT_FOLDER_PATH, "dist", "mac", "FCapture.app");
 
-// TODO: re-implement Windows developer mode check.
-// improve Windows and Linux icon rendering
-
 (async () => {
   // ensure package.json exists and its dependencies are present
   if (!utils.pathExists(PACKAGE_JSON_FILE)) {
     console.error("[fbuild] - package.json not found. please check the project files.");
+    return;
   }
 
   if (!utils.pathExists(path.join(utils.ROOT_FOLDER_PATH, "node_modules"))) {
     console.error("[fbuild] - node_modules not found. run 'npm install' first.");
+    return;
   }
 
   // check npx availability
   const hasNpx = await utils.commandExists("npx");
   if (!hasNpx) {
     console.error("[fbuild] - npx could not be found. please, reinstall node.js (npm).");
+    return;
   }
 
   // read package.json file to extract the app version
@@ -40,6 +40,7 @@ const APP_PATH_MAC = path.join(utils.ROOT_FOLDER_PATH, "dist", "mac", "FCapture.
   const CURRENT_VERSION = String(pkg.version ?? "").trim();
   if (!CURRENT_VERSION) {
     console.error("[fbuild] - package.json has no valid version field.");
+    return;
   }
 
   let LAST_VERSION = "N/A";
@@ -66,6 +67,13 @@ const APP_PATH_MAC = path.join(utils.ROOT_FOLDER_PATH, "dist", "mac", "FCapture.
     console.log(
       "[fbuild] - app version has not been changed, skipping dist folder deletion.",
     );
+  }
+  
+  if (process.platform !== "win32") {
+      console.log("[fbuild] - not on windows, skipping dev mode check.");
+  } else if (!utils.isDevModeEnabled()) {
+    console.error("[fbuild] - Developer Mode is currently disabled, please enable it at: (Settings -> System -> Advanced -> For developers)");
+    return;
   }
 
   console.log("[fbuild] - running electron-builder..");

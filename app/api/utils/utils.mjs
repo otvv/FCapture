@@ -68,6 +68,32 @@ export const getCorrectPicturesFolder = () => {
       return fallbackFolder;
   }
 };
+export const isDevModeEnabled = () => {
+  try {
+    const key = "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock";
+    const out = execSync(
+      `reg query "${key}" /v AllowDevelopmentWithoutDevLicense /reg:64`,
+      { encoding: "utf-8" }
+    );
+
+    const match = out.match(/AllowDevelopmentWithoutDevLicense\s+REG_DWORD\s+(0x\w+)/i);
+
+    if (!match) {
+      console.warn("[fbuild] - dev mode key found but value missing or unreadable.");
+      return false;
+    }
+
+    return parseInt(match[1], 16) === 1;
+  } catch (err) {
+    const msg = err?.stderr?.toString() ?? err?.message ?? "";
+    if (msg.includes("ERROR: The system was unable to find")) {
+      console.warn("[fbuild] - dev mode registry key not found (feature may be unavailable on this Windows version).");
+    } else {
+      console.warn("[fbuild] - failed to read dev mode registry key:", msg.trim());
+    }
+    return false;
+  }
+};
 
 export const pathExists = (path) => {
   try {
