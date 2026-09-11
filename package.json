@@ -58,11 +58,15 @@
   },
   "homepage": "https://github.com/otvv/fcapture#readme",
   "devDependencies": {
-    "electron": "^40.0.0",
+    "electron": "^44.3.0",
     "electron-builder": "^26.4.0"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
     "v8-compile-cache": "^2.4.0"
+  },
+  "allowScripts": {
+    "electron@44.3.0": true,
+    "electron-winstaller@5.4.0": true
   }
 }
